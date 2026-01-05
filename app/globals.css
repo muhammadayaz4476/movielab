@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default (Mobile) - using fixed pixels for readability on small screens */
+  --text-xs-fluid: 12px;
+  --text-sm-fluid: 14px;
+  --text-base-fluid: 16px;
+  --text-lg-fluid: 18px;
+  --text-xl-fluid: 20px;
+  --text-2xl-fluid: 24px;
+  --text-3xl-fluid: 30px;
+  --text-4xl-fluid: 36px;
+  --text-5xl-fluid: 48px;
+  --text-6xl-fluid: 60px;
+  --text-7xl-fluid: 72px;
+  --text-8xl-fluid: 96px;
+  --text-9xl-fluid: 128px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 768px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Desktop/Large - using VW for fluid scaling */
+    --text-xs-fluid: 0.65vw;
+    --text-sm-fluid: 0.75vw;
+    --text-base-fluid: 0.85vw;
+    --text-lg-fluid: 1vw;
+    --text-xl-fluid: 1.25vw;
+    --text-2xl-fluid: 1.5vw;
+    --text-3xl-fluid: 2vw;
+    --text-4xl-fluid: 2.5vw;
+    --text-5xl-fluid: 3vw;
+    --text-6xl-fluid: 4vw;
+    --text-7xl-fluid: 5vw;
+    --text-8xl-fluid: 6vw;
+    --text-9xl: 7vw;
   }
 }
 
+@theme {
+  --font-poppins: "poppins", sans-serif;
+  --font-comfortaa: "Comfortaa", sans-serif;
+  /* --font-sans: var(--font-poppins); */
+  --font-display: var(--font-poppins);
+  --font-body: var(--font-poppins);
+
+  --color-primary: #2eafff;
+  --color-secondary: #58b4ff;
+  --color-tertiary: #8a499f;
+
+  --color-container: #323138;
+
+  --radius-DEFAULT: 0.75rem;
+
+  --text-xs: var(--text-xs-fluid);
+  --text-sm: var(--text-sm-fluid);
+  --text-base: var(--text-base-fluid);
+  --text-lg: var(--text-lg-fluid);
+  --text-xl: var(--text-xl-fluid);
+  --text-2xl: var(--text-2xl-fluid);
+  --text-3xl: var(--text-3xl-fluid);
+  --text-4xl: var(--text-4xl-fluid);
+  --text-5xl: var(--text-5xl-fluid);
+  --text-6xl: var(--text-6xl-fluid);
+  --text-7xl: var(--text-7xl-fluid);
+  --text-8xl: var(--text-8xl-fluid);
+  --text-9xl: var(--text-9xl-fluid);
+}
+
 body {
-  background: var(--background);
+  background: black;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hide Scrollbar Globally - Placed outside layer to ensure priority */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
