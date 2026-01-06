@@ -8,7 +8,7 @@ import ShareModal from "../../components/ShareModal";
 
 const SidebarSkeleton = () => (
   <div className="flex gap-3 animate-pulse px-1">
-    <div className="w-40 lg:w-[10vw] aspect-video bg-zinc-900 rounded-lg flex-shrink-0" />
+    <div className="w-40 lg:w-[10vw] aspect-video bg-zinc-900 rounded-lg shrink-0" />
     <div className="flex-1 space-y-2">
       <div className="h-4 bg-zinc-900 rounded w-full" />
       <div className="h-3 bg-zinc-900 rounded w-1/2" />
@@ -265,7 +265,7 @@ const WatchContent = ({ initialMovie, slug, id }) => {
                 href={`/watch/${createSlug(rec.title, rec.id)}`}
                 className="flex gap-3 group"
               >
-                <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+                <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                   <img
                     src={`https://image.tmdb.org/t/p/w300${
                       rec.backdrop_path || rec.poster_path

@@ -10,7 +10,7 @@ import NoticeModal from "../../components/NoticeModal";
 // --- Skeleton Component for Sidebar ---
 const SidebarSkeleton = () => (
   <div className="flex gap-3 animate-pulse">
-    <div className="w-40 lg:w-[10vw] aspect-video bg-gray-800 rounded-lg flex-shrink-0" />
+    <div className="w-40 lg:w-[10vw] aspect-video bg-gray-800 rounded-lg shrink-0" />
     <div className="flex-1 space-y-2">
       <div className="h-4 bg-gray-800 rounded w-full" />
       <div className="h-3 bg-gray-800 rounded w-1/2" />
@@ -278,7 +278,7 @@ const MovieContent = ({ initialMovie, slug, id }) => {
                 href={`/movie/${createSlug(item.title, item.id)}`}
                 className="flex gap-3 group cursor-pointer"
               >
-                <div className="relative w-40 lg:w-[12vw] aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                <div className="relative w-40 lg:w-[12vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-800">
                   <img
                     src={`https://image.tmdb.org/t/p/w300${
                       item.backdrop_path || item.poster_path

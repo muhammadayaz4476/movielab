@@ -1,6 +1,5 @@
-import { Poppins, Roboto } from "next/font/google";
-import { Comfortaa } from "next/font/google";
-
+import { Poppins, Roboto, Comfortaa } from "next/font/google";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -66,6 +65,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${poppins.variable} ${roboto.variable} ${comfortaa.variable} antialiased`}
       >
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
