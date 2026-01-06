@@ -42,6 +42,7 @@ const Navbar = () => {
     { name: "Bollywood", slug: "bollywood" },
     { name: "Korean", slug: "korean" },
     { name: "Anime", slug: "anime" },
+    { name: "Web Series", slug: "web-series" },
   ];
 
   return (
@@ -105,7 +106,9 @@ const Navbar = () => {
               className="fixed top-0 right-0 h-full w-[300px] lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] shadow-2xl overflow-y-auto custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-10">
-                <h2 className="text-2xl font-bold font-comfortaa text-white">Discover</h2>
+                <h2 className="text-2xl font-bold font-comfortaa text-white">
+                  Discover
+                </h2>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-2 hover:bg-primary/20 hover:text-primary text-gray-400 rounded-full transition-colors"
@@ -142,7 +145,9 @@ const Navbar = () => {
                   {genres.map((genre) => (
                     <Link
                       key={genre.id}
-                      href={`/discover/${genre.name.toLowerCase().replace(/ /g, "-")}-${genre.id}`}
+                      href={`/discover/${genre.name
+                        .toLowerCase()
+                        .replace(/ /g, "-")}-${genre.id}`}
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >

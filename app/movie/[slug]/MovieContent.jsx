@@ -18,11 +18,11 @@ const SidebarSkeleton = () => (
   </div>
 );
 
-const MovieContent = ({ initialMovie, slug, id }) => {
-  // Main Movie State
-  const [movie, setMovie] = useState(initialMovie);
+const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
+  // Main Movie/TV State
+  const [movie, setMovie] = useState(initialData);
   const [trailer, setTrailer] = useState(null);
-  const [loading, setLoading] = useState(!initialMovie);
+  const [loading, setLoading] = useState(!initialData);
 
   // Recommendations / Sidebar State
   const [recommendations, setRecommendations] = useState([]);
@@ -52,21 +52,20 @@ const MovieContent = ({ initialMovie, slug, id }) => {
   // Handle movie change if user navigates via sidebar
   useEffect(() => {
     const fetchMovieData = async () => {
-      // If the ID matches initialMovie, we don't need to refetch immediately
-      // but sidebar needs reset
-      if (initialMovie && initialMovie.id.toString() === id.toString()) {
-        setMovie(initialMovie);
+      // If the ID and mediaType match initialData, we don't need to refetch immediately
+      if (initialData && initialData.id.toString() === id.toString()) {
+        setMovie(initialData);
         setLoading(false);
       } else {
         try {
           setLoading(true);
-          const movieReq = await axios.get(
-            `${BASE_URL}/movie/${id}?api_key=${API_KEY}&append_to_response=videos,credits`
+          const res = await axios.get(
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`
           );
-          setMovie(movieReq.data);
+          setMovie(res.data);
           setLoading(false);
         } catch (error) {
-          console.error("Error fetching movie details:", error);
+          console.error("Error fetching content details:", error);
           setLoading(false);
         }
       }
@@ -77,7 +76,7 @@ const MovieContent = ({ initialMovie, slug, id }) => {
     setRecPage(1);
     setHasMoreRecs(true);
     setIsFallbackMode(false);
-  }, [id, initialMovie]);
+  }, [id, initialData, mediaType]);
 
   // 2. Fetch Sidebar Content (Infinite Scroll)
   const fetchSidebarData = async (pageNum) => {
@@ -86,8 +85,8 @@ const MovieContent = ({ initialMovie, slug, id }) => {
       setLoadingMoreRecs(true);
 
       const endpoint = isFallbackMode
-        ? `${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${pageNum}`
-        : `${BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
+        ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
+        : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
 
       const res = await axios.get(endpoint);
       const newItems = res.data.results;
@@ -144,7 +143,7 @@ const MovieContent = ({ initialMovie, slug, id }) => {
 
   useEffect(() => {
     fetchSidebarData(recPage);
-  }, [recPage, isFallbackMode, id]);
+  }, [recPage, isFallbackMode, id, mediaType]);
 
   useEffect(() => {
     if (loadingMoreRecs || !hasMoreRecs) return;
@@ -158,8 +157,9 @@ const MovieContent = ({ initialMovie, slug, id }) => {
     return () => observer.disconnect();
   }, [loadingMoreRecs, hasMoreRecs]);
 
-  const createSlug = (title, id) => {
-    return `${(title || "")
+  const createSlug = (title, id, type = "movie") => {
+    const prefix = type === "tv" ? "tv-" : "";
+    return `${prefix}${(title || "")
       .toLowerCase()
       .replace(/ /g, "-")
       .replace(/[^\w-]+/g, "")}-${id}`;
@@ -217,11 +217,18 @@ const MovieContent = ({ initialMovie, slug, id }) => {
 
           <div className="flex items-center gap-3 justify-between flex-wrap md:gap-0 py-[2vw] md:pr-[1vw]">
             <h1 className="text-xl lg:text-2xl w-full md:w-[60%] font-bold font-comfortaa">
-              {movie?.title} <span className="text-gray-400">~ Trailer</span>
+              {movie?.title || movie?.name}{" "}
+              <span className="text-gray-400">
+                ~ {mediaType === "tv" ? "Series Trailer" : "Movie Trailer"}
+              </span>
             </h1>
             <div className="flex flex-nowrap items-center gap-3 lg:gap-[1vw]">
               <Link
-                href={`/watch/${slug}`}
+                href={`/watch/${createSlug(
+                  movie?.title || movie?.name,
+                  movie?.id,
+                  mediaType
+                )}`}
                 className="bg-primary text-black font-extrabold px-4 py-2 text-sm md:px-[1vw] md:py-[0.7vw] rounded-full font-comfortaa transition"
               >
                 Watch Now
@@ -275,7 +282,11 @@ const MovieContent = ({ initialMovie, slug, id }) => {
             {recommendations.map((item, index) => (
               <Link
                 key={`${item.id}-${index}`}
-                href={`/movie/${createSlug(item.title, item.id)}`}
+                href={`/movie/${createSlug(
+                  item.title || item.name,
+                  item.id,
+                  mediaType
+                )}`}
                 className="flex gap-3 group cursor-pointer"
               >
                 <div className="relative w-40 lg:w-[12vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-800">
@@ -283,7 +294,7 @@ const MovieContent = ({ initialMovie, slug, id }) => {
                     src={`https://image.tmdb.org/t/p/w300${
                       item.backdrop_path || item.poster_path
                     }`}
-                    alt={item.title}
+                    alt={item.title || item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                   />
                   <div className="absolute bottom-1 right-1 bg-black/80 px-1 text-[10px] rounded">
@@ -292,14 +303,15 @@ const MovieContent = ({ initialMovie, slug, id }) => {
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <h4 className="text-md font-poppins line-clamp-2 group-hover:text-primary transition">
-                    {item.title}
+                    {item.title || item.name}
                   </h4>
                   <p className="text-xs text-gray-400 mt-1">
-                    {item.release_date?.split("-")[0]} • Movie
+                    {(item.release_date || item.first_air_date)?.split("-")[0]}{" "}
+                    • {mediaType === "tv" ? "Series" : "Movie"}
                   </p>
                   <div className="mt-1 flex items-center gap-1">
                     <span className="text-[10px] bg-zinc-800 px-1 py-0.5 rounded text-gray-300">
-                      ★ {item.vote_average.toFixed(1)}
+                      ★ {item.vote_average?.toFixed(1)}
                     </span>
                   </div>
                 </div>

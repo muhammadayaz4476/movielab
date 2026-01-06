@@ -7,18 +7,23 @@ const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const id = slug?.split("-").pop();
+  const isTV = slug?.startsWith("tv-");
+  const mediaType = isTV ? "tv" : "movie";
 
   try {
-    const res = await axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
-    const movie = res.data;
+    const res = await axios.get(
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}`
+    );
+    const data = res.data;
+    const title = data.title || data.name;
 
     return {
-      title: `Watching ${movie.title} | MovieLab`,
-      description: `Watch ${movie.title} in high quality on MovieLab. ${movie.overview}`,
+      title: `Watching ${title} | MovieLab`,
+      description: `Watch ${title} in high quality on MovieLab. ${data.overview}`,
       openGraph: {
-        title: `Watch ${movie.title} | MovieLab`,
-        description: movie.overview,
-        images: [`https://image.tmdb.org/t/p/w780${movie.backdrop_path}`],
+        title: `Watch ${title} | MovieLab`,
+        description: data.overview,
+        images: [`https://image.tmdb.org/t/p/w780${data.backdrop_path}`],
       },
     };
   } catch (error) {
@@ -31,16 +36,25 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { slug } = await params;
   const id = slug?.split("-").pop();
+  const isTV = slug?.startsWith("tv-");
+  const mediaType = isTV ? "tv" : "movie";
 
-  let movie = null;
+  let data = null;
   try {
     const res = await axios.get(
-      `${BASE_URL}/movie/${id}?api_key=${API_KEY}&append_to_response=credits`
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits`
     );
-    movie = res.data;
+    data = res.data;
   } catch (error) {
-    console.error("Error fetching movie for watch page:", error);
+    console.error("Error fetching content for watch page:", error);
   }
 
-  return <WatchContent initialMovie={movie} slug={slug} id={id} />;
+  return (
+    <WatchContent
+      initialData={data}
+      slug={slug}
+      id={id}
+      mediaType={mediaType}
+    />
+  );
 }

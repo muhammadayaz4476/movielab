@@ -90,6 +90,7 @@ const DiscoverContent = ({ slug }) => {
           "new-releases",
           "hidden-gems",
           "feel-good",
+          "web-series",
         ].includes(decodedSlug)
       ) {
         const categoryTitles = {
@@ -99,6 +100,7 @@ const DiscoverContent = ({ slug }) => {
           "new-releases": "New Releases",
           "hidden-gems": "Hidden Gems",
           "feel-good": "Feel Good Movies",
+          "web-series": "Web Series",
         };
         if (pageNum === 1) setTitle(categoryTitles[decodedSlug]);
         if (decodedSlug === "trending")
@@ -113,6 +115,8 @@ const DiscoverContent = ({ slug }) => {
           endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc${params}`;
         else if (decodedSlug === "feel-good")
           endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc${params}`;
+        else if (decodedSlug === "web-series")
+          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${params}`;
       } else {
         const parts = decodedSlug.split("-");
         const id = parts.pop();
@@ -178,9 +182,10 @@ const DiscoverContent = ({ slug }) => {
     setPage(1);
     setHasMore(true);
     setLoading(true);
-    setMediaType("movie");
+    const initialType = decodedSlug === "web-series" ? "tv" : "movie";
+    setMediaType(initialType);
     setYear("");
-    fetchDiscovery(1, "movie", "");
+    fetchDiscovery(1, initialType, "");
   }, [decodedSlug]);
 
   useEffect(() => {
@@ -196,9 +201,10 @@ const DiscoverContent = ({ slug }) => {
     return () => observer.disconnect();
   }, [loading, hasMore]);
 
-  const createSlug = (title, id) => {
+  const createSlug = (title, id, type = "movie") => {
     if (!title) return id;
-    return `${title
+    const prefix = type === "tv" ? "tv-" : "";
+    return `${prefix}${title
       .toLowerCase()
       .replace(/ /g, "-")
       .replace(/[^\w-]+/g, "")}-${id}`;
@@ -263,7 +269,11 @@ const DiscoverContent = ({ slug }) => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-[1.5vw]">
           {results.map((item, index) => (
             <Link
-              href={`/movie/${createSlug(item.title || item.name, item.id)}`}
+              href={`/movie/${createSlug(
+                item.title || item.name,
+                item.id,
+                mediaType
+              )}`}
               key={`${item.id}-${index}`}
               className="group cursor-pointer"
             >
@@ -279,6 +289,15 @@ const DiscoverContent = ({ slug }) => {
                     No Image
                   </div>
                 )}
+
+                {/* Badge Overlay */}
+                <div className="absolute top-2 right-2 lg:top-[0.8vw] lg:right-[0.8vw]">
+                  <div className="px-2 py-0.5 lg:px-2 lg:py-1 bg-primary rounded-md backdrop-blur-sm bg-opacity-90">
+                    <span className="text-[8px] lg:text-[10px] font-black text-black uppercase tracking-[0.1em] font-poppins">
+                      {mediaType === "tv" ? "Series" : "Movie"}
+                    </span>
+                  </div>
+                </div>
               </div>
               <h3 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors">
                 {item.title || item.name}

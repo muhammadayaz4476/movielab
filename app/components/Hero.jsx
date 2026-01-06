@@ -15,10 +15,14 @@ const Hero = () => {
     const fetchTrending = async () => {
       try {
         const res = await axios.get(
-          `${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`
+          `${BASE_URL}/trending/all/day?api_key=${API_KEY}&include_adult=false`
         );
-        const trendingMovies = res.data.results.slice(0, 5); // Take top 5 for the slider
-        setMovies(trendingMovies);
+        const trendingItems = res.data.results
+          .filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv"
+          )
+          .slice(0, 5);
+        setMovies(trendingItems);
         setLoading(false);
       } catch (err) {
         console.error("Hero Fetch Error:", err);
@@ -76,10 +80,10 @@ const Hero = () => {
         {/* Content */}
         <div className="relative z-20 h-full flex flex-col justify-center px-4 lg:px-[5vw] ">
           <motion.div
-            // initial={{ y: 20, opacity: 0 }}
-            // animate={{ y: 0, opacity: 1 }}
-            // key={`content-${currentIndex}`}
-            // transition={{ delay: 0.5, duration: 0.8 }}
+          // initial={{ y: 20, opacity: 0 }}
+          // animate={{ y: 0, opacity: 1 }}
+          // key={`content-${currentIndex}`}
+          // transition={{ delay: 0.5, duration: 0.8 }}
           >
             {/* Trending Badge */}
             {/* <div className="flex items-center gap-2 mb-4">
@@ -107,9 +111,14 @@ const Hero = () => {
                 View Details
               </button>
             </div> */}
-               <div className='lg:w-full space-y-4 md:mt-[10vw] mt-[14vw] '>
-                <h1 className='text-3xl text-white lg:text-5xl leading-normal lg:leading-[4vw] font-semibold lg:font-light font-comfortaa'>Watch & Download Your <br className="hidden lg:block" /> Favorite Movies Here.</h1>
-                <p className='w-3/4  lg:text-lg font-poppins text-gray-300'>Watch unlimited movies online or download for free.</p>
+            <div className="lg:w-full space-y-4 md:mt-[10vw] mt-[14vw] ">
+              <h1 className="text-3xl text-white lg:text-5xl leading-normal lg:leading-[4vw] font-semibold lg:font-light font-comfortaa">
+                Watch & Download Your <br className="hidden lg:block" />{" "}
+                Favorite Movies Here.
+              </h1>
+              <p className="w-3/4  lg:text-lg font-poppins text-gray-300">
+                Watch unlimited movies online or download for free.
+              </p>
             </div>
           </motion.div>
         </div>

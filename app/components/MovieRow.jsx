@@ -41,12 +41,10 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
     fetchData();
   }, [fetchURL]);
 
-  const createSlug = (title, id) => {
+  const createSlug = (title, id, type = "movie") => {
     if (!title) return id;
-    return `${title
-      .toLowerCase()
-      .replace(/ /g, "-")
-      .replace(/[^\w-]+/g, "")}-${id}`;
+    const prefix = type === "tv" ? "tv-" : "";
+    return `${prefix}${title.toLowerCase().replace(/[^\w-]+/g, "")}-${id}`;
   };
 
   return (
@@ -81,7 +79,8 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
               <Link
                 href={`/movie/${createSlug(
                   movie.title || movie.name,
-                  movie.id
+                  movie.id,
+                  movie.media_type || (movie.first_air_date ? "tv" : "movie")
                 )}`}
                 key={movie.id}
                 className="w-[45vw] lg:w-[21vw] group cursor-pointer shrink-0"
@@ -94,7 +93,7 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
                       src={`https://image.tmdb.org/t/p/w500/${
                         movie.poster_path || movie.backdrop_path
                       }`}
-                      alt={movie.title}
+                      alt={movie.title || movie.name}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -103,13 +102,14 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
                   )}
 
                   {/* Badge Overlay */}
-                  <div className="absolute top-3 right-3 lg:top-[0.8vw] lg:right-[0.8vw] px-2 py-1 bg-red-600 rounded-md flex items-center gap-1 backdrop-blur-sm bg-opacity-90">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
-                    <span className="text-[10px] lg:text-xs font-bold text-white uppercase tracking-wider">
-                      {movie.vote_average
-                        ? movie.vote_average.toFixed(1)
-                        : "NEW"}
-                    </span>
+                  <div className="absolute top-2 right-2 font-poppins lg:top-[0.8vw] lg:right-[0.8vw]">
+                    <div className="px-2 py-0.5 lg:px-[0.6vw] lg:py-[0.2vw] flex items-center justify-center bg-primary rounded-full backdrop-blur-sm bg-opacity-90">
+                      <span className="text-[8px] italic lg:text-[0.5vw]  font-semibold text-black uppercase  font-poppins">
+                        {movie.media_type === "tv" || movie.first_air_date
+                          ? "Series"
+                          : "HD"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
