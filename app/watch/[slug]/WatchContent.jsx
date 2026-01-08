@@ -27,7 +27,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     { name: "Server 3", value: "https://vidsrc.cc/v2/embed", id: "vidsrc_cc" },
     { name: "Server 4", value: "https://www.2embed.cc/embed", id: "2embed" },
   ];
-  const [selectedServer, setSelectedServer] = useState(providers[0]);
+  const [selectedServer, setSelectedServer] = useState(providers[2]);
 
   // TV Series States
   const [seasons, setSeasons] = useState([]);
