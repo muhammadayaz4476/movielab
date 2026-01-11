@@ -12,6 +12,8 @@ const SearchContent = ({ query }) => {
   const [yearFilter, setYearFilter] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
 
+  const [personInfo, setPersonInfo] = useState(null);
+
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
@@ -37,27 +39,74 @@ const SearchContent = ({ query }) => {
         const req = await axios.get(
           `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${decodedQuery}&include_adult=false`
         );
-        const filtered = req.data.results.filter((item) => {
+
+        let initialResults = req.data.results || [];
+        let extraCredits = [];
+
+        // Check if the top result is a person (Actor/Actress)
+        const personResult = initialResults.find(
+          (item) => item.media_type === "person"
+        );
+
+        if (personResult) {
+          setPersonInfo(personResult);
+          try {
+            const creditsReq = await axios.get(
+              `${BASE_URL}/person/${personResult.id}/combined_credits?api_key=${API_KEY}`
+            );
+            if (creditsReq.data.cast) {
+              // Sort by popularity to show best known work first
+              extraCredits = creditsReq.data.cast.sort(
+                (a, b) => b.popularity - a.popularity
+              );
+            }
+          } catch (e) {
+            console.error("Error fetching person credits:", e);
+          }
+        } else {
+          setPersonInfo(null);
+        }
+
+        // Merge results: Person credits + Direct search matches
+        const allItems = [...initialResults, ...extraCredits];
+
+        // Deduplicate by ID
+        const uniqueItems = Array.from(
+          new Map(allItems.map((item) => [item.id, item])).values()
+        );
+
+        const unsafeKeywords = [
+          "sexy",
+          "erotic",
+          "porn",
+          "xxx",
+          "nude",
+          "breast",
+          "sex",
+          "18+",
+        ];
+
+        const filtered = uniqueItems.filter((item) => {
           const isMedia =
             item.media_type === "movie" || item.media_type === "tv";
+          // If it came from person credits, it might not have media_type set correctly on some endpoints,
+          // but combined_credits usually has it.
+          // Note: combined_credits returns 'media_type' per item.
+
           const title = (item.title || item.name || "").toLowerCase();
           const overview = (item.overview || "").toLowerCase();
           const isAdult = item.adult;
-          const unsafeKeywords = [
-            "sexy",
-            "erotic",
-            "porn",
-            "xxx",
-            "nude",
-            "breast",
-            "sex",
-            "18+",
-          ];
+
           const hasUnsafeKeyword = unsafeKeywords.some(
             (keyword) => title.includes(keyword) || overview.includes(keyword)
           );
+
           return isMedia && !isAdult && !hasUnsafeKeyword;
         });
+
+        // If we found a person, maybe showing 100+ credits is too much if we also have direct matches?
+        // Let's just keep them all, the user can filter.
+
         setResults(filtered);
         setLoading(false);
       } catch (error) {
@@ -81,6 +130,7 @@ const SearchContent = ({ query }) => {
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
       <div className="px-4 lg:px-[5vw] md:py-[10vw] py-[40vw]">
+        {/* Header & Filter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h1 className="text-2xl lg:text-3xl font-comfortaa font-bold">
             Results for "<span className="text-primary">{decodedQuery}</span>"
@@ -120,6 +170,34 @@ const SearchContent = ({ query }) => {
             </select>
           </div>
         </div>
+
+        {/* Starring Section (if finding an actor) */}
+        {personInfo && (
+          <div className="mb-10 w-full bg-linear-to-r from-zinc-900 to-black border border-white/10 p-6 rounded-2xl flex items-center gap-6">
+            <div className="w-20 h-20 md:w-26 md:h-26 shrink-0 rounded-full overflow-hidden">
+              {personInfo.profile_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w200${personInfo.profile_path}`}
+                  alt={personInfo.name}
+                  className="w-full h-full object-cover  object-top"
+                />
+              ) : (
+                <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-lg font-bold text-gray-500">
+                  {personInfo.name?.[0]}
+                </div>
+              )}
+            </div>
+            <div>
+             
+              <h2 className="text-2xl md:text-3xl font-bold font-comfortaa text-white">
+                {personInfo.name}
+              </h2>
+              <p className="text-zinc-400 text-xs md:text-sm mt-1">
+                Found {results.length} titles featuring this actor.
+              </p>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20">Loading...</div>

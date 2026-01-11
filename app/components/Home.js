@@ -76,36 +76,43 @@ const Home = () => {
           fetchURL={requests.trendingToday}
           viewAllLink="/discover/trending"
         />
+         <MovieRow
+          title="Horror Movies"
+          fetchURL={requests.horrorMovies}
+          viewAllLink="/discover/horror-27"
+        />
         <MovieRow
           title="Top Rated Movies"
           fetchURL={requests.topRated}
           viewAllLink="/discover/top-rated"
+        />
+          <MovieRow
+          title="Comedy Movies"
+          fetchURL={requests.comedyMovies}
+          viewAllLink="/discover/comedy-35"
         />
         <MovieRow
           title="Popular Now"
           fetchURL={requests.popularNow}
           viewAllLink="/discover/popular"
         />
-        <MovieRow
+        {/* <MovieRow
           title="Upcoming Movies"
           fetchURL={requests.newReleases}
           viewAllLink="/discover/new-releases"
+        /> */}
+        <MovieRow
+          title="Sci-Fi Movies"
+          fetchURL={requests.sciFiMovies}
+          viewAllLink="/discover/sci-fi-878"
         />
         <MovieRow
           title="Action Movies"
           fetchURL={requests.actionMovies}
           viewAllLink="/discover/action-28"
         />
-        <MovieRow
-          title="Comedy Movies"
-          fetchURL={requests.comedyMovies}
-          viewAllLink="/discover/comedy-35"
-        />
-        <MovieRow
-          title="Horror Movies"
-          fetchURL={requests.horrorMovies}
-          viewAllLink="/discover/horror-27"
-        />
+      
+       
         <MovieRow
           title="Romance Movies"
           fetchURL={requests.romanceMovies}

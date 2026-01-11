@@ -2,10 +2,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { Plus, Check } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const MovieRow = ({ title, fetchURL, viewAllLink }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { watchLater, toggleWatchLater } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -75,64 +78,78 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
                 </div>
               </div>
             ))
-          : movies.map((movie) => (
-              <Link
-                href={`/movie/${createSlug(
-                  movie.title || movie.name,
-                  movie.id,
-                  movie.media_type || (movie.first_air_date ? "tv" : "movie")
-                )}`}
-                key={movie.id}
-                className="w-[45vw] lg:w-[21vw] group cursor-pointer shrink-0"
-              >
-                {/* Image Container */}
-                <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden group">
-                  {movie.poster_path ? (
-                    <img
-                      className="w-full h-full object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
-                      src={`https://image.tmdb.org/t/p/w500/${
-                        movie.poster_path || movie.backdrop_path
-                      }`}
-                      alt={movie.title || movie.name}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      No Image
-                    </div>
-                  )}
-
-                  {/* Badge Overlay */}
-                  <div className="absolute top-2 right-2 font-poppins lg:top-[0.8vw] lg:right-[0.8vw]">
-                    <div className="px-2 py-0.5 lg:px-[0.6vw] lg:py-[0.2vw] flex items-center justify-center bg-primary rounded-full backdrop-blur-sm bg-opacity-90">
-                      <span className="text-[8px] italic lg:text-[0.5vw]  font-semibold text-black uppercase  font-poppins">
-                        {movie.media_type === "tv" || movie.first_air_date
-                          ? "Series"
-                          : "HD"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Content Infio */}
-                <div className="space-y-1 font-poppins lg:space-y-[0.3vw] lg:mt-[0.5vw]">
-                  <h3 className="text-base lg:text-xl font-medium text-white line-clamp-1">
-                    {movie.title || movie.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    {/* {movie.poster_path && (
+          : movies.map((movie) => {
+              const isSaved = watchLater.some(
+                (item) => item.id === movie.id.toString()
+              );
+              return (
+                <Link
+                  href={`/movie/${createSlug(
+                    movie.title || movie.name,
+                    movie.id,
+                    movie.media_type || (movie.first_air_date ? "tv" : "movie")
+                  )}`}
+                  key={movie.id}
+                  className="w-[45vw] lg:w-[21vw] group cursor-pointer shrink-0"
+                >
+                  {/* Image Container */}
+                  <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden group">
+                    {movie.poster_path ? (
                       <img
-                        src={`https://image.tmdb.org/t/p/w200/${movie.poster_path}`}
-                        className="w-5 h-5 lg:w-[1.5vw] lg:h-[1.5vw] rounded-full object-cover"
-                        alt=""
+                        className="w-full h-full object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
+                        src={`https://image.tmdb.org/t/p/w500/${
+                          movie.poster_path || movie.backdrop_path
+                        }`}
+                        alt={movie.title || movie.name}
                       />
-                    )} */}
-                    <p className="text-xs lg:text-sm text-primary">
-                      {movie.release_date || movie.first_air_date}
-                    </p>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        No Image
+                      </div>
+                    )}
+
+                    {/* Badge Overlay */}
+                    <div className="absolute top-2 right-2 font-poppins lg:top-[0.8vw] lg:right-[0.8vw]">
+                      <div className="px-2 py-0.5 lg:px-[0.6vw] lg:py-[0.2vw] flex items-center justify-center bg-primary rounded-full backdrop-blur-sm bg-opacity-90">
+                        <span className="text-[8px] italic lg:text-[0.5vw]  font-semibold text-black uppercase  font-poppins">
+                          {movie.media_type === "tv" || movie.first_air_date
+                            ? "Series"
+                            : "HD"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+
+                  {/* Content Infio */}
+                  <div className="space-y-1 font-poppins lg:space-y-[0.3vw] lg:mt-[0.5vw]">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-base lg:text-xl font-medium text-white line-clamp-1 flex-1">
+                        {movie.title || movie.name}
+                      </h3>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleWatchLater(movie);
+                        }}
+                        className="text-white hover:text-primary transition-colors p-1"
+                      >
+                        {isSaved ? (
+                          <Check size={18} className="text-primary" />
+                        ) : (
+                          <Plus size={18} />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <p className="text-xs lg:text-sm text-primary">
+                        {movie.release_date || movie.first_air_date}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
       </div>
     </div>
   );

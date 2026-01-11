@@ -1,9 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { PlayIcon, SearchIcon, Menu, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Search as SearchIcon,
+  Play as PlayIcon,
+  User,
+  Menu,
+  ListPlus ,
+  X,
+  Layers,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 
 const Navbar = () => {
@@ -13,11 +23,34 @@ const Navbar = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [placeholderText, setPlaceholderText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
   const searchRef = React.useRef(null);
   const router = useRouter();
 
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
+
+  // Placeholder Animation Logic
+  const { user, logout, isLoginModalOpen, setIsLoginModalOpen } = useAuth();
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPhraseIndex((prev) => (prev + 1) % 4); // 4 phrases
+    }, 3000); // Change every 3 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const phrases = [
+    "Search movies...",
+    "Search by actor...",
+    "Search web series...",
+    "Explore genres...",
+  ];
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -57,7 +90,10 @@ const Navbar = () => {
 
           let results = response.data.results
             .filter(
-              (item) => item.media_type === "movie" || item.media_type === "tv"
+              (item) =>
+                item.media_type === "movie" ||
+                item.media_type === "tv" ||
+                item.media_type === "person"
             )
             .slice(0, 5);
 
@@ -109,6 +145,8 @@ const Navbar = () => {
           item.id.split("-")[1]
         }`
       );
+    } else if (item.media_type === "person") {
+      router.push(`/search/${encodeURIComponent(item.name)}`);
     } else {
       const slug = createSlug(
         item.title || item.name,
@@ -158,22 +196,38 @@ const Navbar = () => {
 
         <nav className="flex items-center w-full lg:w-fit gap-2 pt-5 md:pt-0 lg:gap-[1vw]">
           <div className="relative w-full lg:w-[25vw]" ref={searchRef}>
-            <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all">
-              <SearchIcon className="text-primary/50" size={20} />
-              <input
-                type="search"
-                className="bg-transparent border-none outline-none text-white text-sm lg:text-base w-full"
-                placeholder="Search movies..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearch}
-                onFocus={() =>
-                  searchQuery.trim().length > 1 && setShowSuggestions(true)
-                }
-              />
+            <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
+              <SearchIcon className="text-primary/50 shrink-0" size={20} />
+
+              <div className="relative flex-1 h-6">
+                <input
+                  type="search"
+                  className="bg-transparent border-none outline-none text-white text-sm lg:text-base w-full h-full absolute top-0 left-0 z-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                  onFocus={() =>
+                    searchQuery.trim().length > 1 && setShowSuggestions(true)
+                  }
+                />
+                <AnimatePresence mode="wait">
+                  {!searchQuery && (
+                    <motion.span
+                      key={currentPhraseIndex}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 0.5 }}
+                      exit={{ y: -20, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="absolute top-0 left-0 pointer-events-none text-sm lg:text-base text-gray-400 truncate w-full h-full flex items-center"
+                    >
+                      {phrases[currentPhraseIndex]}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
               {isSearching && (
                 <div className="p-2  border-2 border-primary border-t-transparent animate-spin rounded-full " />
-               )}
+              )}
             </div>
 
             {/* Suggestions Dropdown */}
@@ -197,9 +251,11 @@ const Navbar = () => {
                         </div>
                       ) : (
                         <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0">
-                          {item.poster_path ? (
+                          {item.poster_path || item.profile_path ? (
                             <img
-                              src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
+                              src={`https://image.tmdb.org/t/p/w92${
+                                item.poster_path || item.profile_path
+                              }`}
                               alt={item.title || item.name}
                               className="w-full h-full object-cover"
                             />
@@ -211,12 +267,14 @@ const Navbar = () => {
                         </div>
                       )}
                       <div className="flex flex-col lg:gap-[0.2vw] items-start overflow-hidden">
-                        <span className="text-white text-sm font-  font-poppins  w-full group-hover:text-primary transition-colors">
+                        <span className="text-white text-sm font-  font-poppins  w-full group-hover:text-primary transition-colors text-left">
                           {item.title || item.name}
                         </span>
                         <span className="text-gray-500 text-[10px] font-  font-poppins uppercase">
                           {item.isGenre
                             ? "Browse Genre"
+                            : item.media_type === "person"
+                            ? "Actor"
                             : `${
                                 item.media_type === "tv" ? "TV Series" : "Movie"
                               } • ${
@@ -240,7 +298,43 @@ const Navbar = () => {
           >
             <Menu className="text-white group-hover:scale-110 transition-transform" />
           </button>
+           <div className="hidden lg:flex items-center gap-6">
+          <Link
+            href="/watch-later"
+            className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+          >
+            <ListPlus />
+          </Link>
+
+          {/* {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-zinc-400 text-xs">
+                Hello,{" "}
+                <span className="text-white font-bold">{user.username}</span>
+              </span>
+              <button
+                onClick={logout}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-full transition-colors border border-white/5"
+              >
+                Sign Out
+              </button>
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">
+                {user.username[0].toUpperCase()}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full border border-white/10 transition-all font-comfortaa"
+            >
+              <User size={16} />
+              Sign In
+            </button>
+          )} */}
+        </div>
         </nav>
+
+       
       </header>
 
       {/* Sidebar Component */}

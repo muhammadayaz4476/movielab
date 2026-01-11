@@ -1,5 +1,7 @@
 import { Poppins, Roboto, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import { AuthProvider } from "../context/AuthContext";
+import LoginModal from "../components/LoginModal";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -62,11 +64,16 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <meta name="referrer" content="origin" />
+
       <body
         className={`${poppins.variable} ${roboto.variable} ${comfortaa.variable} antialiased`}
       >
         <GoogleAnalytics />
-        {children}
+        <AuthProvider>
+          {children}
+          <LoginModal />
+        </AuthProvider>
       </body>
     </html>
   );

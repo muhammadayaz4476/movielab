@@ -1,11 +1,12 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Share2 } from "lucide-react";
+import { Share2, Plus, Check, PlayIcon, X, MoreVertical, Download, DownloadCloud, DownloadCloudIcon } from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
 import NoticeModal from "../../components/NoticeModal";
+import { useAuth } from "@/context/AuthContext";
 
 // --- Skeleton Component for Sidebar ---
 const SidebarSkeleton = () => (
@@ -32,11 +33,22 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [isFallbackMode, setIsFallbackMode] = useState(false); // If true, we fetch Popular movies instead of Recs
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
-
+  const { toggleWatchLater, watchLater, user } = useAuth();
   const recObserverRef = useRef();
+
+  const [activeMenuId, setActiveMenuId] = useState(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuId(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
+
+  const isSaved = watchLater.some((item) => item.id === id);
 
   // 1. Trailer Logic
   useEffect(() => {
@@ -229,15 +241,41 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   movie?.id,
                   mediaType
                 )}`}
-                className="bg-primary text-black font-extrabold px-4 py-2 text-sm md:px-[1vw] md:py-[0.7vw] rounded-full font-comfortaa transition"
-              >
+                className="bg-primary   text-black font-extrabold px-4 py-2 text-sm md:px-[1vw] md:py-[0.7vw] rounded-full font-comfortaa transition"
+              > 
+                
                 Watch Now
               </Link>
               <button
                 onClick={() => setIsNoticeModalOpen(true)}
-                className="border-2 border-primary text-white px-4 py-2 text-sm md:px-[1vw] md:py-[0.7vw] rounded-full font-comfortaa transition"
+                className="bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >
-                Download Now
+                Download
+                <DownloadCloudIcon
+                  size={24}
+                  className="group-hover:text-primary transition-colors"
+                />
+              </button>
+              <button
+                onClick={() => toggleWatchLater(movie)}
+                className="bg-zinc-800/80 backdrop-blur-md text-white p-4 rounded-xl font-bold border border-white/10 hover:bg-zinc-700 hover:border-primary/50 transition-all group"
+                title={
+                  isSaved ? "Remove from Watch Later" : "Add to Watch Later"
+                }
+              >
+                {isSaved ? (
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary text-black rounded-full p-0.5">
+                      <Check size={20} strokeWidth={3} />
+                    </div>
+                    <span className="sr-only">Saved</span>
+                  </div>
+                ) : (
+                  <Plus
+                    size={24}
+                    className="text-zinc-400 group-hover:text-white transition-colors"
+                  />
+                )}
               </button>
             </div>
           </div>
@@ -271,6 +309,46 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             <p className="md:text-lg font-poppins text-sm w-full md:w-3/4 text-gray-400 leading-relaxed">
               {movie?.overview}
             </p>
+
+            {/* Top Cast Section */}
+            {movie?.credits?.cast?.length > 0 && (
+              <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
+                <h3 className="text-lg font-poppins mb-4 text-white">
+                  Top Cast
+                </h3>
+                <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
+                  {movie.credits.cast.slice(0, 6).map((actor) => (
+                    <Link
+                      href={`/search/${encodeURIComponent(actor.name)}`}
+                      key={actor.id}
+                      className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
+                    >
+                      <div className="w-full aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative">
+                        {actor.profile_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
+                            alt={actor.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 text-xs text-center p-2">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <h4 className="text-xs lg:text-[0.9vw] font- text-white font-poppins group-hover:text-primary transition-colors">
+                          {actor.name}
+                        </h4>
+                        <p className="text-[10px] lg:text-[0.7vw] italic text-zinc-400 truncate">
+                          @{actor.character}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -279,44 +357,87 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             {isFallbackMode ? "Trending Content" : "Related Movies"}
           </h3>
           <div className="flex flex-col gap-4">
-            {recommendations.map((item, index) => (
-              <Link
-                key={`${item.id}-${index}`}
-                href={`/movie/${createSlug(
-                  item.title || item.name,
-                  item.id,
-                  mediaType
-                )}`}
-                className="flex gap-3 group cursor-pointer"
-              >
-                <div className="relative w-40 lg:w-[12vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-800">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w300${
-                      item.backdrop_path || item.poster_path
-                    }`}
-                    alt={item.title || item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="absolute bottom-1 right-1 bg-black/80 px-1 text-[10px] rounded">
-                    4K
-                  </div>
+            {recommendations.map((rec, index) => {
+              const isRecSaved = watchLater.some(
+                (item) => item.id === rec.id.toString()
+              );
+              return (
+                <div key={`${rec.id}-${index}`} className="relative group">
+                  <Link
+                    href={`/watch/${createSlug(
+                      rec.title || rec.name,
+                      rec.id,
+                      mediaType
+                    )}`}
+                    className="flex gap-3 group"
+                  >
+                    <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${
+                          rec.backdrop_path || rec.poster_path
+                        }`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        alt={rec.title || rec.name}
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0 justify-center">
+                      <h4 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                        {rec.title || rec.name}
+                      </h4>
+                      <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
+                        {
+                          (rec.release_date || rec.first_air_date)?.split(
+                            "-"
+                          )[0]
+                        }{" "}
+                        • {mediaType === "tv" ? "Series" : "Movie"}
+                      </p>
+                    </div>
+                  </Link>
+
+                  {/* 3-Dots Menu Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveMenuId(activeMenuId === rec.id ? null : rec.id);
+                    }}
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {activeMenuId === rec.id && (
+                    <div
+                      className="absolute top-8 right-2 z-30 bg-zinc-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[160px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWatchLater(rec);
+                          setActiveMenuId(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
+                      >
+                        {isRecSaved ? (
+                          <>
+                            <Check size={14} className="text-primary" />
+                            <span>Added to List</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={14} />
+                            <span>Watch Later</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <h4 className="text-md font-poppins line-clamp-2 group-hover:text-primary transition">
-                    {item.title || item.name}
-                  </h4>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {(item.release_date || item.first_air_date)?.split("-")[0]}{" "}
-                    • {mediaType === "tv" ? "Series" : "Movie"}
-                  </p>
-                  <div className="mt-1 flex items-center gap-1">
-                    <span className="text-[10px] bg-zinc-800 px-1 py-0.5 rounded text-gray-300">
-                      ★ {item.vote_average?.toFixed(1)}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+              );
+            })}
             <div ref={recObserverRef} className="py-4">
               {loadingMoreRecs && (
                 <div className="flex flex-col gap-4">
