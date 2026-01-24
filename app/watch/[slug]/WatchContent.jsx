@@ -274,7 +274,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     return (
       <main className="w-full min-h-screen bg-black text-white">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-6 px-4 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
+        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
           <div className="flex-1">
             <div className="w-full aspect-video bg-zinc-900 rounded-xl mb-4" />
           </div>
@@ -290,10 +290,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-[4vw] justify-center px-4 lg:px-[5vw] md:py-[8vw] py-[40vw]">
+      <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[40vw]">
         <div className="flex-1 md:pb-0 pb-10">
           {/* Main Player */}
-          <div className="w-full aspect-video bg-black rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
+          <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
             {verifying ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
@@ -308,7 +308,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition"
+                  className="px-2 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition"
                 >
                   Try Reloading
                 </button>
@@ -331,7 +331,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           {/* Server Switcher */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex flex-wrap  px-2  items-center gap-2 mb-4">
             <span className="text-xs uppercase font-bold text-gray-500 mr-2">
               Servers:
             </span>
@@ -351,7 +351,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           {/* User Note */}
-          <div className="bg-zinc-900 font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-4 rounded-lg w-fit mb-6 border border-white/5">
+          <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
             <span className="text-white font-bold mr-1">Note:</span>
             Try changing <span className="text-primary font-bold">
               Server
@@ -368,7 +368,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
           {/* TV Selectors */}
           {mediaType === "tv" && (
-            <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex flex-wrap  px-2  items-center gap-4 mb-6">
               <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
                 <label className="text-[10px] uppercase font-bold text-gray-500">
                   Season
@@ -409,7 +409,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           )}
 
-          <div className="flex flex-col gap-6 relative z-10">
+          <div className="flex flex-col  px-2  gap-6 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div className="flex items-start justify-between w-full">
                 <div>
@@ -524,7 +524,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
         </div>
 
-        <div className="w-full lg:w-[25vw] flex flex-col gap-4">
+        <div className="w-full  px-2  lg:w-[25vw] flex flex-col gap-4">
           <h3 className="text-lg font-semibold font-poppins md:pb-[0.5vw]">
             {fetchStrategy === "recommendations"
               ? "Recommended"
@@ -595,7 +595,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                           toggleWatchLater(rec);
                           setActiveMenuId(null);
                         }}
-                        className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
+                        className="w-full text-left px-2 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
                       >
                         {isRecSaved ? (
                           <>

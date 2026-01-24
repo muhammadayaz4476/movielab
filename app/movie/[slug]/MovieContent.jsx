@@ -181,7 +181,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     return (
       <main className="w-full min-h-screen bg-black text-white">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-6 px-4 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
+        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
           <div className="flex-1">
             <div className="w-full aspect-video bg-gray-900 rounded-xl mb-4" />
             <div className="h-8 bg-gray-900 rounded w-1/2 my-[3vw]" />
@@ -199,9 +199,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-6 px-4 lg:px-[5vw] md:py-[8vw] py-[40vw]">
+      <div className="flex flex-col lg:flex-row gap-6 px-0 lg:px-[5vw] md:py-[8vw] py-[40vw]">
         <div className="flex-1">
-          <div className="w-full aspect-video bg-gray-900 rounded-xl overflow-hidden mb-4 relative group">
+          <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden mb-4 relative group">
             {trailer ? (
               <iframe
                 className="w-full h-full"
@@ -227,7 +227,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             )}
           </div>
 
-          <div className="flex items-center gap-3 justify-between flex-wrap md:gap-0 py-[2vw] md:pr-[1vw]">
+          <div className="flex items-center px-2  gap-3 justify-between flex-wrap md:gap-0 py-[2vw] md:pr-[1vw]">
             <h1 className="text-xl lg:text-2xl w-full md:w-[60%] font-bold font-comfortaa">
               {movie?.title || movie?.name}{" "}
               <span className="text-gray-400">
@@ -241,24 +241,23 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   movie?.id,
                   mediaType
                 )}`}
-                className="bg-primary   text-black font-extrabold px-4 py-2 text-sm md:px-[1vw] md:py-[0.7vw] rounded-full font-comfortaa transition"
+                className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
               > 
                 
                 Watch Now
               </Link>
               <button
                 onClick={() => setIsNoticeModalOpen(true)}
-                className="bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
+                className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >
                 Download
                 <DownloadCloudIcon
-                  size={24}
-                  className="group-hover:text-primary transition-colors"
+                  className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors"
                 />
               </button>
               <button
                 onClick={() => toggleWatchLater(movie)}
-                className="bg-zinc-800/80 backdrop-blur-md text-white p-4 rounded-xl font-bold border border-white/10 hover:bg-zinc-700 hover:border-primary/50 transition-all group"
+                className="bg-white/10 backdrop-blur-md text-white p-2 lg:p-[0.9vw] rounded-md md:rounded-[0.51vw] font-bold border border-white/10 hover:bg-zinc-700 hover:border-primary/50 transition-all group"
                 title={
                   isSaved ? "Remove from Watch Later" : "Add to Watch Later"
                 }
@@ -280,7 +279,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           </div>
 
-          <div className="flex font-poppins flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
+          <div className="flex font-poppins px-2 flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
             <div className="flex items-center gap-3">
               <div>
                 <h3 className="md:font-semibold text-lg font-poppins md:text-xl">
@@ -302,7 +301,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           </div>
 
-          <div className="bg rounded-xl md:mb-[2vw] mb-10">
+          <div className="bg rounded-xl px-2 md:mb-[2vw] mb-10">
             <div className="flex gap-3 text-sm font-bold mb-2">
               <span>{movie?.release_date}</span>
             </div>
@@ -352,7 +351,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
         </div>
 
-        <div className="w-full lg:w-[25vw] flex flex-col gap-4">
+        <div className="w-full px-2 lg:w-[25vw] flex flex-col gap-4">
           <h3 className="text-lg font-bold mb-1">
             {isFallbackMode ? "Trending Content" : "Related Movies"}
           </h3>
@@ -419,7 +418,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                           toggleWatchLater(rec);
                           setActiveMenuId(null);
                         }}
-                        className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
+                        className="w-full text-left px-2 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
                       >
                         {isRecSaved ? (
                           <>
