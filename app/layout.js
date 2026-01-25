@@ -23,30 +23,43 @@ const comfortaa = Comfortaa({
 });
 
 export const metadata = {
-  title: "MovieLab - Stream & Download Movies",
+  metadataBase: new URL("https://movies.umairlab.com"),
+  title: {
+    default: "MovieLab - Stream & Download Movies Online for Free",
+    template: "%s | MovieLab",
+  },
   description:
-    "Experience high-quality movie streaming and downloads on MovieLab. Explore thousands of movies, dedicated hubs, and trending content daily.",
+    "Watch & Download movies and TV series online for free in HD. MovieLab offers a vast collection of trending movies, new releases, and classic films without any subscription.",
   keywords: [
-    "movies",
-    "streaming",
-    "download movies",
+    "free movie streaming",
+    "watch movies online free",
+    "free movies online",
+    "streaming movies free",
+    "online movies free",
+    "free movie websites",
+    "watch free movies",
+    "stream movies free",
+    "movies without subscription",
+    "free movies no sign up",
+    "watch movies free no download",
+    "HD movies",
     "4k movies",
-    "watch online",
-    "movielab",
+    "MovieLab",
+    "umairlab movies",
   ],
   authors: [{ name: "Umair Lab" }],
   openGraph: {
-    title: "MovieLab - Stream & Download Movies",
+    title: "MovieLab - Watch Movies & TV Series Online for Free",
     description:
-      "Explore thousands of movies and trending content on MovieLab.",
-    url: "https://movielab.com",
+      "Stream thousands of movies and TV shows for free in HD on MovieLab. No subscription required.",
+    url: "https://movies.umairlab.com",
     siteName: "MovieLab",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MovieLab Preview",
+        alt: "MovieLab - Free Movie Streaming",
       },
     ],
     locale: "en_US",
@@ -54,10 +67,21 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MovieLab - Stream & Download Movies",
+    title: "MovieLab - Stream & Download Movies Free",
     description:
-      "Explore thousands of movies and trending content on MovieLab.",
+      "Watch the latest movies and TV series tailored for you. Free streaming, no subscription.",
     images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -65,6 +89,23 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <meta name="referrer" content="origin" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "MovieLab",
+            url: "https://movies.umairlab.com",
+            potentialAction: {
+              "@type": "SearchAction",
+              target:
+                "https://movies.umairlab.com/search?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
 
       <body
         className={`${poppins.variable} ${roboto.variable} ${comfortaa.variable} antialiased`}
