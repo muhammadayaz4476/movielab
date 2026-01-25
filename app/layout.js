@@ -89,6 +89,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <meta name="referrer" content="origin" />
+      <meta
+        name="google-site-verification"
+        content="VBh8Z5n2gYt-blPxDnyzDu5KU9JOBHYSdaEZmv-s3bk"
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
