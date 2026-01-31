@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
+import TrailerModal from "../../components/TrailerModal";
+import { Play } from "lucide-react";
 
 const SidebarSkeleton = () => (
   <div className="flex gap-3 animate-pulse px-1">
@@ -20,6 +22,8 @@ const SidebarSkeleton = () => (
 const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [movie, setMovie] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
+  const [trailer, setTrailer] = useState(null);
+  const [isTrailerModalOpen, setIsTrailerModalOpen] = useState(false);
 
   // Server Switcher States
   const providers = [
@@ -77,7 +81,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         try {
           setLoading(true);
           const res = await axios.get(
-            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits`
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits,videos`,
           );
           setMovie(res.data);
           setLoading(false);
@@ -95,6 +99,17 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setFetchStrategy("recommendations");
   }, [id, initialData, mediaType]);
 
+  // Extract Trailer
+  useEffect(() => {
+    if (movie?.videos?.results) {
+      const videos = movie.videos.results;
+      const trailerData =
+        videos.find((v) => v.type === "Trailer" && v.site === "YouTube") ||
+        videos[0];
+      setTrailer(trailerData);
+    }
+  }, [movie]);
+
   // 2. Fetch Season/Episode data for TV shows
   useEffect(() => {
     if (mediaType === "tv" && movie) {
@@ -108,7 +123,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     try {
       setLoadingTV(true);
       const res = await axios.get(
-        `${BASE_URL}/tv/${id}/season/${seasonNum}?api_key=${API_KEY}`
+        `${BASE_URL}/tv/${id}/season/${seasonNum}?api_key=${API_KEY}`,
       );
       setEpisodes(res.data.episodes || []);
       setLoadingTV(false);
@@ -168,7 +183,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       });
 
       setRecommendations((prev) =>
-        pageNum === 1 ? safeResults : [...prev, ...safeResults]
+        pageNum === 1 ? safeResults : [...prev, ...safeResults],
       );
 
       if (res.data.page >= res.data.total_pages) {
@@ -194,7 +209,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       (entries) => {
         if (entries[0].isIntersecting) setRecPage((prev) => prev + 1);
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     if (recObserverRef.current) observer.observe(recObserverRef.current);
     return () => observer.disconnect();
@@ -230,7 +245,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           mediaType,
           id,
           selectedSeason,
-          selectedEpisode
+          selectedEpisode,
         );
         try {
           console.log(`Checking ${provider.name}...`);
@@ -321,7 +336,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   mediaType,
                   id,
                   selectedSeason,
-                  selectedEpisode
+                  selectedEpisode,
                 )}
                 allow="autoplay; fullscreen"
                 referrerPolicy="origin"
@@ -439,6 +454,15 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         </>
                       )}
                     </button>
+                    {trailer && (
+                      <button
+                        onClick={() => setIsTrailerModalOpen(true)}
+                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
+                      >
+                        <Play size={16} fill="currentColor" />
+                        <span>Watch Trailer</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -529,13 +553,13 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             {fetchStrategy === "recommendations"
               ? "Recommended"
               : fetchStrategy === "genre"
-              ? `More ${movie?.genres?.[0]?.name}`
-              : "Trending Now"}
+                ? `More ${movie?.genres?.[0]?.name}`
+                : "Trending Now"}
           </h3>
           <div className="flex flex-col gap-3">
             {recommendations.map((rec, index) => {
               const isRecSaved = watchLater.some(
-                (item) => item.id === rec.id.toString()
+                (item) => item.id === rec.id.toString(),
               );
               return (
                 <div key={`${rec.id}-${index}`} className="relative group">
@@ -543,7 +567,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     href={`/watch/${createSlug(
                       rec.title || rec.name,
                       rec.id,
-                      mediaType
+                      mediaType,
                     )}`}
                     className="flex gap-3 group"
                   >
@@ -563,7 +587,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(
-                            "-"
+                            "-",
                           )[0]
                         }{" "}
                         • {mediaType === "tv" ? "Series" : "Movie"}
@@ -630,6 +654,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         onClose={() => setIsShareModalOpen(false)}
         title={movie?.title}
         url={typeof window !== "undefined" ? window.location.href : ""}
+      />
+      <TrailerModal
+        isOpen={isTrailerModalOpen}
+        onClose={() => setIsTrailerModalOpen(false)}
+        trailerKey={trailer?.key}
       />
     </main>
   );

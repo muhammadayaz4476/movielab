@@ -7,19 +7,19 @@ import "./globals.css";
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], // Specify the weights you need
+  weight: ["400", "500", "600", "700"], 
 });
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["400", "500", "700"], // Specify the weights you need
+  weight: ["400", "500", "700"], 
 });
 
 const comfortaa = Comfortaa({
   variable: "--font-comfortaa",
   subsets: ["latin"],
-  weight: ["400", "500", "700"], // Specify the weights you need
+  weight: ["400", "500", "700"], 
 });
 
 export const metadata = {
@@ -72,6 +72,10 @@ export const metadata = {
       "Watch the latest movies and TV series tailored for you. Free streaming, no subscription.",
     images: ["/og-image.jpg"],
   },
+  referrer: "origin",
+  verification: {
+    google: "VBh8Z5n2gYt-blPxDnyzDu5KU9JOBHYSdaEZmv-s3bk",
+  },
   robots: {
     index: true,
     follow: true,
@@ -88,32 +92,26 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <meta name="referrer" content="origin" />
-      <meta
-        name="google-site-verification"
-        content="VBh8Z5n2gYt-blPxDnyzDu5KU9JOBHYSdaEZmv-s3bk"
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "MovieLab",
-            url: "https://movies.umairlab.com",
-            potentialAction: {
-              "@type": "SearchAction",
-              target:
-                "https://movies.umairlab.com/search?q={search_term_string}",
-              "query-input": "required name=search_term_string",
-            },
-          }),
-        }}
-      />
-
       <body
         className={`${poppins.variable} ${roboto.variable} ${comfortaa.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "MovieLab",
+              url: "https://movies.umairlab.com",
+              potentialAction: {
+                "@type": "SearchAction",
+                target:
+                  "https://movies.umairlab.com/search?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <GoogleAnalytics />
         <AuthProvider>
           {children}

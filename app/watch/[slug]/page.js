@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
 
   try {
     const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}`
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}`,
     );
     const data = res.data;
     const title = data.title || data.name;
@@ -42,7 +42,7 @@ export default async function Page({ params }) {
   let data = null;
   try {
     const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits`
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits,videos`,
     );
     data = res.data;
   } catch (error) {
