@@ -5,9 +5,10 @@ import {
   Play as PlayIcon,
   User,
   Menu,
-  ListPlus ,
+  ListPlus,
   X,
   Layers,
+  PlaySquareIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
+import Marquee from "react-fast-marquee";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +59,7 @@ const Navbar = () => {
       try {
         if (!API_KEY) return;
         const req = await axios.get(
-          `${BASE_URL}/genre/movie/list?api_key=${API_KEY}&language=en-US`
+          `${BASE_URL}/genre/movie/list?api_key=${API_KEY}&language=en-US`,
         );
         setGenres(req.data.genres);
       } catch (err) {
@@ -84,8 +86,8 @@ const Navbar = () => {
           setIsSearching(true);
           const response = await axios.get(
             `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(
-              searchQuery
-            )}&include_adult=false`
+              searchQuery,
+            )}&include_adult=false`,
           );
 
           let results = response.data.results
@@ -93,13 +95,13 @@ const Navbar = () => {
               (item) =>
                 item.media_type === "movie" ||
                 item.media_type === "tv" ||
-                item.media_type === "person"
+                item.media_type === "person",
             )
             .slice(0, 5);
 
           // Genre Detection
           const matchedGenre = genres.find(
-            (g) => g.name.toLowerCase() === searchQuery.toLowerCase().trim()
+            (g) => g.name.toLowerCase() === searchQuery.toLowerCase().trim(),
           );
 
           if (matchedGenre) {
@@ -143,7 +145,7 @@ const Navbar = () => {
       router.push(
         `/discover/${item.title.toLowerCase().replace(/ /g, "-")}-${
           item.id.split("-")[1]
-        }`
+        }`,
       );
     } else if (item.media_type === "person") {
       router.push(`/search/${encodeURIComponent(item.name)}`);
@@ -151,7 +153,7 @@ const Navbar = () => {
       const slug = createSlug(
         item.title || item.name,
         item.id,
-        item.media_type
+        item.media_type,
       );
       router.push(`/movie/${slug}`);
     }
@@ -175,138 +177,204 @@ const Navbar = () => {
     { name: "Anime", slug: "anime" },
     { name: "Web Series", slug: "web-series" },
   ];
+  const tils = [
+    " ",
+    " Please Install the AdGuard browser extension or mobile app to block intrusive ads and popups ",
+    " Movies lab ",
+    " We wish you Merry Christmas and Happy New Year! ",
+    " Movies lab ",
+    " We wish you Merry Christmas and Happy New Year! ",
+    " Movies lab ",
+    " We wish you Merry Christmas and Happy New Year! ",
+    " Movies lab ",
+  ];
 
   return (
     <>
-      <header className="px-4 py-6 absolute top-0 left-0 w-full lg:px-[5vw] lg:py-[1.5vw] flex lg:flex-row flex-col lg:items-center justify-between z-[60]">
-        <div className="flex items-center justify-between w-full lg:w-auto">
-          <Link
-            href="/"
-            className="text-white flex items-center w-fit gap-2 lg:gap-[0.5vw] text-2xl font-comfortaa font-bold"
+      <header className="absolute top-0 left-0 w-full z-50 ">
+        <div className="w-full  z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+          <Marquee
+            speed={40} // Sets the speed (approx. matches the previous 40s animation duration)
+            gradient={false} // Assuming you don't need the fade gradient effect
+            loop={0} // 0 means infinite loop
           >
-            <PlayIcon
-              fill="#2eafff"
-              className="text-primary lg:w-[2vw] lg:h-[2vw] rotate-45"
-            />
-            <div className="flex gap-1">
-              Movies<span className="text-primary font-comfortaa">lab</span>
-            </div>
-          </Link>
+            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+
+            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+          </Marquee>
         </div>
-
-        <nav className="flex items-center w-full lg:w-fit gap-2 pt-5 md:pt-0 lg:gap-[1vw]">
-          <div className="relative w-full lg:w-[25vw]" ref={searchRef}>
-            <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
-              <SearchIcon className="text-primary/50 shrink-0" size={20} />
-
-              <div className="relative flex-1 h-6">
-                <input
-                  type="search"
-                  className="bg-transparent border-none outline-none text-white text-sm lg:text-base w-full h-full absolute top-0 left-0 z-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearch}
-                  onFocus={() =>
-                    searchQuery.trim().length > 1 && setShowSuggestions(true)
-                  }
-                />
-                <AnimatePresence mode="wait">
-                  {!searchQuery && (
-                    <motion.span
-                      key={currentPhraseIndex}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 0.5 }}
-                      exit={{ y: -20, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="absolute top-0 left-0 pointer-events-none text-sm lg:text-base text-gray-400 truncate w-full h-full flex items-center"
-                    >
-                      {phrases[currentPhraseIndex]}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+        <nav className="px-4   py-6 w-full flex lg:flex-row flex-col lg:px-[5vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
+          <div className="flex items-center justify-between w-full lg:w-auto">
+            <Link
+              href="/"
+              className="text-white flex items-center w-fit gap-2 lg:gap-[0.1vw] text-xl font-comfortaa font-bold"
+            >
+              <PlayIcon className="text-primary lg:w-[2vw] lg:h-[1.4vw] rotate-45" />
+              <div className="flex gap-1">
+                Movies<span className="text-primary font-comfortaa">lab</span>
               </div>
-              {isSearching && (
-                <div className="p-2  border-2 border-primary border-t-transparent animate-spin rounded-full " />
-              )}
+            </Link>
+          </div>
+
+          <div className="flex items-center w-full lg:w-fit gap-2 pt-5 md:pt-0 lg:gap-[1vw]">
+            <div className="relative w-full lg:w-[25vw]" ref={searchRef}>
+              <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
+                <SearchIcon className="text-primary/50 shrink-0" size={20} />
+
+                <div className="relative flex-1 h-6">
+                  <input
+                    type="search"
+                    className="bg-transparent border-none outline-none text-white text-sm lg:text-base w-full h-full absolute top-0 left-0 z-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
+                    onFocus={() =>
+                      searchQuery.trim().length > 1 && setShowSuggestions(true)
+                    }
+                  />
+                  <AnimatePresence mode="wait">
+                    {!searchQuery && (
+                      <motion.span
+                        key={currentPhraseIndex}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 0.5 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className="absolute top-0 left-0 pointer-events-none text-sm lg:text-base text-gray-400 truncate w-full h-full flex items-center"
+                      >
+                        {phrases[currentPhraseIndex]}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {isSearching && (
+                  <div className="p-2  border-2 border-primary border-t-transparent animate-spin rounded-full " />
+                )}
+              </div>
+
+              {/* Suggestions Dropdown */}
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-100"
+                  >
+                    {suggestions.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSuggestionClick(item)}
+                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-primary/10 transition-colors border-b border-white/5 last:border-none group"
+                      >
+                        {item.isGenre ? (
+                          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <SearchIcon size={16} className="text-primary" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0">
+                            {item.poster_path || item.profile_path ? (
+                              <img
+                                src={`https://image.tmdb.org/t/p/w92${
+                                  item.poster_path || item.profile_path
+                                }`}
+                                alt={item.title || item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">
+                                N/A
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex flex-col lg:gap-[0.2vw] items-start overflow-hidden">
+                          <span className="text-white text-sm font-  font-poppins  w-full group-hover:text-primary transition-colors text-left">
+                            {item.title || item.name}
+                          </span>
+                          <span className="text-gray-500 text-[10px] font-  font-poppins uppercase">
+                            {item.isGenre
+                              ? "Browse Genre"
+                              : item.media_type === "person"
+                                ? "Actor"
+                                : `${
+                                    item.media_type === "tv"
+                                      ? "TV Series"
+                                      : "Movie"
+                                  } • ${
+                                    (
+                                      item.release_date ||
+                                      item.first_air_date ||
+                                      ""
+                                    ).split("-")[0]
+                                  }`}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Suggestions Dropdown */}
-            <AnimatePresence>
-              {showSuggestions && suggestions.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-100"
-                >
-                  {suggestions.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleSuggestionClick(item)}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-primary/10 transition-colors border-b border-white/5 last:border-none group"
-                    >
-                      {item.isGenre ? (
-                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <SearchIcon size={16} className="text-primary" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0">
-                          {item.poster_path || item.profile_path ? (
-                            <img
-                              src={`https://image.tmdb.org/t/p/w92${
-                                item.poster_path || item.profile_path
-                              }`}
-                              alt={item.title || item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">
-                              N/A
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex flex-col lg:gap-[0.2vw] items-start overflow-hidden">
-                        <span className="text-white text-sm font-  font-poppins  w-full group-hover:text-primary transition-colors text-left">
-                          {item.title || item.name}
-                        </span>
-                        <span className="text-gray-500 text-[10px] font-  font-poppins uppercase">
-                          {item.isGenre
-                            ? "Browse Genre"
-                            : item.media_type === "person"
-                            ? "Actor"
-                            : `${
-                                item.media_type === "tv" ? "TV Series" : "Movie"
-                              } • ${
-                                (
-                                  item.release_date ||
-                                  item.first_air_date ||
-                                  ""
-                                ).split("-")[0]
-                              }`}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
-          >
-            <Menu className="text-white group-hover:scale-110 transition-transform" />
-          </button>
-           <div className="hidden lg:flex items-center gap-6">
-          <Link
-            href="/watch-later"
-            className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
-          >
-            <ListPlus />
-          </Link>
+            <div className="hidden lg:flex items-center gap-6">
+              <Link
+                href="/watch-later"
+                className="text-sm font-medium text-white  hover:scale-110 transition-transform"
+              >
+                <PlayIcon fill="white" />
+              </Link>
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
+              >
+                <Menu className="text-white group-hover:scale-110 transition-transform" />
+              </button>
 
-          {/* {user ? (
+              {/* {user ? (
             <div className="flex items-center gap-3">
               <span className="text-zinc-400 text-xs">
                 Hello,{" "}
@@ -331,10 +399,9 @@ const Navbar = () => {
               Sign In
             </button>
           )} */}
-        </div>
+            </div>
+          </div>
         </nav>
-
-       
       </header>
 
       {/* Sidebar Component */}
