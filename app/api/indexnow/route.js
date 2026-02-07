@@ -1,10 +1,13 @@
+import { NextResponse } from "next/server";
+
 const TMDB_BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
 const EXTERNAL_DATA_URL = "https://movies.umairlab.com";
+const INDEXNOW_KEY = "f6742ad82b834857b4a502013346ca9d";
 
-export default async function sitemap() {
+export async function POST() {
   try {
-    const pagesToFetch = 25; // 25 movies + 25 TV = 50 requests = ~1000 items
+    const pagesToFetch = 25; // Consistent with sitemap
     const promises = [];
 
     // Fetch popular movies
@@ -50,23 +53,53 @@ export default async function sitemap() {
       return year >= 2000;
     });
 
-    const dynamicRoutes = filteredItems.map((item) => ({
-      url: `${EXTERNAL_DATA_URL}/movie/${createSlug(item.title || item.name, item.id, item.media_type)}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
+    const urls = filteredItems.map(
+      (item) =>
+        `${EXTERNAL_DATA_URL}/movie/${createSlug(item.title || item.name, item.id, item.media_type)}`,
+    );
 
-    const staticRoutes = ["", "/search", "/watch-later"].map((route) => ({
-      url: `${EXTERNAL_DATA_URL}${route}`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: route === "" ? 1 : 0.8,
-    }));
+    // Add static routes
+    const staticRoutes = [
+      `${EXTERNAL_DATA_URL}`,
+      `${EXTERNAL_DATA_URL}/search`,
+      `${EXTERNAL_DATA_URL}/watch-later`,
+    ];
 
-    return [...staticRoutes, ...dynamicRoutes];
+    const allUrls = [...staticRoutes, ...urls];
+
+    // Submit to IndexNow
+    const payload = {
+      host: "movies.umairlab.com",
+      key: INDEXNOW_KEY,
+      keyLocation: `https://movies.umairlab.com/${INDEXNOW_KEY}.txt`,
+      urlList: allUrls,
+    };
+
+    const response = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      return NextResponse.json({
+        success: true,
+        message: `Submitted ${allUrls.length} URLs to IndexNow`,
+      });
+    } else {
+      const errorText = await response.text();
+      return NextResponse.json(
+        { success: false, error: errorText },
+        { status: response.status },
+      );
+    }
   } catch (error) {
-    console.error("Sitemap generation error:", error);
-    return [];
+    console.error("IndexNow submission error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }
