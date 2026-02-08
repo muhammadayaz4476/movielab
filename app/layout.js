@@ -2,56 +2,56 @@ import { Poppins, Roboto, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { AuthProvider } from "../context/AuthContext";
 import LoginModal from "../components/LoginModal";
+import SmoothScrollProvider from "./components/SmoothScrollProvider";
+import CustomScrollbar from "./components/CustomScrollbar";
 import "./globals.css";
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], 
+  weight: ["400", "500", "600", "700"],
 });
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["400", "500", "700"], 
+  weight: ["400", "500", "700"],
 });
 
 const comfortaa = Comfortaa({
   variable: "--font-comfortaa",
   subsets: ["latin"],
-  weight: ["400", "500", "700"], 
+  weight: ["400", "500", "700"],
 });
 
 export const metadata = {
   metadataBase: new URL("https://movies.umairlab.com"),
   title: {
-    default: "MovieLab - Stream & Download Movies Online for Free",
-    template: "%s | MovieLab",
+    default: "MovieLab - Watch Free Movies & TV Series Online (1080p HD)",
+    template: "%s | MovieLab - Free HD Streaming",
   },
   description:
-    "Watch & Download movies and TV series online for free in HD. MovieLab offers a vast collection of trending movies, new releases, and classic films without any subscription.",
+    "Stream over 20,000+ movies and TV shows for free in Full HD 1080p. No registration required. Watch latest releases with English subtitles, no ads, and fast streaming on MovieLab.",
   keywords: [
-    "free movie streaming",
-    "watch movies online free",
-    "free movies online",
-    "streaming movies free",
-    "online movies free",
-    "free movie websites",
-    "watch free movies",
-    "stream movies free",
-    "movies without subscription",
+    "watch movies free",
+    "free movie streaming sites",
+    "streaming movies super fast",
+    "watch series online free",
+    "full hd movies 1080p",
     "free movies no sign up",
-    "watch movies free no download",
-    "HD movies",
-    "4k movies",
-    "MovieLab",
-    "umairlab movies",
+    "english subtitles movies",
+    "latest hd movies download",
+    "watch tv shows free",
+    "online cinema free",
+    "movielab streaming",
+    "no buffering movies",
+    "4k movies free",
   ],
   authors: [{ name: "Umair Lab" }],
   openGraph: {
-    title: "MovieLab - Watch Movies & TV Series Online for Free",
+    title: "MovieLab - Watch Movies & TV Series Online for Free (No Ads)",
     description:
-      "Stream thousands of movies and TV shows for free in HD on MovieLab. No subscription required.",
+      "Stream thousands of movies and TV shows for free in HD on MovieLab. No subscription required. Daily updates with latest releases.",
     url: "https://movies.umairlab.com",
     siteName: "MovieLab",
     images: [
@@ -67,9 +67,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MovieLab - Stream & Download Movies Free",
+    title: "MovieLab - Stream & Download Movies Free (1080p)",
     description:
-      "Watch the latest movies and TV series tailored for you. Free streaming, no subscription.",
+      "Watch the latest movies and TV series tailored for you. Free streaming, no subscription, full HD quality.",
     images: ["/og-image.jpg"],
   },
   referrer: "origin",
@@ -114,8 +114,11 @@ export default function RootLayout({ children }) {
         />
         <GoogleAnalytics />
         <AuthProvider>
-          {children}
-          <LoginModal />
+          <SmoothScrollProvider>
+            <CustomScrollbar />
+            {children}
+            <LoginModal />
+          </SmoothScrollProvider>
         </AuthProvider>
       </body>
     </html>

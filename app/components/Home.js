@@ -1,46 +1,140 @@
-import React from "react";
+'use client'
+import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import MovieRow from "./MovieRow";
 import Link from "next/link";
 import Footer from "./Footer";
+import axios from "axios";
 
 const Home = () => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-  const requests = {
-    // 🔥 HERO / TRENDING
-    trendingToday: `${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`,
-    trendingThisWeek: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&include_adult=false`,
+  // State for all rows
+  const [rowData, setRowData] = useState({
+    trendingToday: null,
+    horrorMovies: null,
+    sciFiMovies: null,
+    topRated: null,
+    comedyMovies: null,
+    popularNow: null,
+    actionMovies: null,
+    romanceMovies: null,
+    koreanMovies: null,
+    indianMovies: null,
+    hiddenGems: null,
+    feelGoodMovies: null,
+  });
 
-    // ⭐ QUALITY
-    topRated: `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=false`,
-    criticallyAcclaimed: `${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7.5&vote_count.gte=500&sort_by=vote_average.desc&include_adult=false`,
+  useEffect(() => {
+    const fetchAllData = async () => {
+      const seenIds = new Set();
+      const newData = {};
 
-    // 🔥 POPULARITY
-    popularNow: `${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=false`,
+      const requests = [
+        {
+          key: "trendingToday",
+          url: `${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`,
+        },
+        {
+          key: "horrorMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "topRated",
+          url: `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=false`,
+        },
+        {
+          key: "comedyMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "popularNow",
+          url: `${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=false`,
+        },
+        {
+          key: "sciFiMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "actionMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "romanceMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "koreanMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "indianMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=false`,
+        },
+        {
+          key: "hiddenGems",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=false`,
+        },
+        {
+          key: "feelGoodMovies",
+          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=false`,
+        },
+      ];
 
-    // 🆕 FRESH CONTENT
-    upcoming: `${BASE_URL}/movie/upcoming?api_key=${API_KEY}&include_adult=false`,
-    newReleases: `${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_date.gte=2024-01-01&sort_by=release_date.desc&include_adult=false`,
+      const unsafeKeywords = [
+        "sexy",
+        "erotic",
+        "porn",
+        "xxx",
+        "nude",
+        "breast",
+        "sex",
+        "18+",
+      ];
 
-    // 🎭 GENRE-BASED (VERY IMPORTANT)
-    actionMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=false`,
-    comedyMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=false`,
-    horrorMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`,
-    romanceMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=false`,
-    sciFiMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`,
+      // Fetch sequentially to prioritize order
+      for (const req of requests) {
+        try {
+          const res = await axios.get(req.url);
+          const results = res.data.results || [];
 
-    // 🌍 INTERNATIONAL / LANGUAGE ROWS (VERY PREMIUM FEEL)
-    koreanMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=false`,
-    japaneseMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ja&sort_by=popularity.desc&include_adult=false`,
-    indianMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=false`,
+          const uniqueSafeMovies = results.filter((item) => {
+            if (!item.id) return false;
 
-    // 🎬 NICHE / NETFLIX-STYLE CURATED
-    hiddenGems: `${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=false`,
-    feelGoodMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=false`,
-  };
+            // Check content safety
+            const title = (item.title || item.name || "").toLowerCase();
+            const overview = (item.overview || "").toLowerCase();
+            const isAdult = item.adult;
+            const hasUnsafeKeyword = unsafeKeywords.some(
+              (keyword) =>
+                title.includes(keyword) || overview.includes(keyword),
+            );
+
+            if (isAdult || hasUnsafeKeyword) return false;
+
+            // Check deduplication
+            if (seenIds.has(item.id)) return false;
+
+            return true;
+          });
+
+          // Add new IDs to seen set
+          uniqueSafeMovies.forEach((m) => seenIds.add(m.id));
+
+          newData[req.key] = uniqueSafeMovies;
+        } catch (err) {
+          console.error(`Failed directly fetching ${req.key}`, err);
+          newData[req.key] = [];
+        }
+      }
+
+      setRowData(newData);
+    };
+
+    fetchAllData();
+  }, [API_KEY, BASE_URL]);
 
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
@@ -53,11 +147,11 @@ const Home = () => {
           {[
             { name: "New", slug: "/discover/new-releases" },
             { name: "Trending", slug: "/discover/trending" },
+            { name: "Sci-Fi", slug: "/discover/sci-fi-878" },
+            { name: "Horror", slug: "/discover/horror-27" },
             { name: "Top Rated", slug: "/discover/top-rated" },
             { name: "Action", slug: "/discover/action-28" },
             { name: "Comedy", slug: "/discover/comedy-35" },
-            { name: "Horror", slug: "/discover/horror-27" },
-            { name: "Sci-Fi", slug: "/discover/sci-fi-878" },
             { name: "Korean", slug: "/discover/korean" },
             { name: "Bollywood", slug: "/discover/bollywood" },
           ].map((tab) => (
@@ -73,79 +167,70 @@ const Home = () => {
 
         <MovieRow
           title="Streamers of the day"
-          fetchURL={requests.trendingToday}
+          movies={rowData.trendingToday}
           viewAllLink="/discover/trending"
         />
-         <MovieRow
+        <MovieRow
           title="Horror Movies"
-          fetchURL={requests.horrorMovies}
+          movies={rowData.horrorMovies}
           viewAllLink="/discover/horror-27"
+        />
+          <MovieRow
+          title="Sci-Fi Movies"
+          movies={rowData.sciFiMovies}
+          viewAllLink="/discover/sci-fi-878"
+        />
+        
+        <MovieRow
+          title="Action Movies"
+          movies={rowData.actionMovies}
+          viewAllLink="/discover/action-28"
         />
         <MovieRow
           title="Top Rated Movies"
-          fetchURL={requests.topRated}
+          movies={rowData.topRated}
           viewAllLink="/discover/top-rated"
         />
-          <MovieRow
+        <MovieRow
           title="Comedy Movies"
-          fetchURL={requests.comedyMovies}
+          movies={rowData.comedyMovies}
           viewAllLink="/discover/comedy-35"
         />
         <MovieRow
           title="Popular Now"
-          fetchURL={requests.popularNow}
+          movies={rowData.popularNow}
           viewAllLink="/discover/popular"
         />
-        {/* <MovieRow
-          title="Upcoming Movies"
-          fetchURL={requests.newReleases}
-          viewAllLink="/discover/new-releases"
-        /> */}
-        <MovieRow
-          title="Sci-Fi Movies"
-          fetchURL={requests.sciFiMovies}
-          viewAllLink="/discover/sci-fi-878"
-        />
-        <MovieRow
-          title="Action Movies"
-          fetchURL={requests.actionMovies}
-          viewAllLink="/discover/action-28"
-        />
+
       
-       
+
         <MovieRow
           title="Romance Movies"
-          fetchURL={requests.romanceMovies}
+          movies={rowData.romanceMovies}
           viewAllLink="/discover/romance-10749"
         />
-        <MovieRow
-          title="Sci-Fi Movies"
-          fetchURL={requests.sciFiMovies}
-          viewAllLink="/discover/sci-fi-878"
-        />
+
+        {/* Removed Duplicate Sci-Fi Row */}
+
         <MovieRow
           title="Korean Movies"
-          fetchURL={requests.koreanMovies}
+          movies={rowData.koreanMovies}
           viewAllLink="/discover/korean"
         />
-        {/* <MovieRow
-          title="Japanese Movies"
-          fetchURL={requests.japaneseMovies}
-          viewAllLink="/discover/japanese"
-        /> */}
+
         <MovieRow
           title="Indian Movies"
-          fetchURL={requests.indianMovies}
+          movies={rowData.indianMovies}
           viewAllLink="/discover/bollywood"
         />
         <MovieRow
           title="Hidden Gems"
-          fetchURL={requests.hiddenGems}
+          movies={rowData.hiddenGems}
           viewAllLink="/discover/hidden-gems"
         />
         <MovieRow
           title="Feel Good Movies"
-          fetchURL={requests.feelGoodMovies}
+          movies={rowData.feelGoodMovies}
           viewAllLink="/discover/feel-good"
         />
 

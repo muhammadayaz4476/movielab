@@ -51,26 +51,24 @@ export async function generateMetadata({ params }) {
       kws.forEach((k) => keywords.push(k.name));
     }
 
-    // Construct a longer, SEO-friendly description
+    // Aggressive SEO Description
     const genreNames = data.genres
       ? data.genres.map((g) => g.name).join(", ")
       : "Movies";
     const prefix = `Watch ${title} (${year}) Full ${mediaType === "tv" ? "Series" : "Movie"} Online Free - `;
-    const suffix = ` - Stream ${title} in HD on MovieLab. Discover the best ${genreNames} and more accurately.`;
+    const suffix = ` - Output in 1080p HD on MovieLab. Stream ${title} with English Subtitles, No Ads, and No Buffering. Best site for ${genreNames}.`;
 
     let description = `${prefix}${overview}${suffix}`;
-    // Ensure description is not too long (Google typically displays ~160 characters, but for meta tag we can go up to 300 safe, providing more context)
-    // But user complained about "too short", so we ensure it's robust.
     if (description.length > 300) {
       description = description.substring(0, 297) + "...";
     }
 
     return {
-      title: `${title} (${year}) - Watch Free Online | MovieLab`,
+      title: `${title} (${year}) - Watch Free 1080p HD | MovieLab`,
       description: description,
       keywords: keywords.join(", "),
       openGraph: {
-        title: `${title} (${year}) - Watch Free Online | MovieLab`,
+        title: `${title} (${year}) - Watch Free Online (1080p) | MovieLab`,
         description: description,
         url: `https://movies.umairlab.com/movie/${slug}`,
         siteName: "MovieLab",
@@ -79,13 +77,13 @@ export async function generateMetadata({ params }) {
             url: `https://image.tmdb.org/t/p/w1280${backdrop}`,
             width: 1280,
             height: 720,
-            alt: title,
+            alt: `Watch ${title} Full Movie`,
           },
           {
             url: `https://image.tmdb.org/t/p/w500${data.poster_path}`,
             width: 500,
             height: 750,
-            alt: `${title} Poster`,
+            alt: `${title} Movie Poster`,
           },
         ],
         type: isTV ? "video.tv_show" : "video.movie",
@@ -93,7 +91,7 @@ export async function generateMetadata({ params }) {
       },
       twitter: {
         card: "summary_large_image",
-        title: `${title} (${year}) - Watch Free Online | MovieLab`,
+        title: `${title} (${year}) - Watch Free 1080p | MovieLab`,
         description: description,
         images: [`https://image.tmdb.org/t/p/w1280${backdrop}`],
       },
@@ -125,12 +123,42 @@ export default async function Page({ params }) {
     console.error("Error fetching content in server component:", error);
   }
 
+  // Schema Markup (JSON-LD)
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": isTV ? "TVSeries" : "Movie",
+    name: data?.title || data?.name,
+    image: data?.poster_path
+      ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+      : "",
+    description: data?.overview,
+    datePublished: data?.release_date || data?.first_air_date,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: data?.vote_average || 0,
+      bestRating: "10",
+      ratingCount: data?.vote_count || 0,
+    },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
-    <MovieContent
-      initialData={data}
-      slug={slug}
-      id={id}
-      mediaType={mediaType}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+      />
+      <MovieContent
+        initialData={data}
+        slug={slug}
+        id={id}
+        mediaType={mediaType}
+      />
+    </>
   );
 }

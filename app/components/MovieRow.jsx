@@ -5,12 +5,18 @@ import Link from "next/link";
 import { Plus, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const MovieRow = ({ title, fetchURL, viewAllLink }) => {
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
+const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
+  const [movies, setMovies] = useState(propMovies || []);
+  const [loading, setLoading] = useState(!propMovies);
   const { watchLater, toggleWatchLater } = useAuth();
 
   useEffect(() => {
+    if (propMovies) {
+      setMovies(propMovies);
+      setLoading(false);
+      return;
+    }
+
     async function fetchData() {
       try {
         const request = await axios.get(fetchURL);
@@ -29,7 +35,7 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
           const overview = (item.overview || "").toLowerCase();
           const isAdult = item.adult;
           const hasUnsafeKeyword = unsafeKeywords.some(
-            (keyword) => title.includes(keyword) || overview.includes(keyword)
+            (keyword) => title.includes(keyword) || overview.includes(keyword),
           );
           return !isAdult && !hasUnsafeKeyword;
         });
@@ -42,7 +48,7 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
       }
     }
     fetchData();
-  }, [fetchURL]);
+  }, [fetchURL, propMovies]);
 
   const createSlug = (title, id, type = "movie") => {
     if (!title) return id;
@@ -80,17 +86,17 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
             ))
           : movies.map((movie) => {
               const isSaved = watchLater.some(
-                (item) => item.id === movie.id.toString()
+                (item) => item.id === movie.id.toString(),
               );
               return (
                 <Link
                   href={`/movie/${createSlug(
                     movie.title || movie.name,
                     movie.id,
-                    movie.media_type || (movie.first_air_date ? "tv" : "movie")
+                    movie.media_type || (movie.first_air_date ? "tv" : "movie"),
                   )}`}
                   key={movie.id}
-                  className="w-[45vw] lg:w-[21vw] group cursor-pointer shrink-0"
+                  className="w-[45vw] lg:w-[16vw] group cursor-pointer shrink-0"
                 >
                   {/* Image Container */}
                   <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden group">
@@ -100,7 +106,11 @@ const MovieRow = ({ title, fetchURL, viewAllLink }) => {
                         src={`https://image.tmdb.org/t/p/w500/${
                           movie.poster_path || movie.backdrop_path
                         }`}
-                        alt={movie.title || movie.name}
+                        alt={`Watch ${movie.title || movie.name} (${
+                          movie.release_date?.split("-")[0] ||
+                          movie.first_air_date?.split("-")[0] ||
+                          ""
+                        }) Full HD Free`}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500">

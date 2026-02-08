@@ -303,363 +303,383 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     );
 
   return (
-    <main className="w-full min-h-screen bg-black text-white">
-      <Navbar />
-      <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[40vw]">
-        <div className="flex-1 md:pb-0 pb-10">
-          {/* Main Player */}
-          <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
-            {verifying ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
-                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-                <p className="text-zinc-400 animate-pulse font-poppins">
-                  Finding best server...
-                </p>
-              </div>
-            ) : serverError ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
-                <p className="text-red-500 font-bold mb-2">
-                  No working servers found.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-2 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition"
-                >
-                  Try Reloading
-                </button>
-              </div>
-            ) : (
-              <iframe
-                ref={iframeRef}
-                src={constructServerUrl(
-                  selectedServer,
-                  mediaType,
-                  id,
-                  selectedSeason,
-                  selectedEpisode,
-                )}
-                allow="autoplay; fullscreen"
-                referrerPolicy="origin"
-                className="w-full h-full"
-              />
-            )}
-          </div>
+    <main className="w-full min-h-screen bg-black text-white relative">
+      {/* Cinematic Background */}
+      {movie?.backdrop_path && (
+        <div className="fixed inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
+          <img
+            src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
+            alt={`Watch ${movie.title || movie.name} (${
+              (movie.release_date || movie.first_air_date || "").split("-")[0]
+            }) Cinematic Background HD`}
+            title={`Watch ${movie.title || movie.name} Full HD`}
+            className="w-full h-full object-cover opacity-70 lg:opacity-100 blur-sm"
+          />
+        </div>
+      )}
 
-          {/* Server Switcher */}
-          <div className="flex flex-wrap  px-2  items-center gap-2 mb-4">
-            <span className="text-xs uppercase font-bold text-gray-500 mr-2">
-              Servers:
-            </span>
-            {providers.map((provider) => (
-              <button
-                key={provider.name}
-                onClick={() => setSelectedServer(provider)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                  selectedServer.name === provider.name
-                    ? "bg-primary text-black"
-                    : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
-                }`}
-              >
-                {provider.name}
-              </button>
-            ))}
-          </div>
-
-          {/* User Note */}
-          <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
-            <span className="text-white font-bold mr-1">Note:</span>
-            Try changing <span className="text-primary font-bold">
-              Server
-            </span>{" "}
-            or{" "}
-            <button
-              onClick={() => window.location.reload()}
-              className="underline text-primary hover:text-white transition-colors"
-            >
-              Reload
-            </button>{" "}
-            if not playing.
-          </div>
-
-          {/* TV Selectors */}
-          {mediaType === "tv" && (
-            <div className="flex flex-wrap  px-2  items-center gap-4 mb-6">
-              <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
-                <label className="text-[10px] uppercase font-bold text-gray-500">
-                  Season
-                </label>
-                <select
-                  value={selectedSeason}
-                  onChange={handleSeasonChange}
-                  className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
-                >
-                  {seasons.map((s) => (
-                    <option key={s.id} value={s.season_number}>
-                      {s.name || `Season ${s.season_number}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
-                <label className="text-[10px] uppercase font-bold text-gray-500">
-                  Episode
-                </label>
-                <select
-                  value={selectedEpisode}
-                  onChange={(e) => setSelectedEpisode(parseInt(e.target.value))}
-                  className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
-                  disabled={loadingTV}
-                >
-                  {loadingTV ? (
-                    <option>Loading...</option>
-                  ) : (
-                    episodes.map((e) => (
-                      <option key={e.id} value={e.episode_number}>
-                        Ep {e.episode_number}: {e.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col  px-2  gap-6 relative z-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="flex items-start justify-between w-full">
-                <div>
-                  <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-2">
-                    {mediaType === "movie"
-                      ? movie.title
-                      : movie.name +
-                        ` (S${selectedSeason} E${selectedEpisode})`}
-                  </h1>
-                  {/* Watch Later Button (Mobile/Desktop) */}
-                  <div className="flex items-center gap-4 mt-2">
-                    <button
-                      onClick={() => toggleWatchLater(movie)}
-                      className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
-                    >
-                      {isSaved ? (
-                        <>
-                          <div className="bg-primary text-black rounded-full p-0.5">
-                            <Check size={14} strokeWidth={3} />
-                          </div>
-                          <span>Saved</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} />
-                          <span>Watch Later</span>
-                        </>
-                      )}
-                    </button>
-                    {trailer && (
-                      <button
-                        onClick={() => setIsTrailerModalOpen(true)}
-                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
-                      >
-                        <Play size={16} fill="currentColor" />
-                        <span>Watch Trailer</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition md:hidden"
-                >
-                  <Share2 size={18} />
-                </button>
-              </div>
-
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition hidden md:block"
-              >
-                <Share2 size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font- text-lg lg:text-xl">
-                    {movie?.production_companies?.[0]?.name ||
-                      "Official Studio"}
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    {movie?.vote_count?.toLocaleString()} votes ~ IMDB
+      <div className="relative z-10">
+        <Navbar />
+        <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[40vw]">
+          <div className="flex-1 md:pb-0 pb-10">
+            {/* Main Player */}
+            <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
+              {verifying ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
+                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+                  <p className="text-zinc-400 animate-pulse font-poppins">
+                    Finding best server...
                   </p>
                 </div>
-              </div>
-            </div>
-            <div className="pt-[1vw]">
-              <p className="text-lg font-poppins mb-1">
-                {movie?.release_date || movie?.first_air_date} •{" "}
-                {mediaType === "tv"
-                  ? `${movie?.number_of_seasons} Seasons`
-                  : `${movie?.runtime} min`}
-              </p>
-              <p className="text-sm md:text-lg font-light w-full md:w-[80%] text-zinc-400 leading-relaxed cursor-pointer transition-all">
-                {movie?.overview}
-              </p>
-
-              {/* Top Cast Section */}
-              {movie?.credits?.cast?.length > 0 && (
-                <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
-                  <h3 className="text-lg   font-poppins mb-4 text-white">
-                    Top Cast
-                  </h3>
-                  <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
-                    {movie.credits.cast.slice(0, 6).map((actor) => (
-                      <Link
-                        href={`/search/${encodeURIComponent(actor.name)}`}
-                        key={actor.id}
-                        className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
-                      >
-                        <div className="w-full aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative">
-                          {actor.profile_path ? (
-                            <img
-                              src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
-                              alt={actor.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 text-xs text-center p-2">
-                              No Image
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-left">
-                          <h4 className="text-xs lg:text-[0.9vw] font- text-white font-poppins group-hover:text-primary transition-colors">
-                            {actor.name}
-                          </h4>
-                          <p className="text-[10px] lg:text-[0.7vw] italic text-zinc-400 truncate">
-                            @{actor.character}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+              ) : serverError ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
+                  <p className="text-red-500 font-bold mb-2">
+                    No working servers found.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-2 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition"
+                  >
+                    Try Reloading
+                  </button>
                 </div>
+              ) : (
+                <iframe
+                  ref={iframeRef}
+                  src={constructServerUrl(
+                    selectedServer,
+                    mediaType,
+                    id,
+                    selectedSeason,
+                    selectedEpisode,
+                  )}
+                  allow="autoplay; fullscreen"
+                  referrerPolicy="origin"
+                  className="w-full h-full"
+                />
               )}
             </div>
-          </div>
-        </div>
 
-        <div className="w-full  px-2  lg:w-[25vw] flex flex-col gap-4">
-          <h3 className="text-lg font-semibold font-poppins md:pb-[0.5vw]">
-            {fetchStrategy === "recommendations"
-              ? "Recommended"
-              : fetchStrategy === "genre"
-                ? `More ${movie?.genres?.[0]?.name}`
-                : "Trending Now"}
-          </h3>
-          <div className="flex flex-col gap-3">
-            {recommendations.map((rec, index) => {
-              const isRecSaved = watchLater.some(
-                (item) => item.id === rec.id.toString(),
-              );
-              return (
-                <div key={`${rec.id}-${index}`} className="relative group">
-                  <Link
-                    href={`/watch/${createSlug(
-                      rec.title || rec.name,
-                      rec.id,
-                      mediaType,
-                    )}`}
-                    className="flex gap-3 group"
+            {/* Server Switcher */}
+            <div className="flex flex-wrap  px-2  items-center gap-2 mb-4">
+              <span className="text-xs uppercase font-bold text-gray-500 mr-2">
+                Servers:
+              </span>
+              {providers.map((provider) => (
+                <button
+                  key={provider.name}
+                  onClick={() => setSelectedServer(provider)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                    selectedServer.name === provider.name
+                      ? "bg-primary text-black"
+                      : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
+                  }`}
+                >
+                  {provider.name}
+                </button>
+              ))}
+            </div>
+
+            {/* User Note */}
+            <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
+              <span className="text-white font-bold mr-1">Note:</span>
+              Try changing{" "}
+              <span className="text-primary font-bold">Server</span> or{" "}
+              <button
+                onClick={() => window.location.reload()}
+                className="underline text-primary hover:text-white transition-colors"
+              >
+                Reload
+              </button>{" "}
+              if not playing.
+            </div>
+
+            {/* TV Selectors */}
+            {mediaType === "tv" && (
+              <div className="flex flex-wrap  px-2  items-center gap-4 mb-6">
+                <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+                  <label className="text-[10px] uppercase font-bold text-gray-500">
+                    Season
+                  </label>
+                  <select
+                    value={selectedSeason}
+                    onChange={handleSeasonChange}
+                    className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
                   >
-                    <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
-                      <img
-                        src={`https://image.tmdb.org/t/p/w300${
-                          rec.backdrop_path || rec.poster_path
-                        }`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                        alt={rec.title || rec.name}
-                      />
-                    </div>
-                    <div className="flex flex-col min-w-0 justify-center">
-                      <h4 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
-                        {rec.title || rec.name}
-                      </h4>
-                      <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
-                        {
-                          (rec.release_date || rec.first_air_date)?.split(
-                            "-",
-                          )[0]
-                        }{" "}
-                        • {mediaType === "tv" ? "Series" : "Movie"}
-                      </p>
-                    </div>
-                  </Link>
-
-                  {/* 3-Dots Menu Button */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setActiveMenuId(activeMenuId === rec.id ? null : rec.id);
-                    }}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white lg:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
+                    {seasons.map((s) => (
+                      <option key={s.id} value={s.season_number}>
+                        {s.name || `Season ${s.season_number}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+                  <label className="text-[10px] uppercase font-bold text-gray-500">
+                    Episode
+                  </label>
+                  <select
+                    value={selectedEpisode}
+                    onChange={(e) =>
+                      setSelectedEpisode(parseInt(e.target.value))
+                    }
+                    className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
+                    disabled={loadingTV}
                   >
-                    <MoreVertical size={16} />
-                  </button>
+                    {loadingTV ? (
+                      <option>Loading...</option>
+                    ) : (
+                      episodes.map((e) => (
+                        <option key={e.id} value={e.episode_number}>
+                          Ep {e.episode_number}: {e.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              </div>
+            )}
 
-                  {/* Dropdown Menu */}
-                  {activeMenuId === rec.id && (
-                    <div
-                      className="absolute top-8 right-2 z-30 bg-zinc-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[160px]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+            <div className="flex flex-col  px-2  gap-6 relative z-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex items-start justify-between w-full">
+                  <div>
+                    <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-2">
+                      {mediaType === "movie"
+                        ? movie.title
+                        : movie.name +
+                          ` (S${selectedSeason} E${selectedEpisode})`}
+                    </h1>
+                    {/* Watch Later Button (Mobile/Desktop) */}
+                    <div className="flex items-center gap-4 mt-2">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleWatchLater(rec);
-                          setActiveMenuId(null);
-                        }}
-                        className="w-full text-left px-2 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
+                        onClick={() => toggleWatchLater(movie)}
+                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
                       >
-                        {isRecSaved ? (
+                        {isSaved ? (
                           <>
-                            <Check size={14} className="text-primary" />
-                            <span>Added to List</span>
+                            <div className="bg-primary text-black rounded-full p-0.5">
+                              <Check size={14} strokeWidth={3} />
+                            </div>
+                            <span>Saved</span>
                           </>
                         ) : (
                           <>
-                            <Plus size={14} />
+                            <Plus size={16} />
                             <span>Watch Later</span>
                           </>
                         )}
                       </button>
+                      {trailer && (
+                        <button
+                          onClick={() => setIsTrailerModalOpen(true)}
+                          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
+                        >
+                          <Play size={16} fill="currentColor" />
+                          <span>Watch Trailer</span>
+                        </button>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition md:hidden"
+                  >
+                    <Share2 size={18} />
+                  </button>
                 </div>
-              );
-            })}
-            <div ref={recObserverRef} className="py-4">
-              {loadingMoreRecs && (
-                <div className="space-y-3">
-                  <SidebarSkeleton />
-                  <SidebarSkeleton />
+
+                <button
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition hidden md:block"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="font- text-lg lg:text-xl">
+                      {movie?.production_companies?.[0]?.name ||
+                        "Official Studio"}
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      {movie?.vote_count?.toLocaleString()} votes ~ IMDB
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
+              <div className="pt-[1vw]">
+                <p className="text-lg font-poppins mb-1">
+                  {movie?.release_date || movie?.first_air_date} •{" "}
+                  {mediaType === "tv"
+                    ? `${movie?.number_of_seasons} Seasons`
+                    : `${movie?.runtime} min`}
+                </p>
+                <p className="text-sm md:text-lg font-light w-full md:w-[80%] text-zinc-400 leading-relaxed cursor-pointer transition-all">
+                  {movie?.overview}
+                </p>
+
+                {/* Top Cast Section */}
+                {movie?.credits?.cast?.length > 0 && (
+                  <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
+                    <h3 className="text-lg   font-poppins mb-4 text-white">
+                      Top Cast
+                    </h3>
+                    <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
+                      {movie.credits.cast.slice(0, 6).map((actor) => (
+                        <Link
+                          href={`/search/${encodeURIComponent(actor.name)}`}
+                          key={actor.id}
+                          className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
+                        >
+                          <div className="w-full aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative">
+                            {actor.profile_path ? (
+                              <img
+                                src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
+                                alt={actor.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 text-xs text-center p-2">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-xs lg:text-[0.9vw] font- text-white font-poppins group-hover:text-primary transition-colors">
+                              {actor.name}
+                            </h4>
+                            <p className="text-[10px] lg:text-[0.7vw] italic text-zinc-400 truncate">
+                              @{actor.character}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full  px-2  lg:w-[25vw] flex flex-col gap-4">
+            <h3 className="text-lg font-semibold font-poppins md:pb-[0.5vw]">
+              {fetchStrategy === "recommendations"
+                ? "Recommended"
+                : fetchStrategy === "genre"
+                  ? `More ${movie?.genres?.[0]?.name}`
+                  : "Trending Now"}
+            </h3>
+            <div className="flex flex-col gap-3">
+              {recommendations.map((rec, index) => {
+                const isRecSaved = watchLater.some(
+                  (item) => item.id === rec.id.toString(),
+                );
+                return (
+                  <div key={`${rec.id}-${index}`} className="relative group">
+                    <Link
+                      href={`/watch/${createSlug(
+                        rec.title || rec.name,
+                        rec.id,
+                        mediaType,
+                      )}`}
+                      className="flex gap-3 group"
+                    >
+                      <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
+                        <img
+                          src={`https://image.tmdb.org/t/p/w300${
+                            rec.backdrop_path || rec.poster_path
+                          }`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          alt={rec.title || rec.name}
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0 justify-center">
+                        <h4 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                          {rec.title || rec.name}
+                        </h4>
+                        <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
+                          {
+                            (rec.release_date || rec.first_air_date)?.split(
+                              "-",
+                            )[0]
+                          }{" "}
+                          • {mediaType === "tv" ? "Series" : "Movie"}
+                        </p>
+                      </div>
+                    </Link>
+
+                    {/* 3-Dots Menu Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveMenuId(
+                          activeMenuId === rec.id ? null : rec.id,
+                        );
+                      }}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white lg:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {activeMenuId === rec.id && (
+                      <div
+                        className="absolute top-8 right-2 z-30 bg-zinc-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[160px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleWatchLater(rec);
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full text-left px-2 py-2 text-xs flex items-center gap-2 hover:bg-white/10 transition-colors"
+                        >
+                          {isRecSaved ? (
+                            <>
+                              <Check size={14} className="text-primary" />
+                              <span>Added to List</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus size={14} />
+                              <span>Watch Later</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={recObserverRef} className="py-4">
+                {loadingMoreRecs && (
+                  <div className="space-y-3">
+                    <SidebarSkeleton />
+                    <SidebarSkeleton />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          title={movie?.title}
+          url={typeof window !== "undefined" ? window.location.href : ""}
+        />
+        <TrailerModal
+          isOpen={isTrailerModalOpen}
+          onClose={() => setIsTrailerModalOpen(false)}
+          trailerKey={trailer?.key}
+        />
       </div>
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        title={movie?.title}
-        url={typeof window !== "undefined" ? window.location.href : ""}
-      />
-      <TrailerModal
-        isOpen={isTrailerModalOpen}
-        onClose={() => setIsTrailerModalOpen(false)}
-        trailerKey={trailer?.key}
-      />
     </main>
   );
 };
