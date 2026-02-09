@@ -89,6 +89,19 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Enable smooth touch scrolling for custom scrollable areas */
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Smooth native scrolling helpers for scrollable regions */
+  .smooth-native-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+  }
 }
 
 

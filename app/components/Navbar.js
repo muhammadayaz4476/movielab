@@ -423,9 +423,9 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "circOut" }}
-              className="fixed top-0 right-0 h-full w-[300px] lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] shadow-2xl overflow-y-auto custom-scrollbar"
+              className="fixed top-0 right-0 bottom-0 w-[300px] lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
-              <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold font-comfortaa text-white">
                   Discover
                 </h2>
@@ -437,48 +437,55 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Hubs Section */}
-              <div className="mb-10">
-                <h3 className="text-primary text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
-                  Cinema Hubs
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {hubs.map((hub) => (
-                    <Link
-                      key={hub.slug}
-                      href={`/discover/${hub.slug}`}
-                      onClick={() => setIsSidebarOpen(false)}
-                      className="bg-zinc-900 font-poppins border border-white/5 p-3 rounded-xl text-center hover:bg-primary hover:border-primary transition-all  text-sm"
-                    >
-                      {hub.name}
-                    </Link>
-                  ))}
+              <div
+                onWheel={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                className="overflow-y-auto flex-1 pr-2 custom-scrollbar smooth-native-scroll"
+              >
+                {/* Hubs Section */}
+                <div className="mb-10">
+                  <h3 className="text-primary text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                    Cinema Hubs
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {hubs.map((hub) => (
+                      <Link
+                        key={hub.slug}
+                        href={`/discover/${hub.slug}`}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="bg-zinc-900 font-poppins border border-white/5 p-3 rounded-xl text-center hover:bg-primary hover:border-primary transition-all  text-sm"
+                      >
+                        {hub.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Genres Section */}
-              <div>
-                <h3 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
-                  Browse Genres
-                </h3>
-                <div className="flex flex-col gap-1">
-                  {genres.map((genre) => (
-                    <Link
-                      key={genre.id}
-                      href={`/discover/${genre.name
-                        .toLowerCase()
-                        .replace(/ /g, "-")}-${genre.id}`}
-                      onClick={() => setIsSidebarOpen(false)}
-                      className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
-                    >
-                      <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all">
-                        {genre.name}
-                      </span>
-                      <span className="text-gray-700 group-hover:text-primary transition-colors">
-                        ›
-                      </span>
-                    </Link>
-                  ))}
+                {/* Genres Section */}
+                <div>
+                  <h3 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                    Browse Genres
+                  </h3>
+                  <div className="flex flex-col gap-1 pb-6">
+                    {genres.map((genre) => (
+                      <Link
+                        key={genre.id}
+                        href={`/discover/${genre.name
+                          .toLowerCase()
+                          .replace(/ /g, "-")}-${genre.id}`}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                      >
+                        <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all">
+                          {genre.name}
+                        </span>
+                        <span className="text-gray-700 group-hover:text-primary transition-colors">
+                          ›
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>

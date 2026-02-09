@@ -75,9 +75,13 @@ const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
           ? Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
-                className="w-[45vw] lg:w-[21vw] shrink-0 animate-pulse"
+                className="w-[45vw] lg:w-[16vw] shrink-0 animate-pulse"
               >
-                <div className="bg-gray-800 rounded-xl lg:rounded-[1vw] mb-3 lg:mb-[0.8vw] aspect-3/4 lg:aspect-video"></div>
+                <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden bg-gray-800 mb-3 lg:mb-[0.8vw]">
+                  <div className="w-full h-full bg-gradient-to-b from-gray-700 to-gray-800" />
+                  <div className="absolute top-2 right-2 w-10 h-5 bg-gray-700 rounded-full" />
+                </div>
+
                 <div className="space-y-2">
                   <div className="h-4 bg-gray-800 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-800 rounded w-1/2"></div>
