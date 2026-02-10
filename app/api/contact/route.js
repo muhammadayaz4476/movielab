@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, message } = body || {};
+    const { name, email, message } = body || {};
 
     if (!name || !message) {
       return NextResponse.json({ error: "Name and message are required" }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(req) {
 
     await dbConnect();
 
-    const contact = await Contact.create({ name: name.trim(), message: message.trim() });
+    const contact = await Contact.create({ name: name.trim(), email: email?.trim() || null, message: message.trim() });
 
     return NextResponse.json({ success: true, id: contact._id }, { status: 201 });
   } catch (err) {

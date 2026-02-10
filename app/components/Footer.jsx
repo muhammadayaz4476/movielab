@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 const Footer = () => {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
@@ -17,12 +18,13 @@ const Footer = () => {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, message }),
+        body: JSON.stringify({ name, email, message }),
       });
       const data = await res.json();
       if (res.ok) {
         setStatus({ success: "Message Sended — thank you!" });
         setName("");
+        setEmail("");
         setMessage("");
       } else {
         setStatus({ error: data?.error || "Failed to Sended Try Again Later" });
@@ -61,6 +63,15 @@ const Footer = () => {
             className="w-full mb-2 p-2 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
             placeholder="Your name"
             aria-label="Name"
+            required
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            className="w-full mb-2 p-2 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
+            placeholder="Your email (optional)"
+            aria-label="Email"
           />
           <textarea
             value={message}

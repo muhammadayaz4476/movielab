@@ -4,6 +4,7 @@ import { AuthProvider } from "../context/AuthContext";
 import LoginModal from "../components/LoginModal";
 import SmoothScrollProvider from "./components/SmoothScrollProvider";
 import CustomScrollbar from "./components/CustomScrollbar";
+import PageTransition from "./components/PageTransition";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -116,7 +117,9 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <SmoothScrollProvider>
             <CustomScrollbar />
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
             <LoginModal />
           </SmoothScrollProvider>
         </AuthProvider>

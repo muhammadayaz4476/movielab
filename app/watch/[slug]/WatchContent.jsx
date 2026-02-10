@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
 import TrailerModal from "../../components/TrailerModal";
+import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 
 const SidebarSkeleton = () => (
@@ -307,15 +308,18 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       {/* Cinematic Background */}
       {movie?.backdrop_path && (
         <div className="fixed inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
-          <img
+          <motion.div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
+          <motion.img
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 2 , ease: "easeInOut" }}
             src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-            alt={`Watch ${movie.title || movie.name} (${
-              (movie.release_date || movie.first_air_date || "").split("-")[0]
-            }) Cinematic Background HD`}
+            alt={`Watch ${movie.title || movie.name} (${(movie.release_date || movie.first_air_date || "").split("-")[0]
+              }) Cinematic Background HD`}
             title={`Watch ${movie.title || movie.name} Full HD`}
-            className="w-full h-full object-cover opacity-70 lg:opacity-100 blur-sm"
+            className="w-full h-screen object-cover lg:opacity-100 blur-xs opacity-70  "
           />
         </div>
       )}
@@ -371,11 +375,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={provider.name}
                   onClick={() => setSelectedServer(provider)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                    selectedServer.name === provider.name
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${selectedServer.name === provider.name
                       ? "bg-primary text-black"
                       : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
-                  }`}
+                    }`}
                 >
                   {provider.name}
                 </button>
@@ -449,7 +452,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       {mediaType === "movie"
                         ? movie.title
                         : movie.name +
-                          ` (S${selectedSeason} E${selectedEpisode})`}
+                        ` (S${selectedSeason} E${selectedEpisode})`}
                     </h1>
                     {/* Watch Later Button (Mobile/Desktop) */}
                     <div className="flex items-center gap-4 mt-2">
@@ -590,9 +593,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     >
                       <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                         <img
-                          src={`https://image.tmdb.org/t/p/w300${
-                            rec.backdrop_path || rec.poster_path
-                          }`}
+                          src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
+                            }`}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           alt={rec.title || rec.name}
                         />

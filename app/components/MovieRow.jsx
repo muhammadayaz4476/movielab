@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import Image from "next/image";
 import { Plus, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -105,19 +106,20 @@ const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
                   {/* Image Container */}
                   <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden group">
                     {movie.poster_path ? (
-                      <img
-                        className="w-full h-full object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
+                      <Image
+                        fill
+                        className="object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
                         src={`https://image.tmdb.org/t/p/w500/${
                           movie.poster_path || movie.backdrop_path
                         }`}
-                        alt={`Watch ${movie.title || movie.name} (${
-                          movie.release_date?.split("-")[0] ||
-                          movie.first_air_date?.split("-")[0] ||
-                          ""
-                        }) Full HD Free`}
+                        alt={`${movie.title || movie.name} poster`}
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 16vw"
+                        quality={80}
+                        priority={false}
+                        loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-800">
                         No Image
                       </div>
                     )}
