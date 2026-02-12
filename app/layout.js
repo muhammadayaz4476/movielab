@@ -1,6 +1,7 @@
 import { Poppins, Roboto, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { AuthProvider } from "../context/AuthContext";
+import { AdminProvider } from "../context/AdminContext";
 import LoginModal from "../components/LoginModal";
 import SmoothScrollProvider from "./components/SmoothScrollProvider";
 import CustomScrollbar from "./components/CustomScrollbar";
@@ -114,15 +115,17 @@ export default function RootLayout({ children }) {
           }}
         />
         <GoogleAnalytics />
-        <AuthProvider>
-          <SmoothScrollProvider>
-            <CustomScrollbar />
-            <PageTransition>
-              {children}
-            </PageTransition>
-            <LoginModal />
-          </SmoothScrollProvider>
-        </AuthProvider>
+        <AdminProvider>
+          <AuthProvider>
+            <SmoothScrollProvider>
+              <CustomScrollbar />
+              <PageTransition>
+                {children}
+              </PageTransition>
+              <LoginModal />
+            </SmoothScrollProvider>
+          </AuthProvider>
+        </AdminProvider>
       </body>
     </html>
   );

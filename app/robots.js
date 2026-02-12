@@ -3,8 +3,8 @@ export default function robots() {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/admin/"], // Add any other private paths
+      disallow: ["/api/", "/admin/"],
     },
-    sitemap: "https://movies.umairlab.com/sitemap.xml",
+    sitemap: "https://movies.umairlab.com/sitemap-main.xml",
   };
 }

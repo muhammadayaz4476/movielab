@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
@@ -11,130 +11,109 @@ const Home = () => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-  // State for all rows
-  const [rowData, setRowData] = useState({
-    trendingToday: null,
-    horrorMovies: null,
-    sciFiMovies: null,
-    topRated: null,
-    comedyMovies: null,
-    popularNow: null,
-    actionMovies: null,
-    romanceMovies: null,
-    koreanMovies: null,
-    indianMovies: null,
-    hiddenGems: null,
-    feelGoodMovies: null,
-  });
+  // Shared state for deduplication
+  const [seenIds, setSeenIds] = useState(new Set());
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      const seenIds = new Set();
-      const newData = {};
+  // Storage for row data
+  const [rowData, setRowData] = useState({});
 
-      const requests = [
-        {
-          key: "trendingToday",
-          url: `${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`,
-        },
-        {
-          key: "horrorMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "topRated",
-          url: `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=false`,
-        },
-        {
-          key: "comedyMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "popularNow",
-          url: `${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=false`,
-        },
-        {
-          key: "sciFiMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "actionMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "romanceMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "koreanMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "indianMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=false`,
-        },
-        {
-          key: "hiddenGems",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=false`,
-        },
-        {
-          key: "feelGoodMovies",
-          url: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=false`,
-        },
-      ];
+  const unsafeKeywords = [
+    "sexy",
+    "erotic",
+    "porn",
+    "xxx",
+    "nude",
+    "breast",
+    "sex",
+    "18+",
+  ];
 
-      const unsafeKeywords = [
-        "sexy",
-        "erotic",
-        "porn",
-        "xxx",
-        "nude",
-        "breast",
-        "sex",
-        "18+",
-      ];
+  const fetchRowData = async (key, url) => {
+    try {
+      const res = await axios.get(url);
+      const results = res.data.results || [];
 
-      // Fetch sequentially to prioritize order
-      for (const req of requests) {
-        try {
-          const res = await axios.get(req.url);
-          const results = res.data.results || [];
+      const uniqueSafeMovies = results.filter((item) => {
+        if (!item.id) return false;
+        const title = (item.title || item.name || "").toLowerCase();
+        const overview = (item.overview || "").toLowerCase();
+        const hasUnsafeKeyword = unsafeKeywords.some(
+          (keyword) => title.includes(keyword) || overview.includes(keyword),
+        );
 
-          const uniqueSafeMovies = results.filter((item) => {
-            if (!item.id) return false;
+        if (item.adult || hasUnsafeKeyword) return false;
 
-            // Check content safety
-            const title = (item.title || item.name || "").toLowerCase();
-            const overview = (item.overview || "").toLowerCase();
-            const isAdult = item.adult;
-            const hasUnsafeKeyword = unsafeKeywords.some(
-              (keyword) =>
-                title.includes(keyword) || overview.includes(keyword),
-            );
+        // Use a functional update to check against the latest set
+        let isDuplicate = false;
+        setSeenIds((prev) => {
+          if (prev.has(item.id)) {
+            isDuplicate = true;
+            return prev;
+          }
+          return prev;
+        });
 
-            if (isAdult || hasUnsafeKeyword) return false;
+        return !isDuplicate;
+      });
 
-            // Check deduplication
-            if (seenIds.has(item.id)) return false;
+      // Update seen IDs
+      setSeenIds((prev) => {
+        const next = new Set(prev);
+        uniqueSafeMovies.forEach((m) => next.add(m.id));
+        return next;
+      });
 
-            return true;
-          });
+      setRowData((prev) => ({ ...prev, [key]: uniqueSafeMovies }));
+    } catch (err) {
+      console.error(`Failed fetching ${key}`, err);
+      setRowData((prev) => ({ ...prev, [key]: [] }));
+    }
+  };
 
-          // Add new IDs to seen set
-          uniqueSafeMovies.forEach((m) => seenIds.add(m.id));
+  // Lazy loading wrapper for MovieRow
+  const LazyMovieRow = ({
+    title,
+    url,
+    viewAllLink,
+    rowKey,
+    priority = false,
+  }) => {
+    const [isVisible, setIsVisible] = useState(priority);
+    const rowRef = React.useRef(null);
 
-          newData[req.key] = uniqueSafeMovies;
-        } catch (err) {
-          console.error(`Failed directly fetching ${req.key}`, err);
-          newData[req.key] = [];
-        }
+    useEffect(() => {
+      if (priority) return;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" }, // Start fetching before it's fully on screen
+      );
+
+      if (rowRef.current) observer.observe(rowRef.current);
+      return () => observer.disconnect();
+    }, [priority]);
+
+    useEffect(() => {
+      if (isVisible && !rowData[rowKey]) {
+        fetchRowData(rowKey, url);
       }
+    }, [isVisible, rowKey, url]);
 
-      setRowData(newData);
-    };
-
-    fetchAllData();
-  }, [API_KEY, BASE_URL]);
+    return (
+      <div ref={rowRef} className="min-h-[300px]">
+        <MovieRow
+          title={title}
+          movies={rowData[rowKey]}
+          viewAllLink={viewAllLink}
+        />
+      </div>
+    );
+  };
 
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
@@ -165,72 +144,99 @@ const Home = () => {
           ))}
         </div>
 
-        <MovieRow
+        <LazyMovieRow
+          priority={true}
+          rowKey="trendingToday"
           title="Streamers of the day"
-          movies={rowData.trendingToday}
+          url={`${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`}
           viewAllLink="/discover/trending"
         />
-        <MovieRow
+        <LazyMovieRow
+          priority={true}
+          rowKey="horrorMovies"
           title="Horror Movies"
-          movies={rowData.horrorMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/horror-27"
         />
-          <MovieRow
+        <LazyMovieRow
+          priority={true}
+          rowKey="sciFiMovies"
           title="Sci-Fi Movies"
-          movies={rowData.sciFiMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/sci-fi-878"
         />
-        
-        <MovieRow
+
+        <LazyMovieRow
+          rowKey="movies2024"
+          title="Best of 2024"
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2024&sort_by=popularity.desc&include_adult=false`}
+          viewAllLink="/discover/new-releases"
+        />
+        <LazyMovieRow
+          rowKey="movies2025"
+          title="Top of 2025"
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2025&sort_by=popularity.desc&include_adult=false`}
+          viewAllLink="/discover/new-releases"
+        />
+        <LazyMovieRow
+          rowKey="movies2026"
+          title="Upcoming 2026"
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2026&sort_by=popularity.desc&include_adult=false`}
+          viewAllLink="/discover/new-releases"
+        />
+
+        <LazyMovieRow
+          rowKey="actionMovies"
           title="Action Movies"
-          movies={rowData.actionMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/action-28"
         />
-        <MovieRow
+        <LazyMovieRow
+          rowKey="topRated"
           title="Top Rated Movies"
-          movies={rowData.topRated}
+          url={`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=false`}
           viewAllLink="/discover/top-rated"
         />
-        <MovieRow
+        <LazyMovieRow
+          rowKey="comedyMovies"
           title="Comedy Movies"
-          movies={rowData.comedyMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/comedy-35"
         />
-        <MovieRow
+        <LazyMovieRow
+          rowKey="popularNow"
           title="Popular Now"
-          movies={rowData.popularNow}
+          url={`${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=false`}
           viewAllLink="/discover/popular"
         />
-
-      
-
-        <MovieRow
+        <LazyMovieRow
+          rowKey="romanceMovies"
           title="Romance Movies"
-          movies={rowData.romanceMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/romance-10749"
         />
-
-        {/* Removed Duplicate Sci-Fi Row */}
-
-        <MovieRow
+        <LazyMovieRow
+          rowKey="koreanMovies"
           title="Korean Movies"
-          movies={rowData.koreanMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/korean"
         />
-
-        <MovieRow
+        <LazyMovieRow
+          rowKey="indianMovies"
           title="Indian Movies"
-          movies={rowData.indianMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/bollywood"
         />
-        <MovieRow
+        <LazyMovieRow
+          rowKey="hiddenGems"
           title="Hidden Gems"
-          movies={rowData.hiddenGems}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=false`}
           viewAllLink="/discover/hidden-gems"
         />
-        <MovieRow
+        <LazyMovieRow
+          rowKey="feelGoodMovies"
           title="Feel Good Movies"
-          movies={rowData.feelGoodMovies}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/feel-good"
         />
 

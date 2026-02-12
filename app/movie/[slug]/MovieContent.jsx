@@ -1,7 +1,16 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Share2, Plus, Check, PlayIcon, X, MoreVertical, Download, DownloadCloud, DownloadCloudIcon } from "lucide-react";
+import {
+  Share2,
+  Plus,
+  Check,
+  PlayIcon,
+  X,
+  MoreVertical,
+  DownloadCloud,
+  DownloadCloudIcon,
+} from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
@@ -72,7 +81,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         try {
           setLoading(true);
           const res = await axios.get(
-            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
           );
           setMovie(res.data);
           setLoading(false);
@@ -128,7 +137,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         const title = (item.title || "").toLowerCase();
         const overview = (item.overview || "").toLowerCase();
         const hasUnsafe = unsafeKeywords.some(
-          (k) => title.includes(k) || overview.includes(k)
+          (k) => title.includes(k) || overview.includes(k),
         );
         return (
           !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
@@ -138,7 +147,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       setRecommendations((prev) =>
         pageNum === 1 && !isFallbackMode
           ? safeResults
-          : [...prev, ...safeResults]
+          : [...prev, ...safeResults],
       );
 
       if (res.data.page >= res.data.total_pages) {
@@ -163,7 +172,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       (entries) => {
         if (entries[0].isIntersecting) setRecPage((prev) => prev + 1);
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     if (recObserverRef.current) observer.observe(recObserverRef.current);
     return () => observer.disconnect();
@@ -239,11 +248,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 href={`/watch/${createSlug(
                   movie?.title || movie?.name,
                   movie?.id,
-                  mediaType
+                  mediaType,
                 )}`}
                 className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
-              > 
-                
+              >
                 Watch Now
               </Link>
               <button
@@ -251,9 +259,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >
                 Download
-                <DownloadCloudIcon
-                  className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors"
-                />
+                <DownloadCloudIcon className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors" />
               </button>
               <button
                 onClick={() => toggleWatchLater(movie)}
@@ -358,7 +364,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           <div className="flex flex-col gap-4">
             {recommendations.map((rec, index) => {
               const isRecSaved = watchLater.some(
-                (item) => item.id === rec.id.toString()
+                (item) => item.id === rec.id.toString(),
               );
               return (
                 <div key={`${rec.id}-${index}`} className="relative group">
@@ -366,7 +372,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     href={`/watch/${createSlug(
                       rec.title || rec.name,
                       rec.id,
-                      mediaType
+                      mediaType,
                     )}`}
                     className="flex gap-3 group"
                   >
@@ -386,7 +392,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(
-                            "-"
+                            "-",
                           )[0]
                         }{" "}
                         • {mediaType === "tv" ? "Series" : "Movie"}
