@@ -6,7 +6,13 @@ import Image from "next/image";
 import { Plus, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
+const MovieRow = ({
+  title,
+  fetchURL,
+  viewAllLink,
+  movies: propMovies,
+  isPriority = false,
+}) => {
   const [movies, setMovies] = useState(propMovies || []);
   const [loading, setLoading] = useState(!propMovies);
   const { watchLater, toggleWatchLater } = useAuth();
@@ -41,7 +47,6 @@ const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
           return !isAdult && !hasUnsafeKeyword;
         });
         setMovies(safeResults);
-        // console.log(safeResults);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching movies:", error);
@@ -89,10 +94,11 @@ const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
                 </div>
               </div>
             ))
-          : movies.map((movie) => {
+          : movies.map((movie, index) => {
               const isSaved = watchLater.some(
                 (item) => item.id === movie.id.toString(),
               );
+              const isHighPriority = isPriority && index < 4;
               return (
                 <Link
                   href={`/movie/${createSlug(
@@ -114,9 +120,8 @@ const MovieRow = ({ title, fetchURL, viewAllLink, movies: propMovies }) => {
                         }`}
                         alt={`${movie.title || movie.name} poster`}
                         sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 16vw"
-                        quality={80}
-                        priority={false}
-                        loading="lazy"
+                        quality={75}
+                        priority={isHighPriority}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-800">

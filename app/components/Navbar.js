@@ -198,7 +198,7 @@ const Navbar = () => {
             gradient={false} // Assuming you don't need the fade gradient effect
             loop={0} // 0 means infinite loop
           >
-            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
               Please Install the{" "}
               <Link
                 href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"

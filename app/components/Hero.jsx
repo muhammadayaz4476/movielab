@@ -1,25 +1,27 @@
-"use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
-const Hero = () => {
-  const [movies, setMovies] = useState([]);
+const Hero = ({ initialMovies = [] }) => {
+  const [movies, setMovies] = useState(initialMovies);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialMovies.length === 0);
 
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
   useEffect(() => {
+    if (initialMovies.length > 0) return;
+
     const fetchTrending = async () => {
       try {
         const res = await axios.get(
-          `${BASE_URL}/trending/all/day?api_key=${API_KEY}&include_adult=false`
+          `${BASE_URL}/trending/all/day?api_key=${API_KEY}&include_adult=false`,
         );
         const trendingItems = res.data.results
           .filter(
-            (item) => item.media_type === "movie" || item.media_type === "tv"
+            (item) => item.media_type === "movie" || item.media_type === "tv",
           )
           .slice(0, 5);
         setMovies(trendingItems);
@@ -30,7 +32,7 @@ const Hero = () => {
       }
     };
     fetchTrending();
-  }, [API_KEY, BASE_URL]);
+  }, [API_KEY, BASE_URL, initialMovies]);
 
   // Auto-slide every 8 seconds
   useEffect(() => {
@@ -64,12 +66,17 @@ const Hero = () => {
             transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <div
-              className="absolute inset-0  bg-cover bg-center transition-transform duration-[10000ms] ease-linear transform group-hover:scale-110"
-              style={{
-                backgroundImage: `url(https://image.tmdb.org/t/p/original${currentMovie?.backdrop_path})`,
-              }}
-            />
+            {currentMovie?.backdrop_path && (
+              <Image
+                src={`https://image.tmdb.org/t/p/original${currentMovie.backdrop_path}`}
+                alt={currentMovie?.title || currentMovie?.name || "Hero Banner"}
+                fill
+                priority={currentIndex === 0} // Priority for the first slide
+                className="object-cover transition-transform duration-[10000ms] ease-linear transform group-hover:scale-110"
+                sizes="100vw"
+                quality={90}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 

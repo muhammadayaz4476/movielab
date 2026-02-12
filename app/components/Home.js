@@ -7,7 +7,7 @@ import Link from "next/link";
 import Footer from "./Footer";
 import axios from "axios";
 
-const Home = () => {
+const Home = ({ initialData = {} }) => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
@@ -16,8 +16,19 @@ const Home = () => {
   // Prevent duplicate fetches
   const fetchingKeysRef = React.useRef(new Set());
 
-  // Storage for row data
-  const [rowData, setRowData] = useState({});
+  // Storage for row data - initialize with server data
+  const [rowData, setRowData] = useState(initialData);
+
+  // Mark server-fetched keys as "already fetching/fetched"
+  useEffect(() => {
+    Object.keys(initialData).forEach((key) => {
+      fetchingKeysRef.current.add(key);
+      // Populate seen IDs for deduplication
+      initialData[key].forEach((movie) => {
+        if (movie.id) seenIdsRef.current.add(movie.id);
+      });
+    });
+  }, [initialData]);
 
   const unsafeKeywords = ["porn", "xxx", "erotic", "nude", "18+", "nsfw"];
 
@@ -78,7 +89,14 @@ const Home = () => {
 
   // Lazy loading wrapper for MovieRow
   const LazyMovieRow = React.memo(
-    ({ title, url, viewAllLink, rowKey, priority = false }) => {
+    ({
+      title,
+      url,
+      viewAllLink,
+      rowKey,
+      priority = false,
+      isPriority = false,
+    }) => {
       const [isVisible, setIsVisible] = useState(priority);
       const rowRef = React.useRef(null);
 
@@ -111,6 +129,7 @@ const Home = () => {
             title={title}
             movies={rowData[rowKey]}
             viewAllLink={viewAllLink}
+            isPriority={isPriority}
           />
         </div>
       );
@@ -120,7 +139,7 @@ const Home = () => {
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
       <Navbar />
-      <Hero />
+      <Hero initialMovies={initialData.hero} />
 
       <div className="flex flex-col gap-4 lg:gap-[4vw] relative z-10">
         {/* Mobile Category Tabs */}
@@ -148,6 +167,7 @@ const Home = () => {
 
         <LazyMovieRow
           priority={true}
+          isPriority={true}
           rowKey="trendingToday"
           title="Streamers of the day"
           url={`${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`}
@@ -155,6 +175,7 @@ const Home = () => {
         />
         <LazyMovieRow
           priority={true}
+          isPriority={true}
           rowKey="horrorMovies"
           title="Horror Movies"
           url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`}
@@ -162,6 +183,7 @@ const Home = () => {
         />
         <LazyMovieRow
           priority={true}
+          isPriority={true}
           rowKey="sciFiMovies"
           title="Sci-Fi Movies"
           url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`}
