@@ -1,5 +1,5 @@
-import dbConnect from "../../../lib/db";
-import Admin from "../../../models/Admin";
+import dbConnect from "@/lib/db";
+import Admin from "@/models/Admin";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 
