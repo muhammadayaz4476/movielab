@@ -22,7 +22,9 @@ async function getInitialData() {
       const res = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
       if (!res.ok) return [key, []];
       const data = await res.json();
-      return [key, data.results || []];
+      let results = data.results || [];
+      if (key === "hero") results = results.slice(0, 5);
+      return [key, results];
     });
 
     const results = await Promise.all(requests);
