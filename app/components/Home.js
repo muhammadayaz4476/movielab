@@ -110,7 +110,7 @@ const Home = ({ initialData = {} }) => {
               observer.disconnect();
             }
           },
-          { rootMargin: "1px" },
+          { rootMargin: "0px" },
         );
 
         if (rowRef.current) observer.observe(rowRef.current);

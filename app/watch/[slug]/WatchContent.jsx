@@ -326,7 +326,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
       <div className="relative z-10">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[40vw]">
+        <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[160px]">
           <div className="flex-1 md:pb-0 pb-10">
             {/* Main Player */}
             <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
@@ -532,7 +532,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       Top Cast
                     </h3>
                     <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
-                      {movie.credits.cast.slice(0, 6).map((actor) => (
+                      {movie.credits.cast.slice(0, 8).map((actor) => (
                         <Link
                           href={`/search/${encodeURIComponent(actor.name)}`}
                           key={actor.id}
