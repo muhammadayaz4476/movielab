@@ -11,116 +11,118 @@ const Home = () => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-  // Shared state for deduplication
-  const [seenIds, setSeenIds] = useState(new Set());
+  // Sync ref for deduplication across async fetches
+  const seenIdsRef = React.useRef(new Set());
+  // Prevent duplicate fetches
+  const fetchingKeysRef = React.useRef(new Set());
 
   // Storage for row data
   const [rowData, setRowData] = useState({});
 
-  const unsafeKeywords = [
-    "sexy",
-    "erotic",
-    "porn",
-    "xxx",
-    "nude",
-    "breast",
-    "sex",
-    "18+",
-  ];
+  const unsafeKeywords = ["porn", "xxx", "erotic", "nude", "18+", "nsfw"];
 
-  const fetchRowData = async (key, url) => {
-    try {
-      const res = await axios.get(url);
-      const results = res.data.results || [];
+  const fetchRowData = React.useCallback(
+    async (key, url) => {
+      if (fetchingKeysRef.current.has(key)) return;
+      fetchingKeysRef.current.add(key);
 
-      const uniqueSafeMovies = results.filter((item) => {
-        if (!item.id) return false;
-        const title = (item.title || item.name || "").toLowerCase();
-        const overview = (item.overview || "").toLowerCase();
-        const hasUnsafeKeyword = unsafeKeywords.some(
-          (keyword) => title.includes(keyword) || overview.includes(keyword),
-        );
+      try {
+        const allUniqueMovies = [];
+        let page = 1;
+        const MAX_PAGES = 8; // Scan more pages to find unique content
 
-        if (item.adult || hasUnsafeKeyword) return false;
+        while (allUniqueMovies.length < 15 && page <= MAX_PAGES) {
+          const separator = url.includes("?") ? "&" : "?";
+          const res = await axios.get(`${url}${separator}page=${page}`);
+          const results = res.data.results || [];
 
-        // Use a functional update to check against the latest set
-        let isDuplicate = false;
-        setSeenIds((prev) => {
-          if (prev.has(item.id)) {
-            isDuplicate = true;
-            return prev;
+          if (results.length === 0) break;
+
+          for (const item of results) {
+            if (!item.id || item.adult) continue;
+
+            const title = (item.title || item.name || "").toLowerCase();
+            const overview = (item.overview || "").toLowerCase();
+            const hasUnsafeKeyword = unsafeKeywords.some(
+              (keyword) =>
+                title.includes(keyword) || overview.includes(keyword),
+            );
+
+            if (hasUnsafeKeyword) continue;
+
+            // Sync deduplication check using Ref
+            if (seenIdsRef.current.has(item.id)) continue;
+
+            // Mark as seen immediately so no other row (or item in this row) uses it
+            seenIdsRef.current.add(item.id);
+            allUniqueMovies.push(item);
+
+            if (allUniqueMovies.length >= 20) break;
           }
-          return prev;
-        });
 
-        return !isDuplicate;
-      });
+          page++;
+          // If the URL already specifies a page, or we have plenty of movies, stop
+          if (url.includes("page=") || allUniqueMovies.length >= 20) break;
+        }
 
-      // Update seen IDs
-      setSeenIds((prev) => {
-        const next = new Set(prev);
-        uniqueSafeMovies.forEach((m) => next.add(m.id));
-        return next;
-      });
-
-      setRowData((prev) => ({ ...prev, [key]: uniqueSafeMovies }));
-    } catch (err) {
-      console.error(`Failed fetching ${key}`, err);
-      setRowData((prev) => ({ ...prev, [key]: [] }));
-    }
-  };
+        setRowData((prev) => ({ ...prev, [key]: allUniqueMovies }));
+      } catch (err) {
+        console.error(`Failed fetching ${key}`, err);
+        // Allow retry if it failed (don't keep in fetchingKeysRef if error)
+        fetchingKeysRef.current.delete(key);
+        setRowData((prev) => ({ ...prev, [key]: [] }));
+      }
+    },
+    [API_KEY, BASE_URL],
+  );
 
   // Lazy loading wrapper for MovieRow
-  const LazyMovieRow = ({
-    title,
-    url,
-    viewAllLink,
-    rowKey,
-    priority = false,
-  }) => {
-    const [isVisible, setIsVisible] = useState(priority);
-    const rowRef = React.useRef(null);
+  const LazyMovieRow = React.memo(
+    ({ title, url, viewAllLink, rowKey, priority = false }) => {
+      const [isVisible, setIsVisible] = useState(priority);
+      const rowRef = React.useRef(null);
 
-    useEffect(() => {
-      if (priority) return;
+      useEffect(() => {
+        if (priority) return;
 
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.disconnect();
-          }
-        },
-        { rootMargin: "200px" }, // Start fetching before it's fully on screen
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            if (entry.isIntersecting) {
+              setIsVisible(true);
+              observer.disconnect();
+            }
+          },
+          { rootMargin: "400px" },
+        );
+
+        if (rowRef.current) observer.observe(rowRef.current);
+        return () => observer.disconnect();
+      }, [priority]);
+
+      useEffect(() => {
+        if (isVisible && !rowData[rowKey]) {
+          fetchRowData(rowKey, url);
+        }
+      }, [isVisible, rowKey, url, fetchRowData]);
+
+      return (
+        <div ref={rowRef} className="min-h-[380px]">
+          <MovieRow
+            title={title}
+            movies={rowData[rowKey]}
+            viewAllLink={viewAllLink}
+          />
+        </div>
       );
-
-      if (rowRef.current) observer.observe(rowRef.current);
-      return () => observer.disconnect();
-    }, [priority]);
-
-    useEffect(() => {
-      if (isVisible && !rowData[rowKey]) {
-        fetchRowData(rowKey, url);
-      }
-    }, [isVisible, rowKey, url]);
-
-    return (
-      <div ref={rowRef} className="min-h-[300px]">
-        <MovieRow
-          title={title}
-          movies={rowData[rowKey]}
-          viewAllLink={viewAllLink}
-        />
-      </div>
-    );
-  };
+    },
+  );
 
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
       <Navbar />
       <Hero />
 
-      <div className="flex flex-col gap-4 lg:gap-[2vw] relative z-10">
+      <div className="flex flex-col gap-4 lg:gap-[4vw] relative z-10">
         {/* Mobile Category Tabs */}
         <div className="flex lg:hidden overflow-x-auto gap-3 px-4 pb-2 scrollbar-hide py-3">
           {[

@@ -77,6 +77,7 @@ export const metadata = {
   referrer: "origin",
   verification: {
     google: "VBh8Z5n2gYt-blPxDnyzDu5KU9JOBHYSdaEZmv-s3bk",
+    yandex: "03632b5675884ef5",
   },
   robots: {
     index: true,
@@ -119,9 +120,7 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <SmoothScrollProvider>
               <CustomScrollbar />
-              <PageTransition>
-                {children}
-              </PageTransition>
+              <PageTransition>{children}</PageTransition>
               <LoginModal />
             </SmoothScrollProvider>
           </AuthProvider>
