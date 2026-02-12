@@ -213,7 +213,7 @@ const Navbar = () => {
             <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
               | Movies lab |
             </span>
-            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
               Please Install the{" "}
               <Link
                 href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
@@ -229,7 +229,7 @@ const Navbar = () => {
               | Movies lab |
             </span>
 
-            <span className="mx-[10px] lg:mx-[3vw]   text-white md:text-base text-[12px]">
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
               Please Install the{" "}
               <Link
                 href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
