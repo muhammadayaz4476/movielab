@@ -37,6 +37,27 @@ export async function GET(request, { params }) {
         mediaType = "tv";
         startPage = 41;
         break;
+      // New sitemap parts
+      case 5:
+        mediaType = "movie";
+        startPage = 121;
+        break;
+      case 6:
+        mediaType = "movie";
+        startPage = 161;
+        break;
+      case 7:
+        mediaType = "movie";
+        startPage = 201;
+        break;
+      case 8:
+        mediaType = "tv";
+        startPage = 81;
+        break;
+      case 9:
+        mediaType = "tv";
+        startPage = 121;
+        break;
       default:
         return new Response("Not Found", { status: 404 });
     }
@@ -49,9 +70,12 @@ export async function GET(request, { params }) {
           `${TMDB_BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${i}`,
         )
           .then((res) => res.json())
-          .then((data) => data.results || [])
-          .then((results) =>
-            results.map((item) => ({ ...item, media_type: mediaType })),
+          .then((data) =>
+            (data.results || []).map((item) => ({
+              ...item,
+              media_type: mediaType,
+              page: i,
+            })),
           )
           .catch(() => []),
       );
@@ -87,17 +111,27 @@ export async function GET(request, { params }) {
       });
     }
 
-    filteredItems.forEach((item) => {
+    filteredItems.forEach((item, index) => {
       const slug = createSlug(
         item.title || item.name,
         item.id,
         item.media_type,
       );
+
+      // Dynamic Priority Logic
+      let priority = "0.7";
+      if (sitemapId === 0 || sitemapId === 3) {
+        // First page of most popular items get 1.0, rest of these sitemaps get 0.9
+        priority = item.page === 1 ? "1.0" : "0.9";
+      } else if (sitemapId === 1 || sitemapId === 4) {
+        priority = "0.8";
+      }
+
       xml += "  <url>\n";
       xml += `    <loc>${EXTERNAL_DATA_URL}/movie/${slug}</loc>\n`;
       xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
       xml += "    <changefreq>weekly</changefreq>\n";
-      xml += "    <priority>0.8</priority>\n";
+      xml += `    <priority>${priority}</priority>\n`;
       xml += "  </url>\n";
     });
 

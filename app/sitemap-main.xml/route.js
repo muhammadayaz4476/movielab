@@ -1,7 +1,7 @@
 export async function GET() {
   console.log("Sitemap Index: Request received");
   const EXTERNAL_DATA_URL = "https://movies.umairlab.com";
-  const sitemapCount = 5;
+  const sitemapCount = 10;
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
