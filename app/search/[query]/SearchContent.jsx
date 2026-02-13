@@ -11,6 +11,7 @@ const SearchContent = ({ query }) => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
+  const [displayQuery, setDisplayQuery] = useState(decodedQuery);
 
   const [personInfo, setPersonInfo] = useState(null);
 
@@ -36,43 +37,98 @@ const SearchContent = ({ query }) => {
       if (!decodedQuery) return;
       try {
         setLoading(true);
-        const req = await axios.get(
-          `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${decodedQuery}&include_adult=false`
-        );
-
-        let initialResults = req.data.results || [];
+        let initialResults = [];
         let extraCredits = [];
+        let currentDisplayQuery = decodedQuery; // Local variable to hold the query for display
 
-        // Check if the top result is a person (Actor/Actress)
-        const personResult = initialResults.find(
-          (item) => item.media_type === "person"
-        );
-
-        if (personResult) {
-          setPersonInfo(personResult);
-          try {
-            const creditsReq = await axios.get(
-              `${BASE_URL}/person/${personResult.id}/combined_credits?api_key=${API_KEY}`
-            );
-            if (creditsReq.data.cast) {
-              // Sort by popularity to show best known work first
-              extraCredits = creditsReq.data.cast.sort(
-                (a, b) => b.popularity - a.popularity
-              );
-            }
-          } catch (e) {
-            console.error("Error fetching person credits:", e);
-          }
-        } else {
+        if (decodedQuery.startsWith("kw-")) {
+          const parts = decodedQuery.split("-");
+          const kwId = parts[1];
+          const kwName = parts.slice(2).join(" ").replace(/-/g, " ");
+          setDisplayQuery(`#${kwName}`);
           setPersonInfo(null);
+
+          // Fetch movies and tv shows with this keyword
+          const [movieRes, tvRes] = await Promise.all([
+            axios.get(
+              `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_keywords=${kwId}&include_adult=false&sort_by=popularity.desc`,
+            ),
+            axios.get(
+              `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_keywords=${kwId}&include_adult=false&sort_by=popularity.desc`,
+            ),
+          ]);
+
+          initialResults = [
+            ...(movieRes.data.results || []).map((m) => ({
+              ...m,
+              media_type: "movie",
+            })),
+            ...(tvRes.data.results || []).map((t) => ({
+              ...t,
+              media_type: "tv",
+            })),
+          ].sort((a, b) => b.popularity - a.popularity);
+        } else {
+          const req = await axios.get(
+            `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${decodedQuery}&include_adult=false`,
+          );
+          initialResults = req.data.results || [];
+
+          // Filter initial results
+          const movieTvResults = initialResults.filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv",
+          );
+          const personResults = initialResults.filter(
+            (item) => item.media_type === "person",
+          );
+
+          // Determine if we should prioritize a person (actor)
+          const topPerson = personResults[0];
+          const topMovie = movieTvResults[0];
+
+          let shouldFetchCredits = false;
+          if (topPerson) {
+            const queryLower = decodedQuery.toLowerCase().trim();
+            const nameLower = topPerson.name.toLowerCase().trim();
+
+            if (
+              nameLower === queryLower ||
+              (nameLower.includes(queryLower) && queryLower.length > 3)
+            ) {
+              if (!topMovie || topPerson.popularity > topMovie.popularity * 2) {
+                shouldFetchCredits = true;
+              }
+            } else if (movieTvResults.length === 0) {
+              shouldFetchCredits = true;
+            }
+          }
+
+          if (shouldFetchCredits) {
+            setPersonInfo(topPerson);
+            try {
+              const creditsReq = await axios.get(
+                `${BASE_URL}/person/${topPerson.id}/combined_credits?api_key=${API_KEY}`,
+              );
+              if (creditsReq.data.cast) {
+                extraCredits = creditsReq.data.cast
+                  .sort((a, b) => b.popularity - a.popularity)
+                  .slice(0, 30);
+              }
+            } catch (e) {
+              console.error("Error fetching person credits:", e);
+            }
+          } else {
+            setPersonInfo(null);
+          }
+          setDisplayQuery(decodedQuery);
         }
 
-        // Merge results: Person credits + Direct search matches
+        // Merge results: Direct search matches FIRST, then actor credits
         const allItems = [...initialResults, ...extraCredits];
 
         // Deduplicate by ID
         const uniqueItems = Array.from(
-          new Map(allItems.map((item) => [item.id, item])).values()
+          new Map(allItems.map((item) => [item.id, item])).values(),
         );
 
         const unsafeKeywords = [
@@ -98,7 +154,7 @@ const SearchContent = ({ query }) => {
           const isAdult = item.adult;
 
           const hasUnsafeKeyword = unsafeKeywords.some(
-            (keyword) => title.includes(keyword) || overview.includes(keyword)
+            (keyword) => title.includes(keyword) || overview.includes(keyword),
           );
 
           return isMedia && !isAdult && !hasUnsafeKeyword;
@@ -133,7 +189,7 @@ const SearchContent = ({ query }) => {
         {/* Header & Filter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h1 className="text-2xl lg:text-3xl font-comfortaa font-bold">
-            Results for "<span className="text-primary">{decodedQuery}</span>"
+            Results for "<span className="text-primary">{displayQuery}</span>"
           </h1>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -188,7 +244,6 @@ const SearchContent = ({ query }) => {
               )}
             </div>
             <div>
-             
               <h2 className="text-2xl md:text-3xl font-bold font-comfortaa text-white">
                 {personInfo.name}
               </h2>
@@ -202,13 +257,13 @@ const SearchContent = ({ query }) => {
         {loading ? (
           <div className="text-center py-20">Loading...</div>
         ) : filteredResults.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-[1.5vw]">
+          <div className="grid grid-cols-2 lg:grid-cols-5 font-poppins gap-4 lg:gap-[2.5vw]">
             {filteredResults.map((item) => (
               <Link
                 href={`/movie/${createSlug(
                   item.title || item.name,
                   item.id,
-                  item.media_type
+                  item.media_type,
                 )}`}
                 key={item.id}
                 className="group cursor-pointer"
@@ -225,14 +280,14 @@ const SearchContent = ({ query }) => {
                       No Image
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-primary px-2 py-0.5 rounded text-[8px] lg:text-[10px] font-black uppercase text-black tracking-[0.1em] font-poppins">
+                  <div className="absolute top-2 right-2 bg-primary px-2 py-0.5 rounded text-[8px] lg:text-[10px]  uppercase text-black  font-comfortaa font-bold">
                     {item.media_type === "tv" ? "Series" : "Movie"}
                   </div>
                 </div>
-                <h3 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors">
+                <h3 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors text-sm lg:text-lg">
                   {item.title || item.name}
                 </h3>
-                <div className="flex items-center justify-between text-xs text-gray-400 mt-1">
+                <div className="flex items-center justify-between text-[10px] lg:text-sm text-gray-400 mt-1">
                   <span>
                     {item.release_date || item.first_air_date || "N/A"}
                   </span>

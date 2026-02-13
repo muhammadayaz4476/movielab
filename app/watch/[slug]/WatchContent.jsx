@@ -52,10 +52,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [recPage, setRecPage] = useState(1);
   const [hasMoreRecs, setHasMoreRecs] = useState(true);
   const [loadingMoreRecs, setLoadingMoreRecs] = useState(false);
-  const [fetchStrategy, setFetchStrategy] = useState("recommendations"); // 'recommendations' | 'genre' | 'popular'
+  const [isFallbackMode, setIsFallbackMode] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -97,7 +98,6 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setRecommendations([]);
     setRecPage(1);
     setHasMoreRecs(true);
-    setFetchStrategy("recommendations");
   }, [id, initialData, mediaType]);
 
   // Extract Trailer
@@ -141,31 +141,46 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     fetchEpisodes(s);
   };
 
-  // 3. Sidebar Fetch Logic
+  // 2. Fetch Sidebar Content (Infinite Scroll)
   const fetchSidebarData = async (pageNum) => {
     if (!id) return;
     try {
       setLoadingMoreRecs(true);
       let endpoint = "";
 
-      if (fetchStrategy === "recommendations") {
-        endpoint = `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
-      } else if (fetchStrategy === "genre" && movie?.genres?.length > 0) {
-        const genreId = movie.genres[0].id;
-        endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${pageNum}`;
-      } else {
-        endpoint = `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`;
+      const primaryGenreId = movie?.genres?.[0]?.id;
+      const primaryStudioId = movie?.production_companies?.[0]?.id;
+      const leadingActorId = movie?.credits?.cast?.[0]?.id;
+      const firstKeywordId = movie?.keywords?.keywords?.[0]?.id;
+
+      switch (activeTab) {
+        case "related":
+          endpoint = `${BASE_URL}/${mediaType}/${id}/similar?api_key=${API_KEY}&page=${pageNum}`;
+          break;
+        case "genre":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${primaryGenreId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "studio":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_companies=${primaryStudioId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "actor":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${leadingActorId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "topic":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_keywords=${firstKeywordId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        default: // 'all' tab
+          endpoint = isFallbackMode
+            ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
+            : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
       }
 
       const res = await axios.get(endpoint);
-      const data = res.data.results;
+      const newItems = res.data.results;
 
-      if (data.length === 0) {
-        if (fetchStrategy === "recommendations") {
-          setFetchStrategy("genre");
-          setRecPage(1);
-        } else if (fetchStrategy === "genre") {
-          setFetchStrategy("popular");
+      if (newItems.length === 0) {
+        if (activeTab === "all" && !isFallbackMode) {
+          setIsFallbackMode(true);
           setRecPage(1);
         } else {
           setHasMoreRecs(false);
@@ -175,7 +190,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       }
 
       const unsafeKeywords = ["sexy", "porn", "nude", "adult", "sex", "18+"];
-      const safeResults = data.filter((item) => {
+      const safeResults = newItems.filter((item) => {
         const title = (item.title || "").toLowerCase();
         const hasUnsafe = unsafeKeywords.some((k) => title.includes(k));
         return (
@@ -188,9 +203,12 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       );
 
       if (res.data.page >= res.data.total_pages) {
-        if (fetchStrategy === "recommendations") setFetchStrategy("genre");
-        else if (fetchStrategy === "genre") setFetchStrategy("popular");
-        else setHasMoreRecs(false);
+        if (activeTab === "all" && !isFallbackMode) {
+          setIsFallbackMode(true);
+          setRecPage(1);
+        } else {
+          setHasMoreRecs(false);
+        }
       }
 
       setLoadingMoreRecs(false);
@@ -202,8 +220,21 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   useEffect(() => {
     fetchSidebarData(recPage);
-  }, [recPage, fetchStrategy, movie]);
+  }, [recPage, isFallbackMode, id, mediaType, activeTab]);
 
+  // Handle Tab Change
+  useEffect(() => {
+    setRecommendations([]);
+    setRecPage(1);
+    setHasMoreRecs(true);
+    setIsFallbackMode(false);
+    if (id) {
+      // Only fetch if ID is available
+      fetchSidebarData(1);
+    }
+  }, [activeTab, id]); // Added id to dependencies to ensure fetch on initial load after id is set
+
+  // Infinite Scroll Intersection Observer
   useEffect(() => {
     if (loadingMoreRecs || !hasMoreRecs) return;
     const observer = new IntersectionObserver(
@@ -309,15 +340,15 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       {movie?.backdrop_path && (
         <div className="fixed inset-0 z-0">
           <motion.div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
+          <motion.div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
           <motion.img
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 2 , ease: "easeInOut" }}
+            transition={{ duration: 2, ease: "easeInOut" }}
             src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-            alt={`Watch ${movie.title || movie.name} (${(movie.release_date || movie.first_air_date || "").split("-")[0]
-              }) Cinematic Background HD`}
+            alt={`Watch ${movie.title || movie.name} (${
+              (movie.release_date || movie.first_air_date || "").split("-")[0]
+            }) Cinematic Background HD`}
             title={`Watch ${movie.title || movie.name} Full HD`}
             className="w-full h-screen object-cover lg:opacity-100 blur-xs opacity-70  "
           />
@@ -375,10 +406,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={provider.name}
                   onClick={() => setSelectedServer(provider)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${selectedServer.name === provider.name
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                    selectedServer.name === provider.name
                       ? "bg-primary text-black"
                       : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
-                    }`}
+                  }`}
                 >
                   {provider.name}
                 </button>
@@ -452,7 +484,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       {mediaType === "movie"
                         ? movie.title
                         : movie.name +
-                        ` (S${selectedSeason} E${selectedEpisode})`}
+                          ` (S${selectedSeason} E${selectedEpisode})`}
                     </h1>
                     {/* Watch Later Button (Mobile/Desktop) */}
                     <div className="flex items-center gap-4 mt-2">
@@ -569,13 +601,45 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           <div className="w-full  px-2  lg:w-[25vw] flex flex-col gap-4">
-            <h3 className="text-lg font-semibold font-poppins md:pb-[0.5vw]">
-              {fetchStrategy === "recommendations"
-                ? "Recommended"
-                : fetchStrategy === "genre"
-                  ? `More ${movie?.genres?.[0]?.name}`
-                  : "Trending Now"}
-            </h3>
+            <div className="mb-2 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 pb-2">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "related", label: "Related" },
+                  { id: "genre", label: movie?.genres?.[0]?.name || "Genre" },
+                  {
+                    id: "studio",
+                    label: movie?.production_companies?.[0]?.name
+                      ? "From Studio"
+                      : "Studio",
+                  },
+                  {
+                    id: "actor",
+                    label: movie?.credits?.cast?.[0]?.name
+                      ? `With ${movie.credits.cast[0].name.split(" ")[0]}`
+                      : "Actor",
+                  },
+                  {
+                    id: "topic",
+                    label: movie?.keywords?.keywords?.[0]?.name
+                      ? `#${movie.keywords.keywords[0].name}`
+                      : "Topic",
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                      activeTab === tab.id
+                        ? "bg-white text-black border-white"
+                        : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex flex-col gap-3">
               {recommendations.map((rec, index) => {
                 const isRecSaved = watchLater.some(
@@ -593,8 +657,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     >
                       <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                         <img
-                          src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
-                            }`}
+                          src={`https://image.tmdb.org/t/p/w300${
+                            rec.backdrop_path || rec.poster_path
+                          }`}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           alt={rec.title || rec.name}
                         />

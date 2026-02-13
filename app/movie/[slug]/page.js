@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
 
   try {
     const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=keywords,credits,external_ids`,
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=keywords,credits,external_ids,release_dates,watch/providers`,
     );
     const data = res.data;
     const title = data.title || data.name;
@@ -55,10 +55,14 @@ export async function generateMetadata({ params }) {
     const genreNames = data.genres
       ? data.genres.map((g) => g.name).join(", ")
       : "Movies";
-    const prefix = `Watch ${title} (${year}) Full ${mediaType === "tv" ? "Series" : "Movie"} Online Free - `;
-    const suffix = ` - Output in 1080p HD on MovieLab. Stream ${title} with English Subtitles, No Ads, and No Buffering. Best site for ${genreNames}.`;
+    const director = data.credits?.crew?.find(
+      (person) => person.job === "Director",
+    )?.name;
+    const prefix = `Watch ${title} (${year})${director ? ` directed by ${director}` : ""} Full ${mediaType === "tv" ? "Series" : "Movie"} Online Free. `;
+    const storyBrief = overview ? `${overview.substring(0, 150)}... ` : "";
+    const suffix = `Stream ${title} in 1080p HD on MovieLab. Experience ${genreNames} content with zero ads and fast buffering.`;
 
-    let description = `${prefix}${overview}${suffix}`;
+    let description = `${prefix}${storyBrief}${suffix}`;
     if (description.length > 300) {
       description = description.substring(0, 297) + "...";
     }
@@ -116,7 +120,7 @@ export default async function Page({ params }) {
   let data = null;
   try {
     const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
+      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,release_dates,external_ids,watch/providers`,
     );
     data = res.data;
   } catch (error) {

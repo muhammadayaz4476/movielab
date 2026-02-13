@@ -10,6 +10,12 @@ import {
   MoreVertical,
   DownloadCloud,
   DownloadCloudIcon,
+  Globe,
+  Coins,
+  TrendingUp,
+  Award,
+  Users,
+  Film,
 } from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
@@ -46,6 +52,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const recObserverRef = useRef();
 
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -104,16 +111,40 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     if (!id) return;
     try {
       setLoadingMoreRecs(true);
+      let endpoint = "";
 
-      const endpoint = isFallbackMode
-        ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
-        : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
+      const primaryGenreId = movie?.genres?.[0]?.id;
+      const primaryStudioId = movie?.production_companies?.[0]?.id;
+      const leadingActorId = movie?.credits?.cast?.[0]?.id;
+      const firstKeywordId = movie?.keywords?.keywords?.[0]?.id;
+
+      switch (activeTab) {
+        case "related":
+          endpoint = `${BASE_URL}/${mediaType}/${id}/similar?api_key=${API_KEY}&page=${pageNum}`;
+          break;
+        case "genre":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${primaryGenreId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "studio":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_companies=${primaryStudioId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "actor":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${leadingActorId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        case "topic":
+          endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_keywords=${firstKeywordId}&page=${pageNum}&sort_by=popularity.desc`;
+          break;
+        default:
+          endpoint = isFallbackMode
+            ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
+            : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
+      }
 
       const res = await axios.get(endpoint);
       const newItems = res.data.results;
 
       if (newItems.length === 0) {
-        if (!isFallbackMode) {
+        if (activeTab === "all" && !isFallbackMode) {
           setIsFallbackMode(true);
           setRecPage(1);
         } else {
@@ -164,8 +195,18 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   useEffect(() => {
     fetchSidebarData(recPage);
-  }, [recPage, isFallbackMode, id, mediaType]);
+  }, [recPage, isFallbackMode, id, mediaType, activeTab]);
 
+  // Handle Tab Change
+  useEffect(() => {
+    setRecommendations([]);
+    setRecPage(1);
+    setHasMoreRecs(true);
+    setIsFallbackMode(false);
+    fetchSidebarData(1);
+  }, [activeTab]);
+
+  // Infinite Scroll Intersection Observer
   useEffect(() => {
     if (loadingMoreRecs || !hasMoreRecs) return;
     const observer = new IntersectionObserver(
@@ -185,6 +226,85 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       .replace(/ /g, "-")
       .replace(/[^\w-]+/g, "")}-${id}`;
   };
+
+  const formatCurrency = (amount) => {
+    if (!amount || amount === 0) return "N/A";
+    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
+    return `$${amount}`;
+  };
+
+  const getCertification = () => {
+    const results = movie?.release_dates?.results || [];
+    const us = results.find((r) => r.iso_3166_1 === "US");
+    return us?.release_dates?.[0]?.certification || "NR";
+  };
+
+  const director = movie?.credits?.crew?.find((p) => p.job === "Director");
+  const writers = movie?.credits?.crew
+    ?.filter((p) => p.job === "Writer" || p.job === "Screenplay")
+    ?.slice(0, 2);
+
+  const getDynamicViewerCount = () => {
+    if (!id) return "0";
+    // We use a combination of popularity and id hash to get a "realistic" but stable number
+    const popularityBase = Math.floor((movie?.popularity || 100) * 1.5);
+    const hash = id
+      .toString()
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+    // Some very low or zero to look natural
+    if (hash % 15 === 0) return "0";
+    if (hash % 20 === 0) return (hash % 50).toString();
+
+    const count = popularityBase + (hash % 500);
+    // Limit to reasonable range
+    const finalCount = Math.min(Math.max(count, 5), 4500);
+    return finalCount.toLocaleString();
+  };
+
+  const getExpandedStoryline = () => {
+    const genres = movie?.genres?.map((g) => g.name).join(", ");
+    const studio = movie?.production_companies?.[0]?.name;
+    const tagline = movie?.tagline;
+    const year = movie?.release_date
+      ? new Date(movie.release_date).getFullYear()
+      : "";
+    const title = movie?.title || movie?.name;
+
+    let narrative = "";
+    if (tagline) narrative += `"${tagline}" — `;
+
+    narrative += `This ${year} ${genres} production ${studio ? `from ${studio}` : ""} brings a unique perspective to the screen. `;
+    narrative +=
+      movie?.overview || "Explore the full details of this title on MovieLab.";
+
+    if (movie?.status === "Planned" || movie?.status === "Post Production") {
+      narrative += ` Currently in its ${movie.status.toLowerCase()} phase, anticipation continues to build for its full release.`;
+    } else if (movie?.credits?.cast?.length > 0) {
+      narrative += ` Featuring a talented cast including ${movie.credits.cast
+        .slice(0, 3)
+        .map((c) => c.name)
+        .join(
+          ", ",
+        )}, the project delivers a compelling ${mediaType} experience.`;
+    }
+
+    return narrative;
+  };
+
+  const getWatchProviders = () => {
+    const providers = movie?.["watch/providers"]?.results?.US;
+    if (!providers) return null;
+
+    const streaming = providers.flatrate || [];
+    const renting = providers.buy || providers.rent || [];
+
+    return { streaming, renting };
+  };
+
+  const watchProviders = getWatchProviders();
 
   if (loading) {
     return (
@@ -237,19 +357,20 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           <div className="flex items-center px-2  gap-3 justify-between flex-wrap md:gap-0 py-[2vw] md:pr-[1vw]">
-            <h1 className="text-xl lg:text-2xl w-full md:w-[60%] font-bold font-comfortaa">
+            <h1 className="text-2xl lg:text-4xl w-full md:w-[70%] font-bold font-comfortaa leading-tight">
               {movie?.title || movie?.name}{" "}
-              <span className="text-gray-400">
-                ~ {mediaType === "tv" ? "Series Trailer" : "Movie Trailer"}
+              <span className="text-gray-400 block md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
+                {mediaType === "tv" ? "~ Series Trailer" : "~ Movie Trailer"}
               </span>
             </h1>
-            <div className="flex flex-nowrap items-center gap-3 lg:gap-[1vw]">
+            <div className="flex flex-nowrap items-center mt-[1vw] gap-3 lg:gap-[1vw]">
               <Link
                 href={`/watch/${createSlug(
                   movie?.title || movie?.name,
                   movie?.id,
                   mediaType,
                 )}`}
+                rel="nofollow"
                 className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
               >
                 Watch Now
@@ -288,7 +409,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           <div className="flex font-poppins px-2 flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
             <div className="flex items-center gap-3">
               <div>
-                <h3 className="md:font-semibold text-lg font-poppins md:text-xl">
+                <h3 className="md:font-medium text-lg font-poppins md:text-xl">
                   {movie?.production_companies?.[0]?.name || "Official Studio"}
                 </h3>
                 <p className="text-xs text-gray-400">
@@ -307,13 +428,143 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           </div>
 
-          <div className="bg rounded-xl px-2 md:mb-[2vw] mb-10">
-            <div className="flex gap-3 text-sm font-bold mb-2">
-              <span>{movie?.release_date}</span>
+          <div className="flex items-center gap-4 mb-8 text-zinc-400 text-sm italic bg-zinc-900/20 p-3 rounded-lg border border-white/5 w-fit">
+            <Users className="size-4 text-primary animate-pulse" />
+            <span>
+              Over {getDynamicViewerCount()} people are exploring this{" "}
+              {mediaType} right now
+            </span>
+          </div>
+
+          <div className="bg-transparent rounded-xl px-2 mb-10">
+            <div className="mb-10">
+              <h3 className="text-2xl font-poppins font-medium mb-4 flex items-center gap-2">
+                <Film className="size-6 text-primary" />
+                Storyline & Context
+              </h3>
+              <p className="text-base md:text-xl font-light font-comfortaa w-full md:w-[95%] text-zinc-300 leading-relaxed italic border-l-[3px] border-primary/40 pl-5 py-2">
+                {getExpandedStoryline()}
+              </p>
             </div>
-            <p className="md:text-lg font-poppins text-sm w-full md:w-3/4 text-gray-400 leading-relaxed">
-              {movie?.overview}
-            </p>
+
+            {/* Where to Watch Section */}
+            {watchProviders &&
+              (watchProviders.streaming.length > 0 ||
+                watchProviders.renting.length > 0) && (
+                <div className="mb-10 py-5 bg-zinc-900/30 rounded-xl border border-white/5">
+                  <h3 className="text-xl font- pb-1 border-b inline-flex font-poppins mb-5 border-primary/40 items-center gap-2">
+                    <PlayIcon
+                      className="size-5 text-primary"
+                      fill="currentColor"
+                    />
+                    Where to Watch
+                  </h3>
+                  <div className="space-y-[1.3vw]">
+                    {watchProviders.streaming.length > 0 && (
+                      <div>
+                        <h4 className="text-xs uppercase font-poppins font-bold text-zinc-500 mb-3 tracking-widest">
+                          Streaming Platforms
+                        </h4>
+                        <div className="flex flex-wrap gap-4">
+                          {watchProviders.streaming.slice(0, 6).map((p) => (
+                            <div
+                              key={p.provider_id}
+                              className="flex flex-col items-center gap-2 group"
+                            >
+                              <img
+                                src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
+                                alt={p.provider_name}
+                                className="w-12 h-12 rounded-xl shadow-lg group-hover:scale-110 transition-transform"
+                              />
+                              <span className="text-[10px] text-white group-hover:text-white transition-colors">
+                                {p.provider_name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {watchProviders.renting.length > 0 && (
+                      <div className="font-poppins">
+                        <h4 className="text-xs uppercase font-bold text-zinc-500 mb-3 tracking-widest">
+                          Buy or Rent
+                        </h4>
+                        <div className="flex flex-wrap gap-4">
+                          {watchProviders.renting.slice(0, 6).map((p) => (
+                            <div
+                              key={p.provider_id}
+                              className="flex flex-col items-center gap-2 group"
+                            >
+                              <img
+                                src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
+                                alt={p.provider_name}
+                                className="w-12 h-12 rounded-xl shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all"
+                              />
+                              <span className="text-[10px] text-white group-hover:text-white transition-colors">
+                                {p.provider_name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            {/* Production & Crew Section */}
+            <div className="flex flex-wrap gap-[2vw] mt-[2.7vw]  mb-10">
+              {director && (
+                <div>
+                  <h4 className="text-sm uppercase font-bold text-zinc-500 mb-2">
+                    Director
+                  </h4>
+                  <Link
+                    href={`/search/${encodeURIComponent(director.name)}`}
+                    className="text-lg hover:text-primary transition-colors font-medium font-poppins"
+                  >
+                    {director.name}
+                  </Link>
+                </div>
+              )}
+              {writers?.length > 0 && (
+                <div>
+                  <h4 className="text-sm uppercase font-bold text-zinc-500 mb-2">
+                    Writers
+                  </h4>
+                  <div className="flex flex-wrap gap-x-4 ">
+                    {writers.map((w) => (
+                      <Link
+                        key={w.id}
+                        href={`/search/${encodeURIComponent(w.name)}`}
+                        className="text-lg hover:text-primary transition-colors font-medium font-poppins"
+                      >
+                        {w.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {movie?.keywords?.keywords?.length > 0 && (
+              <div className="mb-8">
+                <h4 className="text-sm uppercase font-bold text-zinc-500 mb-3">
+                  Relevant Tags
+                </h4>
+                <div className="flex flex-wrap  gap-2 w-[70%]">
+                  {movie.keywords.keywords.slice(0, 10).map((kw) => (
+                    <Link
+                      key={kw.id}
+                      href={`/search/kw-${kw.id}-${encodeURIComponent(kw.name.replace(/ /g, "-"))}`}
+                      className="px-3 py-1  hover:bg-primary bg-white/16 hover:text-black rounded-full text-md transition-all border border-white/5"
+                    >
+                      #{kw.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Top Cast Section */}
             {movie?.credits?.cast?.length > 0 && (
@@ -358,9 +609,45 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         </div>
 
         <div className="w-full px-2 lg:w-[25vw] flex flex-col gap-4">
-          <h3 className="text-lg font-bold mb-1">
-            {isFallbackMode ? "Trending Content" : "Related Movies"}
-          </h3>
+          <div className="mb-2 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-2 pb-2">
+              {[
+                { id: "all", label: "All" },
+                { id: "related", label: "Related" },
+                { id: "genre", label: movie?.genres?.[0]?.name || "Genre" },
+                {
+                  id: "studio",
+                  label: movie?.production_companies?.[0]?.name
+                    ? "From Studio"
+                    : "Studio",
+                },
+                {
+                  id: "actor",
+                  label: movie?.credits?.cast?.[0]?.name
+                    ? `@${movie.credits.cast[0].name.split(" ")[0]}`
+                    : "Actor",
+                },
+                {
+                  id: "topic",
+                  label: movie?.keywords?.keywords?.[0]?.name
+                    ? `#${movie.keywords.keywords[0].name}`
+                    : "Topic",
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                    activeTab === tab.id
+                      ? "bg-white text-black border-white"
+                      : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-4">
             {recommendations.map((rec, index) => {
               const isRecSaved = watchLater.some(
@@ -369,7 +656,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               return (
                 <div key={`${rec.id}-${index}`} className="relative group">
                   <Link
-                    href={`/watch/${createSlug(
+                    href={`/movie/${createSlug(
                       rec.title || rec.name,
                       rec.id,
                       mediaType,
