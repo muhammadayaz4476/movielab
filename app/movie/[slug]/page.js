@@ -1,8 +1,16 @@
-import axios from "axios";
 import MovieContent from "./MovieContent";
 
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
+
+async function getTMDBData(mediaType, id, appendToResponse = "") {
+  const url = `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}${appendToResponse ? `&append_to_response=${appendToResponse}` : ""}`;
+  const res = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+  if (!res.ok) {
+    throw new Error(`Failed to fetch TMDB data: ${res.statusText}`);
+  }
+  return res.json();
+}
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -11,10 +19,11 @@ export async function generateMetadata({ params }) {
   const mediaType = isTV ? "tv" : "movie";
 
   try {
-    const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=keywords,credits,external_ids,release_dates,watch/providers`,
+    const data = await getTMDBData(
+      mediaType,
+      id,
+      "keywords,credits,external_ids,release_dates,watch/providers",
     );
-    const data = res.data;
     const title = data.title || data.name;
     const overview = data.overview || "";
     const backdrop = data.backdrop_path;
@@ -119,10 +128,11 @@ export default async function Page({ params }) {
 
   let data = null;
   try {
-    const res = await axios.get(
-      `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,release_dates,external_ids,watch/providers`,
+    data = await getTMDBData(
+      mediaType,
+      id,
+      "videos,credits,keywords,release_dates,external_ids,watch/providers",
     );
-    data = res.data;
   } catch (error) {
     console.error("Error fetching content in server component:", error);
   }

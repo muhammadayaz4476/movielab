@@ -315,14 +315,16 @@ const Navbar = () => {
                             <SearchIcon size={16} className="text-primary" />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0">
+                          <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 relative">
                             {item.poster_path || item.profile_path ? (
-                              <img
+                              <Image
                                 src={`https://image.tmdb.org/t/p/w92${
                                   item.poster_path || item.profile_path
                                 }`}
-                                alt={item.title || item.name}
-                                className="w-full h-full object-cover"
+                                alt={item.title || item.name || "Suggestion"}
+                                className="object-cover"
+                                fill
+                                sizes="40px"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">

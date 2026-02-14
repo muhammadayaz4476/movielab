@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import Image from "next/image";
 import {
   Share2,
   Plus,
@@ -38,6 +39,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   // Main Movie/TV State
   const [movie, setMovie] = useState(initialData);
   const [trailer, setTrailer] = useState(null);
+  const [showTrailer, setShowTrailer] = useState(false);
   const [loading, setLoading] = useState(!initialData);
 
   // Recommendations / Sidebar State
@@ -83,6 +85,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       // If the ID and mediaType match initialData, we don't need to refetch immediately
       if (initialData && initialData.id.toString() === id.toString()) {
         setMovie(initialData);
+        console.log(initialData);
         setLoading(false);
       } else {
         try {
@@ -91,6 +94,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
           );
           setMovie(res.data);
+          console.log(res.data);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching content details:", error);
@@ -331,27 +335,38 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       <div className="flex flex-col lg:flex-row gap-6 px-0 lg:px-[5vw] md:py-[8vw] py-[160px]">
         <div className="flex-1">
           <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden mb-4 relative group">
-            {trailer ? (
+            {trailer && showTrailer ? (
               <iframe
                 className="w-full h-full"
-                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=0`}
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=1`}
                 title="Trailer"
                 frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800">
-                <img
-                  src={`https://image.tmdb.org/t/p/original${movie?.backdrop_path}`}
-                  className="absolute inset-0 w-full h-full object-cover opacity-30"
-                  alt={movie?.title}
-                />
-                <p className="relative z-10 font-medium">
-                  Trailer not available
-                </p>
-                <p className="relative z-10 font-medium text-center">
-                  Check back later
-                </p>
+              <div
+                className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
+                onClick={() => setShowTrailer(true)}
+              >
+                {movie?.backdrop_path && (
+                  <Image
+                    src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
+                    className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
+                    alt={movie?.title || "Hero Backdrop"}
+                    fill
+                    priority={true}
+                    sizes="(max-width: 768px) 100vw, 70vw"
+                  />
+                )}
+                <div className="relative z-10 flex flex-col items-center gap-4">
+                  <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
+                    <PlayIcon fill="white" className="text-white" size={24} />
+                  </div>
+                  {/* <p className="font-medium text-lg lg:text-xl drop-shadow-md">
+                    Click to Play Trailer
+                  </p> */}
+                </div>
               </div>
             )}
           </div>
@@ -471,11 +486,15 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                               key={p.provider_id}
                               className="flex flex-col items-center gap-2 group"
                             >
-                              <img
-                                src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
-                                alt={p.provider_name}
-                                className="w-12 h-12 rounded-xl shadow-lg group-hover:scale-110 transition-transform"
-                              />
+                              <div className="w-12 h-12 relative">
+                                <Image
+                                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                                  alt={p.provider_name}
+                                  className="rounded-xl shadow-lg group-hover:scale-110 transition-transform object-cover"
+                                  fill
+                                  sizes="48px"
+                                />
+                              </div>
                               <span className="text-[10px] text-white group-hover:text-white transition-colors">
                                 {p.provider_name}
                               </span>
@@ -495,11 +514,15 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                               key={p.provider_id}
                               className="flex flex-col items-center gap-2 group"
                             >
-                              <img
-                                src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
-                                alt={p.provider_name}
-                                className="w-12 h-12 rounded-xl shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all"
-                              />
+                              <div className="w-12 h-12 relative">
+                                <Image
+                                  src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                                  alt={p.provider_name}
+                                  className="rounded-xl shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all object-cover"
+                                  fill
+                                  sizes="48px"
+                                />
+                              </div>
                               <span className="text-[10px] text-white group-hover:text-white transition-colors">
                                 {p.provider_name}
                               </span>
@@ -581,10 +604,12 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     >
                       <div className="w-full aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden relative">
                         {actor.profile_path ? (
-                          <img
-                            src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
+                          <Image
+                            src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
                             alt={actor.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            fill
+                            sizes="(max-width: 768px) 100px, 150px"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 text-xs text-center p-2">
@@ -664,12 +689,14 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     className="flex gap-3 group"
                   >
                     <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
-                      <img
+                      <Image
                         src={`https://image.tmdb.org/t/p/w300${
                           rec.backdrop_path || rec.poster_path
                         }`}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         alt={rec.title || rec.name}
+                        fill
+                        sizes="(max-width: 768px) 160px, 200px"
                       />
                     </div>
                     <div className="flex flex-col min-w-0 justify-center">
