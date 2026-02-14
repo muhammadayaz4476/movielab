@@ -359,13 +359,12 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 {movie?.backdrop_path && (
                   <Image
                     src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
-                    srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
                     className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
                     alt={movie?.title || "Hero Backdrop"}
                     fill
-                    priority={true}
-                    loading="eager"
-                    sizes="(max-width: 768px) 100vw, 70vw"
+                    priority
+                    fetchPriority="high"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 80vw"
                   />
                 )}
 

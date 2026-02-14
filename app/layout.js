@@ -1,12 +1,18 @@
+import dynamic from "next/dynamic";
 import { Poppins, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { AuthProvider } from "../context/AuthContext";
 import { AdminProvider } from "../context/AdminContext";
-import LoginModal from "../components/LoginModal";
 import SmoothScrollProvider from "./components/SmoothScrollProvider";
-import CustomScrollbar from "./components/CustomScrollbar";
 import PageTransition from "./components/PageTransition";
 import "./globals.css";
+
+const CustomScrollbar = dynamic(() => import("./components/CustomScrollbar"), {
+  ssr: false,
+});
+const LoginModal = dynamic(() => import("../components/LoginModal"), {
+  ssr: false,
+});
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -73,6 +79,9 @@ export const metadata = {
     google: "VBh8Z5n2gYt-blPxDnyzDu5KU9JOBHYSdaEZmv-s3bk",
     yandex: "03632b5675884ef5",
   },
+  other: {
+    "viewport-fit": "cover",
+  },
   robots: {
     index: true,
     follow: true,
@@ -89,6 +98,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="preconnect"
+          href="https://image.tmdb.org"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         <script
           type="application/ld+json"

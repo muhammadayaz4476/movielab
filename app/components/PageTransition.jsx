@@ -12,7 +12,7 @@ export default function PageTransition({ children }) {
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         // exit={{ opacity: 0, y: 5 }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
+        transition={{ duration: 0.4, ease: "circOut" }}
       >
         {children}
       </motion.div>
