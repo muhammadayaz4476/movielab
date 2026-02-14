@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   Share2,
   Plus,
@@ -20,9 +21,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import ShareModal from "../../components/ShareModal";
-import NoticeModal from "../../components/NoticeModal";
 import { useAuth } from "@/context/AuthContext";
+
+// Dynamic Imports for Modals
+const ShareModal = dynamic(() => import("../../components/ShareModal"), {
+  ssr: false,
+});
+const NoticeModal = dynamic(() => import("../../components/NoticeModal"), {
+  ssr: false,
+});
 
 // --- Skeleton Component for Sidebar ---
 const SidebarSkeleton = () => (
@@ -352,13 +359,16 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 {movie?.backdrop_path && (
                   <Image
                     src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
+                    srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
                     className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
                     alt={movie?.title || "Hero Backdrop"}
                     fill
                     priority={true}
+                    loading="eager"
                     sizes="(max-width: 768px) 100vw, 70vw"
                   />
                 )}
+
                 <div className="relative z-10 flex flex-col items-center gap-4">
                   <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
                     <PlayIcon fill="white" className="text-white" size={24} />

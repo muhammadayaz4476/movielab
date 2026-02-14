@@ -1,10 +1,5 @@
 "use client";
-import Lenis from "lenis";
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const SmoothScrollProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -59,39 +54,60 @@ const SmoothScrollProvider = ({ children }) => {
       return;
     }
 
-    // Define update function in effect scope for cleanup access
-    const update = (time) => {
-      lenisRef.current?.raf(time * 1000);
-    };
+    // Local variable to store the update function for ticker removal
+    let updateFn = null;
+    let gsapInstance = null;
 
     // Desktop: Use Lenis
-    const timeoutId = setTimeout(() => {
-      const lenis = new Lenis({
-        lerp: 0.1,
-        duration: 1.2,
-        smoothWheel: true,
-        smoothTouch: false,
-        wheelMultiplier: 1.1,
-        touchMultiplier: 0,
-        syncTouch: false,
-      });
+    const initSmoothScroll = async () => {
+      try {
+        const [{ default: Lenis }, { default: gsap }, { ScrollTrigger }] =
+          await Promise.all([
+            import("lenis"),
+            import("gsap"),
+            import("gsap/ScrollTrigger"),
+          ]);
 
-      lenisRef.current = lenis;
+        gsap.registerPlugin(ScrollTrigger);
+        gsapInstance = gsap;
 
-      // Sync with GSAP ScrollTrigger
-      lenis.on("scroll", ScrollTrigger.update);
+        const lenis = new Lenis({
+          lerp: 0.1,
+          duration: 1.2,
+          smoothWheel: true,
+          smoothTouch: false,
+          wheelMultiplier: 1.1,
+          touchMultiplier: 0,
+          syncTouch: false,
+        });
 
-      // Add to GSAP Ticker
-      gsap.ticker.add(update);
+        lenisRef.current = lenis;
 
-      // Disable lag smoothing for instant updates
-      gsap.ticker.lagSmoothing(0);
-    }, 10);
+        // Define update function
+        updateFn = (time) => {
+          lenis.raf(time * 1000);
+        };
+
+        // Sync with GSAP ScrollTrigger
+        lenis.on("scroll", ScrollTrigger.update);
+
+        // Add to GSAP Ticker
+        gsap.ticker.add(updateFn);
+
+        // Disable lag smoothing for instant updates
+        gsap.ticker.lagSmoothing(0);
+      } catch (error) {
+        console.error("Error initializing smooth scroll:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(initSmoothScroll, 10);
 
     return () => {
       clearTimeout(timeoutId);
-      // Cleanup GSAP Ticker
-      gsap.ticker.remove(update);
+      if (gsapInstance && updateFn) {
+        gsapInstance.ticker.remove(updateFn);
+      }
 
       if (lenisRef.current) {
         lenisRef.current.destroy();

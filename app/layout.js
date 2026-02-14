@@ -1,4 +1,4 @@
-import { Poppins, Roboto, Comfortaa } from "next/font/google";
+import { Poppins, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { AuthProvider } from "../context/AuthContext";
 import { AdminProvider } from "../context/AdminContext";
@@ -12,12 +12,6 @@ const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
 });
 
 const comfortaa = Comfortaa({
@@ -95,9 +89,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${poppins.variable} ${roboto.variable} ${comfortaa.variable} antialiased`}
-      >
+      <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
