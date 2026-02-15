@@ -46,14 +46,44 @@ const DiscoverContent = ({ slug }) => {
 
     try {
       let endpoint = "";
-      let params = `&page=${pageNum}&sort_by=popularity.desc&include_adult=false&vote_count.gte=10`;
+      const baseParams = `&page=${pageNum}`;
+      let sortBy = "popularity.desc";
+      const commonFilters = `&include_adult=false${
+        currentType === "tv" ? "&vote_count.gte=0" : "&vote_count.gte=10"
+      }`;
+
+      if (decodedSlug === "new-releases") sortBy = "release_date.desc";
+      if (decodedSlug === "hidden-gems") sortBy = "vote_average.desc";
+
+      let currentParams = `${baseParams}&sort_by=${sortBy}${commonFilters}`;
 
       if (currentYear) {
         if (currentType === "movie")
-          params += `&primary_release_year=${currentYear}`;
+          currentParams += `&primary_release_year=${currentYear}`;
         if (currentType === "tv")
-          params += `&first_air_date_year=${currentYear}`;
+          currentParams += `&first_air_date_year=${currentYear}`;
       }
+
+      const getGenreString = (baseGenres) => {
+        if (currentType === "movie") return baseGenres;
+        const genreMap = {
+          28: 10759, // Action -> Action & Adventure
+          12: 10759, // Adventure -> Action & Adventure
+          878: 10765, // Science Fiction -> Sci-Fi & Fantasy
+          14: 10765, // Fantasy -> Sci-Fi & Fantasy
+          27: "9648|10765|18", // Horror
+          10752: "10768|18", // War
+          53: "9648|80|18", // Thriller
+          36: 18, // History
+          10402: 18, // Music
+          10749: 18, // Romance -> Drama (for TV)
+        };
+        // Split by comma if multiple, map each, and join back
+        return baseGenres
+          .split(",")
+          .map((id) => genreMap[Number(id)] || id)
+          .join(",");
+      };
 
       if (
         ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
@@ -67,7 +97,9 @@ const DiscoverContent = ({ slug }) => {
           anime: "Anime",
           japanese: "Japanese",
         };
-        if (pageNum === 1) setTitle(capitals[decodedSlug]);
+        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
+        if (pageNum === 1) setTitle(`${capitals[decodedSlug]} ${mediaLabel}`);
+
         const langMap = {
           hollywood: "en",
           bollywood: "hi",
@@ -76,11 +108,13 @@ const DiscoverContent = ({ slug }) => {
           japanese: "ja",
         };
         if (decodedSlug === "anime") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=16&with_original_language=ja${params}`;
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString(
+            "16",
+          )}&with_original_language=ja${currentParams}`;
         } else if (decodedSlug === "hollywood") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=en${params}`;
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=en${currentParams}`;
         } else {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug]}${params}`;
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug]}${currentParams}`;
         }
       } else if (
         [
@@ -93,41 +127,56 @@ const DiscoverContent = ({ slug }) => {
           "web-series",
         ].includes(decodedSlug)
       ) {
+        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
         const categoryTitles = {
-          trending: "Trending Today",
-          "top-rated": "Top Rated Movies",
-          popular: "Popular Now",
-          "new-releases": "New Releases",
-          "hidden-gems": "Hidden Gems",
-          "feel-good": "Feel Good Movies",
+          trending: `Trending ${mediaLabel} Today`,
+          "top-rated": `Top Rated ${mediaLabel}`,
+          popular: `Popular ${mediaLabel} Now`,
+          "new-releases": `New ${mediaLabel} Releases`,
+          "hidden-gems": `Hidden Gem ${mediaLabel}`,
+          "feel-good": `Feel Good ${mediaLabel}`,
           "web-series": "Web Series",
         };
         if (pageNum === 1) setTitle(categoryTitles[decodedSlug]);
-        if (decodedSlug === "trending")
-          endpoint = `${BASE_URL}/trending/${currentType}/day?api_key=${API_KEY}${params}`;
-        else if (decodedSlug === "top-rated")
-          endpoint = `${BASE_URL}/${currentType}/top_rated?api_key=${API_KEY}${params}`;
-        else if (decodedSlug === "popular")
-          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${params}`;
-        else if (decodedSlug === "new-releases")
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&primary_release_date.gte=2024-01-01&sort_by=release_date.desc${params}`;
-        else if (decodedSlug === "hidden-gems")
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc${params}`;
-        else if (decodedSlug === "feel-good")
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc${params}`;
-        else if (decodedSlug === "web-series")
-          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${params}`;
+
+        if (decodedSlug === "trending") {
+          endpoint = `${BASE_URL}/trending/${currentType}/day?api_key=${API_KEY}${baseParams}`;
+        } else if (decodedSlug === "top-rated") {
+          endpoint = `${BASE_URL}/${currentType}/top_rated?api_key=${API_KEY}${baseParams}`;
+        } else if (decodedSlug === "popular") {
+          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${baseParams}`;
+        } else if (decodedSlug === "new-releases") {
+          const dateParam =
+            currentType === "movie"
+              ? "primary_release_date.gte"
+              : "first_air_date.gte";
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&${dateParam}=2024-01-01${currentParams}`;
+        } else if (decodedSlug === "hidden-gems") {
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300${currentParams}`;
+        } else if (decodedSlug === "feel-good") {
+          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString(
+            "35,10749",
+          )}${currentParams}`;
+        } else if (decodedSlug === "web-series") {
+          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${baseParams}`;
+        }
       } else {
         const parts = decodedSlug.split("-");
         const id = parts.pop();
         const name = parts.join(" ");
+        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
         if (pageNum === 1)
-          setTitle(name.charAt(0).toUpperCase() + name.slice(1));
+          setTitle(
+            `${name.charAt(0).toUpperCase() + name.slice(1)} ${mediaLabel}`,
+          );
         if (!id || isNaN(id)) {
           setLoading(false);
           return;
         }
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${id}${params}`;
+
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString(
+          id,
+        )}${currentParams}`;
       }
 
       const req = await axios.get(endpoint);
