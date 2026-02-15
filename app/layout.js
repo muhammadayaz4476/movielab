@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import { Poppins, Comfortaa } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { AuthProvider } from "../context/AuthContext";
@@ -6,13 +5,6 @@ import { AdminProvider } from "../context/AdminContext";
 import SmoothScrollProvider from "./components/SmoothScrollProvider";
 import PageTransition from "./components/PageTransition";
 import "./globals.css";
-
-const CustomScrollbar = dynamic(() => import("./components/CustomScrollbar"), {
-  ssr: false,
-});
-const LoginModal = dynamic(() => import("../components/LoginModal"), {
-  ssr: false,
-});
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -127,9 +119,7 @@ export default function RootLayout({ children }) {
         <AdminProvider>
           <AuthProvider>
             <SmoothScrollProvider>
-              <CustomScrollbar />
               <PageTransition>{children}</PageTransition>
-              <LoginModal />
             </SmoothScrollProvider>
           </AuthProvider>
         </AdminProvider>

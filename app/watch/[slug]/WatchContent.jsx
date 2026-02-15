@@ -560,9 +560,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 {/* Top Cast Section */}
                 {movie?.credits?.cast?.length > 0 && (
                   <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
-                    <h3 className="text-lg   font-poppins mb-4 text-white">
+                    <h2 className="text-lg   font-poppins mb-4 text-white">
                       Top Cast
-                    </h3>
+                    </h2>
                     <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
                       {movie.credits.cast.slice(0, 8).map((actor) => (
                         <Link
@@ -665,9 +665,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         />
                       </div>
                       <div className="flex flex-col min-w-0 justify-center">
-                        <h4 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                        <h3 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                           {rec.title || rec.name}
-                        </h4>
+                        </h3>
                         <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                           {
                             (rec.release_date || rec.first_air_date)?.split(

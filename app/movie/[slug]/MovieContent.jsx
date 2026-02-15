@@ -463,10 +463,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
           <div className="bg-transparent rounded-xl px-2 mb-10">
             <div className="mb-10">
-              <h3 className="text-2xl font-poppins font-medium mb-4 flex items-center gap-2">
+              <h2 className="text-2xl font-poppins font-medium mb-4 flex items-center gap-2">
                 <Film className="size-6 text-primary" />
                 Storyline & Context
-              </h3>
+              </h2>
               <p className="text-base md:text-xl font-light font-comfortaa w-full md:w-[95%] text-zinc-300 leading-relaxed italic border-l-[3px] border-primary/40 pl-5 py-2">
                 {getExpandedStoryline()}
               </p>
@@ -477,13 +477,13 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               (watchProviders.streaming.length > 0 ||
                 watchProviders.renting.length > 0) && (
                 <div className="mb-10 py-5 bg-zinc-900/30 rounded-xl border border-white/5">
-                  <h3 className="text-xl font- pb-1 border-b inline-flex font-poppins mb-5 border-primary/40 items-center gap-2">
+                  <h2 className="text-xl font- pb-1 border-b inline-flex font-poppins mb-5 border-primary/40 items-center gap-2">
                     <PlayIcon
                       className="size-5 text-primary"
                       fill="currentColor"
                     />
                     Where to Watch
-                  </h3>
+                  </h2>
                   <div className="space-y-[1.3vw]">
                     {watchProviders.streaming.length > 0 && (
                       <div>
@@ -602,9 +602,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             {/* Top Cast Section */}
             {movie?.credits?.cast?.length > 0 && (
               <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
-                <h3 className="text-lg font-poppins mb-4 text-white">
+                <h2 className="text-lg font-poppins mb-4 text-white">
                   Top Cast
-                </h3>
+                </h2>
                 <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
                   {movie.credits.cast.slice(0, 8).map((actor) => (
                     <Link
@@ -710,9 +710,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       />
                     </div>
                     <div className="flex flex-col min-w-0 justify-center">
-                      <h4 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                      <h3 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                         {rec.title || rec.name}
-                      </h4>
+                      </h3>
                       <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(

@@ -1,5 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+
+const CustomScrollbar = dynamic(() => import("./CustomScrollbar"), {
+  ssr: false,
+});
+const LoginModal = dynamic(() => import("@/components/LoginModal"), {
+  ssr: false,
+});
 
 const SmoothScrollProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -133,7 +141,13 @@ const SmoothScrollProvider = ({ children }) => {
     };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      <CustomScrollbar />
+      {children}
+      <LoginModal />
+    </>
+  );
 };
 
 export default SmoothScrollProvider;

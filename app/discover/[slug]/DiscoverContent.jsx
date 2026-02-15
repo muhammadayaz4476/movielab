@@ -38,7 +38,7 @@ const DiscoverContent = ({ slug }) => {
   const fetchDiscovery = async (
     pageNum,
     typeOverride = null,
-    yearOverride = null
+    yearOverride = null,
   ) => {
     if (!decodedSlug) return;
     const currentType = typeOverride || mediaType;
@@ -57,7 +57,7 @@ const DiscoverContent = ({ slug }) => {
 
       if (
         ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
-          decodedSlug
+          decodedSlug,
         )
       ) {
         const capitals = {
@@ -148,7 +148,7 @@ const DiscoverContent = ({ slug }) => {
         const overview = (item.overview || "").toLowerCase();
         const isAdult = item.adult;
         const hasUnsafeKeyword = unsafeKeywords.some(
-          (keyword) => title.includes(keyword) || overview.includes(keyword)
+          (keyword) => title.includes(keyword) || overview.includes(keyword),
         );
         return !isAdult && !hasUnsafeKeyword;
       });
@@ -157,7 +157,7 @@ const DiscoverContent = ({ slug }) => {
         if (req.data.results.length === 0) setHasMore(false);
       } else {
         setResults((prev) =>
-          pageNum === 1 ? safeResults : [...prev, ...safeResults]
+          pageNum === 1 ? safeResults : [...prev, ...safeResults],
         );
       }
       setLoading(false);
@@ -212,7 +212,7 @@ const DiscoverContent = ({ slug }) => {
 
   const years = Array.from(
     { length: 40 },
-    (_, i) => new Date().getFullYear() - i
+    (_, i) => new Date().getFullYear() - i,
   );
 
   return (
@@ -272,7 +272,7 @@ const DiscoverContent = ({ slug }) => {
               href={`/movie/${createSlug(
                 item.title || item.name,
                 item.id,
-                mediaType
+                mediaType,
               )}`}
               key={`${item.id}-${index}`}
               className="group cursor-pointer"
@@ -299,9 +299,9 @@ const DiscoverContent = ({ slug }) => {
                   </div>
                 </div>
               </div>
-              <h3 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors">
+              <h2 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors">
                 {item.title || item.name}
-              </h3>
+              </h2>
               <div className="flex items-center justify-between text-xs text-gray-400 mt-1">
                 <span>
                   {item.release_date || item.first_air_date

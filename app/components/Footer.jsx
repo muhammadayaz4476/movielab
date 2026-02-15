@@ -11,7 +11,8 @@ const Footer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !message) return setStatus({ error: "Please fill both fields" });
+    if (!name || !message)
+      return setStatus({ error: "Please fill both fields" });
     setLoading(true);
     setStatus(null);
     try {
@@ -42,7 +43,10 @@ const Footer = () => {
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span>Made by Umair at</span>
-            <Link href="https://umairlab.com" className="flex items-baseline font-comfortaa gap-1 tracking-tighter">
+            <Link
+              href="https://umairlab.com"
+              className="flex items-baseline font-comfortaa gap-1 tracking-tighter"
+            >
               <span className="text-white font-bold text-lg">.umair</span>
               <span className="text-primary font-bold">lab</span>
             </Link>
@@ -50,13 +54,20 @@ const Footer = () => {
           <p>© {new Date().getFullYear()} All Rights Reserved.</p>
           <div className="flex gap-4 mt-2">
             {/* <Link href="/contact" className="text-gray-300 hover:text-white">Contact</Link> */}
-            <Link href="/about" className="text-gray-300 hover:text-white">About</Link>
-            <Link href="/privacy" className="text-gray-300 hover:text-white">Privacy Policy</Link>
+            <Link href="/about" className="text-gray-300 hover:text-white">
+              About
+            </Link>
+            <Link href="/privacy" className="text-gray-300 hover:text-white">
+              Privacy Policy
+            </Link>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full md:w-1/2 lg:w-1/3 bg-zinc-900 border border-white/5 p-4 rounded-lg">
-          <h4 className="text-white font-poppins mb-2">Send us a message</h4>
+        <form
+          onSubmit={handleSubmit}
+          className="w-full md:w-1/2 lg:w-1/3 bg-zinc-900 border border-white/5 p-4 rounded-lg"
+        >
+          <h5 className="text-white font-poppins mb-2">Send us a message</h5>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -89,8 +100,12 @@ const Footer = () => {
             >
               {loading ? "Sending..." : "Send"}
             </button>
-            {status?.success && <span className="text-green-400">{status.success}</span>}
-            {status?.error && <span className="text-red-400">{status.error}</span>}
+            {status?.success && (
+              <span className="text-green-400">{status.success}</span>
+            )}
+            {status?.error && (
+              <span className="text-red-400">{status.error}</span>
+            )}
           </div>
         </form>
       </div>

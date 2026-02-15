@@ -428,9 +428,9 @@ const Navbar = () => {
               className="fixed top-0 right-0 bottom-0 w-[300px] lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold font-comfortaa text-white">
+                <h3 className="text-2xl font-bold font-comfortaa text-white">
                   Discover
-                </h2>
+                </h3>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-2 hover:bg-primary/20 hover:text-primary text-gray-400 rounded-full transition-colors"
@@ -447,9 +447,9 @@ const Navbar = () => {
               >
                 {/* Hubs Section */}
                 <div className="mb-10">
-                  <h3 className="text-primary text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                  <h4 className="text-primary text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
                     Cinema Hubs
-                  </h3>
+                  </h4>
                   <div className="grid grid-cols-2 gap-3">
                     {hubs.map((hub) => (
                       <Link
@@ -466,9 +466,9 @@ const Navbar = () => {
 
                 {/* Genres Section */}
                 <div>
-                  <h3 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                  <h4 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
                     Browse Genres
-                  </h3>
+                  </h4>
                   <div className="flex flex-col gap-1 pb-6">
                     {genres.map((genre) => (
                       <Link
