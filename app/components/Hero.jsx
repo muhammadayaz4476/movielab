@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+// Using standard img tag for direct TMDB asset loading & reliability
 
 const Hero = ({ initialMovies = [] }) => {
   const [movies, setMovies] = useState(initialMovies);
@@ -67,14 +67,11 @@ const Hero = ({ initialMovies = [] }) => {
             className="absolute inset-0"
           >
             {currentMovie?.backdrop_path && (
-              <Image
+              <img
                 src={`https://image.tmdb.org/t/p/original${currentMovie.backdrop_path}`}
                 alt={currentMovie?.title || currentMovie?.name || "Hero Banner"}
-                fill
-                priority={currentIndex === 0} // Priority for the first slide
-                className="object-cover transition-transform duration-[10000ms] ease-linear transform group-hover:scale-110"
-                sizes="100vw"
-                quality={90}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10000ms] ease-linear transform group-hover:scale-110"
+                loading={currentIndex === 0 ? "eager" : "lazy"}
               />
             )}
           </motion.div>

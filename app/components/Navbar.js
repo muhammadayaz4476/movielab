@@ -10,7 +10,7 @@ import {
   Layers,
   PlaySquareIcon,
 } from "lucide-react";
-import Image from "next/image";
+// Using standard img tag for direct TMDB asset loading & reliability
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -317,14 +317,12 @@ const Navbar = () => {
                         ) : (
                           <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 relative">
                             {item.poster_path || item.profile_path ? (
-                              <Image
+                              <img
                                 src={`https://image.tmdb.org/t/p/w92${
                                   item.poster_path || item.profile_path
                                 }`}
                                 alt={item.title || item.name || "Suggestion"}
-                                className="object-cover"
-                                fill
-                                sizes="40px"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">

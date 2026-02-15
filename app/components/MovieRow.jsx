@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import Image from "next/image";
+// Using standard img for direct TMDB asset loading & reliability
 import { Plus, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -112,16 +112,13 @@ const MovieRow = ({
                   {/* Image Container */}
                   <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden group">
                     {movie.poster_path ? (
-                      <Image
-                        fill
-                        className="object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
+                      <img
+                        className="absolute inset-0 w-full h-full object-cover transform lg:group-hover:scale-105 transition-transform duration-300"
                         src={`https://image.tmdb.org/t/p/w500/${
                           movie.poster_path || movie.backdrop_path
                         }`}
                         alt={`${movie.title || movie.name} poster`}
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 16vw"
-                        quality={75}
-                        priority={isHighPriority}
+                        loading={isHighPriority ? "eager" : "lazy"}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-800">
