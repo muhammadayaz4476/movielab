@@ -87,9 +87,11 @@ export async function middleware(request) {
     ".m4v",
     ".torrent",
     ".woff",
+    ".woff2",
     ".ttf",
     ".svg",
     ".webmanifest",
+    ".json",
   ];
   const isBot =
     userAgent && bots.some((bot) => userAgent.toLowerCase().includes(bot));
