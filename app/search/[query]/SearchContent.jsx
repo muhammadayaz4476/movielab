@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
+import Footer from "@/app/components/Footer";
 
 // Skeleton Component
 const SkeletonCard = () => (
@@ -307,7 +308,7 @@ const SearchContent = ({ query }) => {
           </div>
         ) : filteredResults.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-[1.5vw] font-poppins">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[2vw] font-poppins">
               {filteredResults.map((item, index) => (
                 <Link
                   href={`/movie/${createSlug(
@@ -356,33 +357,40 @@ const SearchContent = ({ query }) => {
 
               {/* Infinite Scroll Trigger (Skeleton Cards) */}
               {(hasMore || loadingMore) &&
-                Array.from({ length: 4 }).map((_, i) => (
+                Array.from({ length: 5 }).map((_, i) => (
                   <div ref={i === 0 ? observerRef : null} key={`skeleton-${i}`}>
                     <SkeletonCard />
                   </div>
                 ))}
             </div>
 
-            {loadingMore && (
+            {/* {loadingMore && (
               <div className="w-full py-10 flex flex-col items-center gap-2">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">
                   Loading Page {page}...
                 </p>
               </div>
-            )}
+            )} */}
 
             {!hasMore && !loadingMore && filteredResults.length > 10 && (
-              <div className="text-center py-20 text-gray-500 text-[10px] uppercase tracking-widest mt-10 border-t border-white/5">
+              <>
+              <div className="text-center py-20 text-white/80 text-[15px]  font-poppins   uppercase tracking-widest mt-10 border-t border-white/15">
                 You've reached the end!
               </div>
+              <Footer />
+              </>
             )}
           </>
         ) : (
           !loading && (
+            <>
             <div className="text-center py-40 text-gray-400 font-comfortaa">
               No results found for your search.
             </div>
+              <Footer />
+
+            </>
           )
         )}
       </div>

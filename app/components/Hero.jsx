@@ -120,7 +120,7 @@ const Hero = ({ initialMovies = [] }) => {
             </div> */}
             <div className="lg:w-full space-y-4 md:mt-[10vw] mt-[14vw] ">
               <h1 className="text-3xl text-white lg:text-5xl leading-normal lg:leading-[4vw] font-semibold lg:font-light font-comfortaa">
-                MovieLab — Watch & Download Your{" "}
+                MovieLab Watch & Download Your{" "}
                 <br className="hidden lg:block" /> Favorite Movies Here.
               </h1>
               <p className="w-3/4  lg:text-lg font-poppins text-gray-300">

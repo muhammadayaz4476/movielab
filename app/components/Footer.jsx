@@ -38,8 +38,8 @@ const Footer = () => {
   };
 
   return (
-    <footer className="px-4 lg:px-[5vw] py-10 border-t border-white/5 mt-10">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-zinc-500 text-sm font-poppins">
+    <footer className="px-4 lg:px-[5vw] py-10  ">
+      <div className="   flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-zinc-500 text-sm font-poppins">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span>Made by Umair at</span>
@@ -65,13 +65,15 @@ const Footer = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="w-full md:w-1/2 lg:w-1/3 bg-zinc-900 border border-white/5 p-4 rounded-lg"
+          className="w-full md:w-1/2 lg:w-1/3  bg-zinc-900 border border-white/5 p-4 rounded-lg"
         >
-          <h5 className="text-white font-poppins mb-2">Send us a message</h5>
+          <h5 className="text-white font-poppins text-lg  mb-2">Send us a message</h5>
+          <div className="flex  gap-2">
+
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full mb-2 p-2 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
+            className="w-full mb-2 p-3 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
             placeholder="Your name"
             aria-label="Name"
             required
@@ -80,10 +82,12 @@ const Footer = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
-            className="w-full mb-2 p-2 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
+            className="w-full mb-2 p-3 rounded bg-zinc-800 text-white outline-none border border-transparent focus:border-primary"
             placeholder="Your email (optional)"
             aria-label="Email"
           />
+          </div>
+
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -96,7 +100,7 @@ const Footer = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-primary text-black px-4 py-2 rounded font-medium disabled:opacity-50"
+              className="bg-primary w-full text-black px-4 py-3 text-lg rounded font-medium disabled:opacity-50"
             >
               {loading ? "Sending..." : "Send"}
             </button>

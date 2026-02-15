@@ -266,7 +266,7 @@ const DiscoverContent = ({ slug }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-[1.5vw]">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[1.5vw]">
           {results.map((item, index) => (
             <Link
               href={`/movie/${createSlug(
