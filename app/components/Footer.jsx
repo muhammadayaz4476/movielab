@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useState } from "react";
+import Explore from "./Explore";
 
 const Footer = () => {
   const [name, setName] = useState("");
@@ -8,6 +9,7 @@ const Footer = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
+  const [showExplore, setShowExplore] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,12 +50,32 @@ const Footer = () => {
               className="flex items-baseline font-comfortaa gap-1 tracking-tighter"
             >
               <span className="text-white font-bold text-lg">.umair</span>
-              <span className="text-primary font-bold">lab</span>
+              <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text">lab</span>
             </Link>
           </div>
           <p>© {new Date().getFullYear()} All Rights Reserved.</p>
           <div className="flex gap-4 mt-2">
-            {/* <Link href="/contact" className="text-gray-300 hover:text-white">Contact</Link> */}
+            {/* <div className="relative">
+              <button
+                onClick={() => setShowExplore(!showExplore)}
+                className="text-gray-300 hover:text-white flex items-center gap-1"
+              >
+                Explore
+                <svg 
+                  className={`w-4 h-4 transition-transform ${showExplore ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7 7" />
+                </svg>
+              </button>
+              {showExplore && (
+                <div className="absolute bottom-full left-0 mb-2 bg-zinc-900 border border-white/10 rounded-lg p-4 shadow-xl">
+                  <Explore />
+                </div>
+              )}
+            </div> */}
             <Link href="/about" className="text-gray-300 hover:text-white">
               About
             </Link>

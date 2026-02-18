@@ -3,6 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
 import Link from "next/link";
+import HoverOverlay from "@/app/components/HoverOverlay";
+import { useAuth } from "@/context/AuthContext";
 
 // Skeleton Component
 const SkeletonCard = () => (
@@ -30,6 +32,7 @@ const DiscoverContent = ({ slug }) => {
   const [year, setYear] = useState("");
 
   const observerRef = useRef();
+  const { toggleWatchLater, watchLater } = useAuth();
 
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
@@ -339,19 +342,26 @@ const DiscoverContent = ({ slug }) => {
                   </div>
                 )}
 
-                {/* Badge Overlay */}
-                <div className="absolute top-2 right-2 lg:top-[0.8vw] lg:right-[0.8vw]">
+                <HoverOverlay 
+                  movie={item} 
+                  isSaved={watchLater.some(
+                    (watchItem) => watchItem.id === item.id.toString(),
+                  )} 
+                  toggleWatchLater={toggleWatchLater} 
+                />
+
+                <div className="absolute top-2 right-2 lg:top-[0.8vw] lg:right-[0.8vw] lg:group-hover:hidden transition-opacity duration-200">
                   <div className="px-2 py-0.5 lg:px-2 lg:py-1 bg-primary rounded-md backdrop-blur-sm bg-opacity-90">
-                    <span className="text-[8px] lg:text-[10px] font-black text-black uppercase tracking-[0.1em] font-poppins">
+                    <span className="text-[8px] lg:text-[10px] font-black text-black uppercase tracking-widest font-poppins">
                       {mediaType === "tv" ? "Series" : "Movie"}
                     </span>
                   </div>
                 </div>
               </div>
-              <h2 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors">
+              <h2 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors lg:group-hover:hidden">
                 {item.title || item.name}
               </h2>
-              <div className="flex items-center justify-between text-xs text-gray-400 mt-1">
+              <div className="flex items-center justify-between text-xs text-gray-400 mt-1 lg:group-hover:hidden">
                 <span>
                   {item.release_date || item.first_air_date
                     ? (item.release_date || item.first_air_date).split("-")[0]

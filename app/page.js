@@ -18,6 +18,39 @@ async function getInitialData() {
       sciFiMovies: `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`,
     };
 
+    // Trending Keywords Fetching
+    let trendingKeywords = [];
+    try {
+      const trendingUrl = urls.trendingToday;
+      const trendingRes = await fetch(trendingUrl, {
+        next: { revalidate: 3600 },
+      });
+      const trendingData = await trendingRes.json();
+      const topMovies = (trendingData.results || []).slice(0, 6);
+
+      const keywordRequests = topMovies.map((movie) =>
+        fetch(
+          `${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`,
+          { next: { revalidate: 86400 } }, // Cache keywords for 24 hours
+        ).then((res) => res.json()),
+      );
+
+      const keywordsData = await Promise.all(keywordRequests);
+      const allKeywords = keywordsData.flatMap((data) => data.keywords || []);
+
+      // Deduplicate by ID
+      const uniqueKeywordsMap = new Map();
+      allKeywords.forEach((k) => {
+        if (!uniqueKeywordsMap.has(k.id)) {
+          uniqueKeywordsMap.set(k.id, { id: k.id, name: k.name });
+        }
+      });
+
+      trendingKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 50);
+    } catch (err) {
+      console.error("Failed to fetch trending keywords", err);
+    }
+
     const requests = Object.entries(urls).map(async ([key, url]) => {
       const res = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
       if (!res.ok) return [key, []];
@@ -28,10 +61,16 @@ async function getInitialData() {
     });
 
     const results = await Promise.all(requests);
-    return Object.fromEntries(results);
+    return { ...Object.fromEntries(results), trendingKeywords };
   } catch (error) {
     console.error("Server-side fetch error:", error);
-    return { hero: [], trendingToday: [], horrorMovies: [], sciFiMovies: [] };
+    return {
+      hero: [],
+      trendingToday: [],
+      horrorMovies: [],
+      sciFiMovies: [],
+      trendingKeywords: [],
+    };
   }
 }
 

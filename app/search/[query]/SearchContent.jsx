@@ -4,6 +4,8 @@ import axios from "axios";
 import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
+import HoverOverlay from "@/app/components/HoverOverlay";
+import { useAuth } from "@/context/AuthContext";
 
 // Skeleton Component
 const SkeletonCard = () => (
@@ -30,6 +32,7 @@ const SearchContent = ({ query }) => {
   const [displayQuery, setDisplayQuery] = useState(decodedQuery);
   const [personInfo, setPersonInfo] = useState(null);
   const observerRef = React.useRef(null);
+  const { toggleWatchLater, watchLater } = useAuth();
 
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
@@ -59,18 +62,45 @@ const SearchContent = ({ query }) => {
       let newResults = [];
       let extraCredits = [];
 
-      if (decodedQuery.startsWith("kw-")) {
-        const kwId = decodedQuery.split("-")[1];
+      if (
+        decodedQuery.startsWith("kw-") ||
+        decodedQuery.startsWith("genre-") ||
+        decodedQuery.startsWith("year-")
+      ) {
+        const parts = decodedQuery.split("-");
+        const id = parts[1];
+
         let endpoints = [];
+
+        // Define base params based on filter type
+        const movieBase = `${BASE_URL}/discover/movie?api_key=${API_KEY}&include_adult=false&sort_by=popularity.desc&page=${pageNum}`;
+        const tvBase = `${BASE_URL}/discover/tv?api_key=${API_KEY}&include_adult=false&sort_by=popularity.desc&page=${pageNum}`;
+
+        let movieQuery = "";
+        let tvQuery = "";
+
+        if (decodedQuery.startsWith("kw-")) {
+          movieQuery = `&with_keywords=${id}`;
+          tvQuery = `&with_keywords=${id}`;
+        } else if (decodedQuery.startsWith("genre-")) {
+          movieQuery = `&with_genres=${id}`;
+          tvQuery = `&with_genres=${id}`;
+        } else if (decodedQuery.startsWith("year-")) {
+          movieQuery = `&primary_release_year=${id}`;
+          tvQuery = `&first_air_date_year=${id}`;
+        }
+
+        // Apply additional year filter for kw/genre searches if present
+        if (!decodedQuery.startsWith("year-") && currentYearFilter) {
+          movieQuery += `&primary_release_year=${currentYearFilter}`;
+          tvQuery += `&first_air_date_year=${currentYearFilter}`;
+        }
+
         if (currentTypeFilter === "all" || currentTypeFilter === "movie") {
-          endpoints.push(
-            `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_keywords=${kwId}&include_adult=false&sort_by=popularity.desc&page=${pageNum}${currentYearFilter ? `&primary_release_year=${currentYearFilter}` : ""}`,
-          );
+          endpoints.push(movieBase + movieQuery);
         }
         if (currentTypeFilter === "all" || currentTypeFilter === "tv") {
-          endpoints.push(
-            `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_keywords=${kwId}&include_adult=false&sort_by=popularity.desc&page=${pageNum}${currentYearFilter ? `&first_air_date_year=${currentYearFilter}` : ""}`,
-          );
+          endpoints.push(tvBase + tvQuery);
         }
 
         const responses = await Promise.all(
@@ -78,7 +108,10 @@ const SearchContent = ({ query }) => {
         );
 
         responses.forEach((res, idx) => {
-          const type = endpoints[idx].includes("/movie") ? "movie" : "tv";
+          // Determine type based on endpoint URL since order isn't guaranteed if one is skipped
+          const url = endpoints[idx];
+          const type = url.includes("/movie?") ? "movie" : "tv";
+
           newResults = [
             ...newResults,
             ...(res.data.results || []).map((item) => ({
@@ -144,7 +177,11 @@ const SearchContent = ({ query }) => {
           (k) => title.includes(k) || overview.includes(k),
         );
 
-        if (!decodedQuery.startsWith("kw-")) {
+        if (
+          !decodedQuery.startsWith("kw-") &&
+          !decodedQuery.startsWith("genre-") &&
+          !decodedQuery.startsWith("year-")
+        ) {
           if (
             currentTypeFilter !== "all" &&
             item.media_type !== currentTypeFilter
@@ -190,6 +227,16 @@ const SearchContent = ({ query }) => {
         .join(" ")
         .replace(/-/g, " ");
       setDisplayQuery(`#${kwName}`);
+    } else if (decodedQuery.startsWith("genre-")) {
+      const genreName = decodedQuery.split("-")[2];
+      setDisplayQuery(
+        genreName
+          ? genreName.charAt(0).toUpperCase() + genreName.slice(1)
+          : "Genre",
+      );
+    } else if (decodedQuery.startsWith("year-")) {
+      const year = decodedQuery.split("-")[1];
+      setDisplayQuery(`Movies from ${year}`);
     } else {
       setDisplayQuery(decodedQuery);
     }
@@ -309,59 +356,71 @@ const SearchContent = ({ query }) => {
         ) : filteredResults.length > 0 ? (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[2vw] font-poppins">
-              {filteredResults.map((item, index) => (
-                <Link
-                  href={`/movie/${createSlug(
-                    item.title || item.name,
-                    item.id,
-                    item.media_type,
-                  )}`}
-                  key={`${item.id}-${item.media_type}-${index}`}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative aspect-2/3 rounded-xl overflow-hidden mb-3 lg:rounded-[1vw] bg-container">
-                    {item.poster_path ? (
-                      <img
-                        className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
-                        src={`https://image.tmdb.org/t/p/w500/${item.poster_path}`}
-                        alt={item.title || item.name}
-                        loading="lazy"
+              {filteredResults.map((item, index) => {
+                const isSaved = watchLater.some(
+                  (watchItem) => watchItem.id === item.id.toString(),
+                );
+                return (
+                  <Link
+                    href={`/movie/${createSlug(
+                      item.title || item.name,
+                      item.id,
+                      item.media_type,
+                    )}`}
+                    key={`${item.id}-${item.media_type}-${index}`}
+                    className="group cursor-pointer"
+                  >
+                    <div className="relative aspect-2/3 rounded-xl overflow-hidden mb-3 lg:rounded-[1vw] bg-container">
+                      {item.poster_path ? (
+                        <img
+                          className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                          src={`https://image.tmdb.org/t/p/w500/${item.poster_path}`}
+                          alt={item.title || item.name}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-zinc-900">
+                          No Image
+                        </div>
+                      )}
+                      
+                      {/* Hover Overlay */}
+                      <HoverOverlay 
+                        movie={item} 
+                        isSaved={isSaved} 
+                        toggleWatchLater={toggleWatchLater} 
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500 bg-zinc-900">
-                        No Image
+                      
+                      {/* Badge Overlay (Visible when not hovering/mobile) */}
+                      <div className="absolute top-2 right-2 font-poppins lg:group-hover:hidden transition-opacity duration-200">
+                        <div className="px-2 py-0.5 flex items-center justify-center bg-primary rounded-full backdrop-blur-sm bg-opacity-90">
+                          <span className="text-[8px] italic font-semibold text-black uppercase font-poppins">
+                            {item.media_type === "tv" || item.first_air_date
+                              ? "Series"
+                              : "HD"}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute top-2 right-2 bg-primary px-2 py-0.5 rounded text-[8px] lg:text-[10px] uppercase text-black font-comfortaa font-bold">
-                      {item.media_type === "tv" ? "Series" : "Movie"}
                     </div>
-                  </div>
-                  <h2 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors text-sm lg:text-lg">
-                    {item.title || item.name}
-                  </h2>
-                  <div className="flex items-center justify-between text-[10px] lg:text-sm text-gray-400 mt-1">
-                    <span>
-                      {item.release_date || item.first_air_date
-                        ? (item.release_date || item.first_air_date).split(
-                            "-",
-                          )[0]
-                        : "N/A"}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-yellow-500">★</span>
-                      <span>{item.vote_average?.toFixed(1)}</span>
+                    <h2 className="font-medium text-white line-clamp-1 group-hover:text-primary transition-colors text-sm lg:text-lg lg:group-hover:hidden">
+                      {item.title || item.name}
+                    </h2>
+                    <div className="flex items-center justify-between text-[10px] lg:text-sm text-gray-400 mt-1 lg:group-hover:hidden">
+                      <span>
+                        {item.release_date || item.first_air_date
+                          ? (item.release_date || item.first_air_date).split(
+                              "-",
+                            )[0]
+                          : "N/A"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-500">★</span>
+                        <span>{item.vote_average?.toFixed(1)}</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-
-              {/* Infinite Scroll Trigger (Skeleton Cards) */}
-              {(hasMore || loadingMore) &&
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div ref={i === 0 ? observerRef : null} key={`skeleton-${i}`}>
-                    <SkeletonCard />
-                  </div>
-                ))}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* {loadingMore && (
@@ -375,21 +434,20 @@ const SearchContent = ({ query }) => {
 
             {!hasMore && !loadingMore && filteredResults.length > 10 && (
               <>
-              <div className="text-center py-20 text-white/80 text-[15px]  font-poppins   uppercase tracking-widest mt-10 border-t border-white/15">
-                You've reached the end!
-              </div>
-              <Footer />
+                <div className="text-center py-20 text-white/80 text-[15px]  font-poppins   uppercase tracking-widest mt-10 border-t border-white/15">
+                  You've reached the end!
+                </div>
+                <Footer />
               </>
             )}
           </>
         ) : (
           !loading && (
             <>
-            <div className="text-center py-40 text-gray-400 font-comfortaa">
-              No results found for your search.
-            </div>
+              <div className="text-center py-40 text-gray-400 font-comfortaa">
+                No results found for your search.
+              </div>
               <Footer />
-
             </>
           )
         )}

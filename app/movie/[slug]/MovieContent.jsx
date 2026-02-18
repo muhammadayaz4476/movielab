@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 // Standard img tags used instead of next/image for better reliability with TMDB direct CDN
 import dynamic from "next/dynamic";
+import Reviews from "@/app/components/Reviews";
 import {
   Share2,
   Plus,
@@ -578,7 +579,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <h4 className="text-sm uppercase font-bold text-zinc-500 mb-3">
                   Relevant Tags
                 </h4>
-                <div className="flex flex-wrap  gap-2 w-[70%]">
+                <div className="flex flex-wrap  gap-2 w-full md:w-[70%]">
                   {movie.keywords.keywords.slice(0, 10).map((kw) => (
                     <Link
                       key={kw.id}
@@ -631,6 +632,11 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 </div>
               </div>
             )}
+            <div className=" lg: py-12   ">
+              <div className="w-full ">
+                <Reviews movieId={id} type={movie?.media_type || "movie"} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -663,11 +669,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
-                    activeTab === tab.id
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeTab === tab.id
                       ? "bg-white text-black border-white"
                       : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -691,9 +696,8 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   >
                     <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                       <img
-                        src={`https://image.tmdb.org/t/p/w300${
-                          rec.backdrop_path || rec.poster_path
-                        }`}
+                        src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
+                          }`}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         alt={rec.title || rec.name}
                       />
@@ -772,6 +776,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
         </div>
       </div>
+
+      {/* Reviews Section */}
+
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

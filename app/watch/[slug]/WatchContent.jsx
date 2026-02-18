@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
 import TrailerModal from "../../components/TrailerModal";
+import Reviews from "../../components/Reviews";
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 
@@ -29,9 +30,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   // Server Switcher States
   const providers = [
     { name: "Server 1", value: "https://vidsrc.to/embed", id: "vidsrc_to" },
-    { name: "Server 2", value: "https://vidsrc.me/embed", id: "vidsrc_me" },
-    { name: "Server 3", value: "https://vidsrc.cc/v2/embed", id: "vidsrc_cc" },
-    { name: "Server 4", value: "https://www.2embed.cc/embed", id: "2embed" },
+    { name: "Server 2", value: "https://multiembed.mov/", id: "multiembed" },
+    { name: "Server 3", value: "https://vidsrc.me/embed", id: "vidsrc_me" },
+    { name: "Server 4", value: "https://vidsrc.cc/v2/embed", id: "vidsrc_cc" },
   ];
   const [selectedServer, setSelectedServer] = useState(providers[0]);
   const iframeRef = useRef(null);
@@ -249,6 +250,13 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   // 4. Server Verification Logic
   const constructServerUrl = (server, type, mId, sea, epi) => {
+    if (server.id === "multiembed") {
+      if (type === "tv") {
+        return `${server.value}?video_id=${mId}&tmdb=1&s=${sea}&e=${epi}`;
+      } else {
+        return `${server.value}?video_id=${mId}&tmdb=1`;
+      }
+    }
     if (type === "tv") {
       if (server.id === "vidsrc_me")
         return `${server.value}/tv?tmdb=${mId}&sea=${sea}&epi=${epi}`;
@@ -346,9 +354,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 2, ease: "easeInOut" }}
             src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-            alt={`Watch ${movie.title || movie.name} (${
-              (movie.release_date || movie.first_air_date || "").split("-")[0]
-            }) Cinematic Background HD`}
+            alt={`Watch ${movie.title || movie.name} (${(movie.release_date || movie.first_air_date || "").split("-")[0]
+              }) Cinematic Background HD`}
             title={`Watch ${movie.title || movie.name} Full HD`}
             className="w-full h-screen object-cover lg:opacity-100 blur-xs opacity-70  "
           />
@@ -406,11 +413,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={provider.name}
                   onClick={() => setSelectedServer(provider)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                    selectedServer.name === provider.name
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${selectedServer.name === provider.name
                       ? "bg-primary text-black"
                       : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
-                  }`}
+                    }`}
                 >
                   {provider.name}
                 </button>
@@ -419,9 +425,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
             {/* User Note */}
             <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
-              <span className="text-white font-bold mr-1">Note:</span>
+              <span className="text-white font- mr-1">Note:</span>
               Try changing{" "}
-              <span className="text-primary font-bold">Server</span> or{" "}
+              <span className="text-primary font-">Server</span> or{" "}
               <button
                 onClick={() => window.location.reload()}
                 className="underline text-primary hover:text-white transition-colors"
@@ -484,7 +490,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       {mediaType === "movie"
                         ? movie.title
                         : movie.name +
-                          ` (S${selectedSeason} E${selectedEpisode})`}
+                        ` (S${selectedSeason} E${selectedEpisode})`}
                     </h1>
                     {/* Watch Later Button (Mobile/Desktop) */}
                     <div className="flex items-center gap-4 mt-2">
@@ -596,6 +602,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     </div>
                   </div>
                 )}
+                <div className=" lg: py-12   ">
+                  <div className="w-full ">
+                    <Reviews movieId={id} type={movie?.media_type || "movie"} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -629,11 +640,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
-                      activeTab === tab.id
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeTab === tab.id
                         ? "bg-white text-black border-white"
                         : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -657,9 +667,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     >
                       <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                         <img
-                          src={`https://image.tmdb.org/t/p/w300${
-                            rec.backdrop_path || rec.poster_path
-                          }`}
+                          src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
+                            }`}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           alt={rec.title || rec.name}
                         />
@@ -747,6 +756,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           trailerKey={trailer?.key}
         />
       </div>
+
+      {/* Reviews Section */}
+
     </main>
   );
 };

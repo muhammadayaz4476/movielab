@@ -39,7 +39,7 @@ const Hero = ({ initialMovies = [] }) => {
     if (movies.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % movies.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [movies]);
 
@@ -55,7 +55,7 @@ const Hero = ({ initialMovies = [] }) => {
 
   return (
     <div className="lg:px-[0vw] lg:py-[0] relative overflow-hidden">
-      <div className="relative w-full h-[60vh] lg:h-[70vh]  overflow-hidden group shadow-2xl">
+      <div className="relative w-full h-[70vh] lg:h-[70vh]  overflow-hidden group shadow-2xl">
         {/* Background Images with Fade */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -115,13 +115,13 @@ const Hero = ({ initialMovies = [] }) => {
                 View Details
               </button>
             </div> */}
-            <div className="lg:w-full space-y-4 md:mt-[10vw] mt-[14vw] ">
+            <div className="lg:w-full space-y-4 md:mt-[10vw] mt-[120px] ">
               <h1 className="text-3xl text-white lg:text-5xl leading-normal lg:leading-[4vw] font-semibold lg:font-light font-comfortaa">
-                MovieLab Watch & Download Your{" "}
+                <span className="font-comfortaa  text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text">Movieslab</span> <span className="pb-1 border-b">Watch & Download</span> Your{" "}
                 <br className="hidden lg:block" /> Favorite Movies Here.
               </h1>
-              <p className="w-3/4  lg:text-lg font-poppins text-gray-300">
-                Watch unlimited movies online or download for free.
+              <p className="md:w-3/4 w-[90%]  lg:text-lg font-poppins text-gray-300">
+                No Wonders Just Watch unlimited movies online or download for free.
               </p>
             </div>
           </motion.div>

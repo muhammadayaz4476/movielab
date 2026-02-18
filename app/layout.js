@@ -25,7 +25,7 @@ export const metadata = {
     template: "%s | MovieLab - Free HD Streaming",
   },
   description:
-    "Stream over 20,000+ movies and TV shows for free in Full HD 1080p. No registration required. Watch latest releases with English subtitles, no ads, and fast streaming on MovieLab.",
+    "Stream over 100,000+ movies and TV shows for free in Full HD 1080p. No registration required. Watch latest releases with English subtitles, no ads, and fast streaming on MovieLab.",
   keywords: [
     "watch movies free",
     "free movie streaming sites",
@@ -40,8 +40,21 @@ export const metadata = {
     "movielab streaming",
     "no buffering movies",
     "4k movies free",
+    "Movie Lab",
+    "Movie Lab streaming",
+    "action movies free",
+    "horror movies online",
+    "romantic comedies free",
+    "sci-fi movies streaming",
   ],
   authors: [{ name: "Umair Lab" }],
+  creator: "MovieLab",
+  publisher: "MovieLab",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
     title: "MovieLab - Watch Movies & TV Series Online for Free (No Ads)",
     description:
@@ -58,13 +71,19 @@ export const metadata = {
     ],
     locale: "en_US",
     type: "website",
+    countryName: "United States",
   },
   twitter: {
     card: "summary_large_image",
     title: "MovieLab - Stream & Download Movies Free (1080p)",
     description:
-      "Watch the latest movies and TV series tailored for you. Free streaming, no subscription, full HD quality.",
+      "Watch latest movies and TV series tailored for you. Free streaming, no subscription, full HD quality.",
     images: ["/og-image.jpg"],
+    creator: "@MovieLab",
+    site: "@MovieLab",
+  },
+  alternates: {
+    canonical: "https://movies.umairlab.com",
   },
   referrer: "origin",
   verification: {
@@ -73,6 +92,13 @@ export const metadata = {
   },
   other: {
     "viewport-fit": "cover",
+    "theme-color": "#000000",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": "MovieLab",
+    "application-name": "MovieLab",
+    "msapplication-TileColor": "#000000",
+    "msapplication-config": "/browserconfig.xml",
   },
   robots: {
     index: true,

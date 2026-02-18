@@ -237,8 +237,6 @@ export async function OPTIONS(request) {
 
 // Description: Search the site (TMDB-backed) and return enriched results. Supports filtering, pagination (offset), and limiting quantity.
 
-// Required env: NEXT_PUBLIC_TMDB_KEY, NEXT_PUBLIC_TMDB_BASE_URL (e.g. https://api.themoviedb.org/3)
-
 // Request body (JSON):
 
 // query (string) — required. Search text.
@@ -248,10 +246,10 @@ export async function OPTIONS(request) {
 // offset (integer) — optional; number of matching items to skip (default 0).
 // quantity (integer) — optional; how many items to return (default 10, max 50).
 // Example — PowerShell:
-// Invoke-RestMethod -Uri "http://localhost:3000/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
+// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
 
 // Example — curl (WSL/Git Bash):
-// curl -X POST "http://localhost:3000/api/search" -H "Content-Type: application/json" -d '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
+// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
 // Response (JSON):
 
 // results: array of item objects (length ≤ quantity)
