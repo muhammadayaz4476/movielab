@@ -192,7 +192,7 @@ const Navbar = () => {
   return (
     <>
       <header className="absolute top-0 left-0 w-full z-50 ">
-        <div className="w-full  z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+        {/* <div className="w-full  z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
           <Marquee
             speed={40} // Sets the speed (approx. matches the previous 40s animation duration)
             gradient={false} // Assuming you don't need the fade gradient effect
@@ -245,7 +245,7 @@ const Navbar = () => {
               | Movies lab |
             </span>
           </Marquee>
-        </div>
+        </div> */}
         <nav className="px-4   py-6 w-full flex lg:flex-row flex-col lg:px-[5vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
           <div className="flex items-center justify-between w-full lg:w-auto">
             <Link
