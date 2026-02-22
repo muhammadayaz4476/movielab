@@ -24,10 +24,7 @@ export async function generateMetadata({ params }) {
       description: description,
     },
     robots: {
-      index: false, // Generally good practice to NOINDEX internal search results to save crawl budget, BUT user wants aggressive SEO.
-      // However, Google penalizes "Soft 404s" on empty search results.
-      // I will set index: true but with caution, or let the global layout handle it.
-      // Let's stick to global default (index: true) but explicitly make it attractive.
+      index: false, 
       index: true,
       follow: true,
     },

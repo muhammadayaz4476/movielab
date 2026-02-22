@@ -1,17 +1,17 @@
 export async function GET() {
-  console.log("Sitemap Index: Request received");
   const EXTERNAL_DATA_URL = "https://movies.umairlab.com";
-  const sitemapCount = 10;
+
+  const sitemaps = ["static.xml", "movies.xml", "webseries.xml"];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-  for (let i = 0; i < sitemapCount; i++) {
+  sitemaps.forEach((sm) => {
     xml += "  <sitemap>\n";
-    xml += `    <loc>${EXTERNAL_DATA_URL}/sitemap-part/${i}.xml</loc>\n`;
+    xml += `    <loc>${EXTERNAL_DATA_URL}/${sm}</loc>\n`;
     xml += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
     xml += "  </sitemap>\n";
-  }
+  });
 
   xml += "</sitemapindex>";
 

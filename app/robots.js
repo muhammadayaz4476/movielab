@@ -5,29 +5,21 @@ export default function robots() {
       allow: [
         "/",
         "/movie/",
-        
+
         "/search/",
         "/discover/",
         "/about/",
         "/contact/",
         "/privacy/",
-        "/sitemap-main.xml",
-        "/sitemap-part/"
+        "/sitemap.xml",
+        "/static.xml",
+        "/movies.xml",
+        "/webseries.xml",
       ],
-      disallow: [
-        "/api/",
-        "/admin/",
-        "/watch/",
-        "/watch-later/",
-        "/_next/",
-        "/static/"
-      ],
+      disallow: ["/api/", "/admin/", "/watch/", "/watch-later/", "/_next/"],
       crawlDelay: 1,
     },
-    sitemap: [
-      "https://movies.umairlab.com/sitemap-main.xml",
-      "https://movies.umairlab.com/sitemap-part/"
-    ],
+    sitemap: ["https://movies.umairlab.com/sitemap.xml"],
     host: "https://movies.umairlab.com",
   };
 }
