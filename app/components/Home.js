@@ -267,9 +267,9 @@ const Home = ({ initialData = {} }) => {
         {/* Simplified About Section */}
         <section className="px-4 lg:px-[5vw] py-16 font-poppins lg:py-20 ">
           <div className=" mx-auto text-center space-y-8">
-            <h1 className="text-3xl lg:text-5xl font-medium font-comfortaa text-white mb-6">
+            <h2 className="text-3xl lg:text-5xl font-medium font-comfortaa text-white mb-6">
               About <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">Movieslab</span>
-            </h1>
+            </h2>
             <p className="text-xl lg:text-2xl  text-gray-300 italic font-light">
               Your Ultimate Free Streaming Destination @MoviesLab
             </p>

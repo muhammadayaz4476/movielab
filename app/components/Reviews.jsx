@@ -7,6 +7,14 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+const PrevArrow = ({ currentSlide, slideCount, ...props }) => (
+  <ChevronLeft {...props} />
+);
+
+const NextArrow = ({ currentSlide, slideCount, ...props }) => (
+  <ChevronRight {...props} />
+);
+
 const Reviews = ({ movieId, type = "movie" }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,36 +25,48 @@ const Reviews = ({ movieId, type = "movie" }) => {
 
   // Ensure these are defined in your .env.local
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
-  const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL
+  const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-  const fetchReviews = useCallback(async (page = 1, append = false) => {
-    try {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
+  const fetchReviews = useCallback(
+    async (page = 1, append = false) => {
+      try {
+        if (append) setLoadingMore(true);
+        else setLoading(true);
 
-      if (!movieId) throw new Error("Movie ID is missing from props");
-      if (!API_KEY) throw new Error("NEXT_PUBLIC_TMDB_KEY is not defined in .env");
+        if (!movieId) throw new Error("Movie ID is missing from props");
+        if (!API_KEY)
+          throw new Error("NEXT_PUBLIC_TMDB_KEY is not defined in .env");
 
-      // Clean the URL construction
-      const cleanBaseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
-      const url = `${cleanBaseUrl}/${type}/${movieId}/reviews?api_key=${API_KEY}&page=${page}`;
+        // Clean the URL construction
+        const cleanBaseUrl = BASE_URL.endsWith("/")
+          ? BASE_URL.slice(0, -1)
+          : BASE_URL;
+        const url = `${cleanBaseUrl}/${type}/${movieId}/reviews?api_key=${API_KEY}&page=${page}`;
 
-      const response = await axios.get(url);
+        const response = await axios.get(url);
 
-      if (response.data && response.data.results) {
-        setReviews(prev => append ? [...prev, ...response.data.results] : response.data.results);
-        setTotalPages(response.data.total_pages);
-        setCurrentPage(response.data.page);
-        setError(null);
+        if (response.data && response.data.results) {
+          setReviews((prev) =>
+            append
+              ? [...prev, ...response.data.results]
+              : response.data.results,
+          );
+          setTotalPages(response.data.total_pages);
+          setCurrentPage(response.data.page);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("TMDB Fetch Error:", err.response?.data || err.message);
+        setError(
+          `Failed to load reviews: ${err.response?.data?.status_message || err.message}`,
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-    } catch (err) {
-      console.error("TMDB Fetch Error:", err.response?.data || err.message);
-      setError(`Failed to load reviews: ${err.response?.data?.status_message || err.message}`);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [movieId, type, API_KEY, BASE_URL]);
+    },
+    [movieId, type, API_KEY, BASE_URL],
+  );
 
   useEffect(() => {
     fetchReviews(1, false);
@@ -59,42 +79,51 @@ const Reviews = ({ movieId, type = "movie" }) => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   const renderStars = (rating) => {
     if (!rating) return null;
-    
+
     const stars = [];
     const fullStars = Math.floor(rating / 2);
     const hasHalfStar = rating % 2 >= 1;
-    
+
     // Full stars
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <Star key={`full-${i}`} className="w-4 h-4 text-yellow-400 fill-current" />
+        <Star
+          key={`full-${i}`}
+          className="w-4 h-4 text-yellow-400 fill-current"
+        />,
       );
     }
-    
+
     // Half star (using a smaller filled star)
     if (hasHalfStar) {
       stars.push(
         <div key="half" className="relative w-4 h-4">
           <Star className="w-4 h-4 text-gray-600 fill-current absolute" />
-          <Star className="w-4 h-4 text-yellow-400 fill-current absolute" style={{ clipPath: 'inset(0 50% 0 0)' }} />
-        </div>
+          <Star
+            className="w-4 h-4 text-yellow-400 fill-current absolute"
+            style={{ clipPath: "inset(0 50% 0 0)" }}
+          />
+        </div>,
       );
     }
-    
+
     // Empty stars
     const emptyStars = 5 - Math.ceil(rating / 2);
     for (let i = 0; i < emptyStars; i++) {
       stars.push(
-        <Star key={`empty-${i}`} className="w-4 h-4 text-gray-600 fill-current" />
+        <Star
+          key={`empty-${i}`}
+          className="w-4 h-4 text-gray-600 fill-current"
+        />,
       );
     }
-    
+
     return <div className="flex items-center gap-1">{stars}</div>;
   };
 
@@ -122,7 +151,7 @@ const Reviews = ({ movieId, type = "movie" }) => {
     return (
       <div className="text-center py-8">
         <p className="text-red-400">{error}</p>
-        <button 
+        <button
           onClick={() => fetchReviews(1, false)}
           className="mt-4 px-4 py-2 bg-primary text-black rounded-lg font-medium hover:bg-primary/90 transition-colors"
         >
@@ -141,20 +170,27 @@ const Reviews = ({ movieId, type = "movie" }) => {
   }
 
   const sliderSettings = {
-    dots: true,
+    dots: false,
     infinite: false,
     speed: 300,
     slidesToShow: 1,
     slidesToScroll: 1,
     // arrows: true,
-    prevArrow: <ChevronLeft className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center" />,
-    nextArrow: <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center" />,
+    prevArrow: (
+      <PrevArrow className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center p-1.5" />
+    ),
+    nextArrow: (
+      <NextArrow className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center p-1.5" />
+    ),
     adaptiveHeight: true,
-    className: "mobile-reviews-slider"
+    className: "mobile-reviews-slider",
   };
 
   const renderReviewCard = (review) => (
-    <div key={review.id} className="bg-white/8 h-[300px] backdrop-blur-md md:h-auto rounded-lg p-6   ">
+    <div
+      key={review.id}
+      className="bg-white/10 h-[250px]  backdrop-blur-md md:h-auto rounded-lg md:p-6 p-2  "
+    >
       <div className="flex items-start gap-4 mb-4">
         <div className="shrink-0">
           {review.author_details?.avatar_path ? (
@@ -164,18 +200,18 @@ const Reviews = ({ movieId, type = "movie" }) => {
               className="md:size-[3vw] w-12 h-12 rounded-full object-cover"
             />
           ) : (
-            <div className="md:size-[3vw] w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center">
-              <span className="text-zinc-400 text-sm font-medium">
+            <div className="md:size-[3vw] w-12 h-12   bg-zinc-700 rounded-full flex items-center justify-center">
+              <span className="text-zinc-400 text-sm  font-medium">
                 {review.author.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h4 className="text-white text-lg font-medium">
+              <h4 className="text-white  md:w-full w-[150px] text-ellipsis overflow-hidden text-lg font-medium">
                 {review.author}
               </h4>
               {review.author_details?.username && (
@@ -197,16 +233,16 @@ const Reviews = ({ movieId, type = "movie" }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="text-zinc-300 text-sm md:text-lg leading-relaxed w-full lg:w-[85%]">
         {/* {review.content.split('\n').map((paragraph, index) => ( */}
-          <p className="mb-3 line-clamp-4 md:line-clamp-6 ">
-            {/* {paragraph || '\u00A0'} */}
-            {review.content}
-          </p>
+        <p className="mb-3 line-clamp-4 md:line-clamp-6 ">
+          {/* {paragraph || '\u00A0'} */}
+          {review.content}
+        </p>
         {/* ))} */}
       </div>
-      
+
       {review.url && (
         <div className="mt-4 pt-4 border-t border-zinc-800">
           <Link
@@ -216,8 +252,18 @@ const Reviews = ({ movieId, type = "movie" }) => {
             className="text-primary hover:text-primary/80 text-sm font-medium inline-flex items-center gap-1"
           >
             Read full review on TMDB
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
             </svg>
           </Link>
         </div>
@@ -230,7 +276,7 @@ const Reviews = ({ movieId, type = "movie" }) => {
       <h3 className="text-2xl font-semibold text-white mb-4">
         User Reviews ({reviews.length})
       </h3>
-      
+
       {/* Mobile Slider View */}
       <div className="block md:hidden">
         <Slider {...sliderSettings}>
@@ -241,12 +287,12 @@ const Reviews = ({ movieId, type = "movie" }) => {
           ))}
         </Slider>
       </div>
-      
+
       {/* Desktop Grid View */}
       <div className="hidden md:block space-y-[3vw]">
         {reviews.map((review) => renderReviewCard(review))}
       </div>
-      
+
       {currentPage < totalPages && (
         <div className="text-center mt-8">
           <button
@@ -254,7 +300,9 @@ const Reviews = ({ movieId, type = "movie" }) => {
             disabled={loadingMore}
             className="px-6 py-3 bg-primary text-black rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loadingMore ? 'Loading...' : `Load More Reviews (${totalPages - currentPage} page${totalPages - currentPage > 1 ? 's' : ''} remaining)`}
+            {loadingMore
+              ? "Loading..."
+              : `Load More Reviews (${totalPages - currentPage} page${totalPages - currentPage > 1 ? "s" : ""} remaining)`}
           </button>
         </div>
       )}

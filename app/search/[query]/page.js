@@ -25,7 +25,6 @@ export async function generateMetadata({ params }) {
     },
     robots: {
       index: false, 
-      index: true,
       follow: true,
     },
   };

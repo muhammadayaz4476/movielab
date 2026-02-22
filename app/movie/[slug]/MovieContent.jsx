@@ -10,6 +10,7 @@ import {
   Check,
   PlayIcon,
   X,
+  ArrowRight,
   MoreVertical,
   DownloadCloud,
   DownloadCloudIcon,
@@ -19,6 +20,7 @@ import {
   Award,
   Users,
   Film,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
@@ -276,6 +278,55 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     return finalCount.toLocaleString();
   };
 
+  const getUniqueSummary = () => {
+    const title = movie?.title || movie?.name;
+    const year = movie?.release_date
+      ? new Date(movie.release_date).getFullYear()
+      : "";
+    const genres = movie?.genres
+      ?.slice(0, 2)
+      .map((g) => g.name)
+      .join(" and ");
+    const rating = movie?.vote_average?.toFixed(1);
+
+    const summaries = [
+      `Experience the thrill of ${title} (${year}), a standout ${genres} masterpiece that has captivated audiences globally. With a solid ${rating}/10 rating, it's a must-watch on MovieLab.`,
+
+      `Dive into the world of ${title}, where ${genres} elements blend perfectly to create an unforgettable cinematic journey. Now streaming in high definition for all MovieLab users.`,
+
+      `Looking for the best ${genres} content? ${title} (${year}) delivers an emotional and visual spectacle that ranks high among recent releases. Explore this gem on our platform today.`,
+
+      `MovieLab Review: ${title} is a brilliant addition to the ${genres} genre, offering deep storytelling and impressive visuals that earned it a ${rating} rating from fans worldwide.`,
+
+      `${title} (${year}) brings together powerful storytelling and engaging ${genres} moments that keep viewers hooked from start to finish. Rated ${rating}/10, it's definitely worth adding to your watchlist.`,
+
+      `If you're a fan of ${genres} movies, ${title} is one film you shouldn't miss. Released in ${year}, it combines emotion, suspense, and stunning visuals into one memorable experience.`,
+
+      `${title} stands out as one of the most talked-about ${genres} films of ${year}. With a strong audience rating of ${rating}, it continues to impress movie lovers worldwide.`,
+
+      `From gripping scenes to unforgettable performances, ${title} (${year}) delivers everything fans expect from a great ${genres} movie. Stream it now on MovieLab.`,
+
+      `${title} offers a refreshing take on the ${genres} genre, blending storytelling and cinematic visuals beautifully. No surprise it holds a ${rating}/10 rating among viewers.`,
+
+      `Released in ${year}, ${title} captures the essence of great ${genres} filmmaking with compelling characters and an engaging storyline that keeps audiences invested.`,
+
+      `Whether you're discovering it for the first time or rewatching a favorite, ${title} remains a strong pick for anyone who enjoys quality ${genres} entertainment.`,
+
+      `${title} (${year}) is a cinematic experience filled with drama, excitement, and memorable moments, making it a standout title in the ${genres} category.`,
+
+      `With its engaging narrative and impressive production quality, ${title} has quickly become a favorite among fans of ${genres} movies worldwide.`,
+
+      `Searching for something exciting to watch tonight? ${title} combines ${genres} storytelling with strong performances, earning its ${rating} rating from audiences.`,
+    ];
+
+    // Use a simple hash of the ID to pick a consistent but "unique" summary for each movie
+    const hash = id
+      .toString()
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return summaries[hash % summaries.length];
+  };
+
   const getExpandedStoryline = () => {
     const genres = movie?.genres?.map((g) => g.name).join(", ");
     const studio = movie?.production_companies?.[0]?.name;
@@ -285,7 +336,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       : "";
     const title = movie?.title || movie?.name;
 
-    let narrative = "";
+    let narrative = getUniqueSummary() + " ";
     if (tagline) narrative += `"${tagline}" — `;
 
     narrative += `This ${year} ${genres} production ${studio ? `from ${studio}` : ""} brings a unique perspective to the screen. `;
@@ -340,9 +391,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-6 px-0 lg:px-[5vw] md:py-[8vw] py-[160px]">
+      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[5vw] md:py-[8vw] py-[160px]">
         <div className="flex-1">
-          <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden mb-4 relative group">
+          <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
             {trailer && showTrailer ? (
               <iframe
                 className="w-full h-full"
@@ -362,7 +413,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
                     srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
                     className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
-                    alt={movie?.title || "Hero Backdrop"}
+                    alt={
+                      `Watch ${movie?.title} - ${mediaType === "tv" ? "TV Series" : "Movie"} for free online in hd ` ||
+                      "Hero Backdrop"
+                    }
                     priority="high"
                   />
                 )}
@@ -379,10 +433,28 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             )}
           </div>
 
-          <div className="flex items-center px-2  gap-3 justify-between flex-wrap md:gap-0 py-[2vw] md:pr-[1vw]">
+          <div className="flex flex-col items- px-2  gap-3 justify-between flex-wrap md:gap-0 -[2vw] ">
+            <div className="flex pb-[10px] md:pb-[1vw] items-center gap-2 justify-between  my-2 lg:my-[1vw] text-gray-300 text-sm italic bg-zinc-900/20   ">
+              <div className="flex text-xs md:text-sm items-center gap-2">
+                <Eye className="size-4 text-red-500" />
+                <span>
+                  {getDynamicViewerCount()} people are exploring this{" "}
+                  {mediaType} right now
+                </span>
+              </div>
+              <div className="flex items-center gap-2 ">
+                <button
+                  title="share"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="b p-2 text-primary rounded-full hover:bg-zinc-700 transition"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
+            </div>
             <h1 className="text-2xl lg:text-4xl w-full md:w-[70%] font-bold font-comfortaa leading-tight">
               {movie?.title || movie?.name}{" "}
-              <span className="text-gray-400 block md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
+              <span className="text-gray-500 hidden md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
                 {mediaType === "tv" ? "~ Series Trailer" : "~ Movie Trailer"}
               </span>
             </h1>
@@ -430,42 +502,32 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           <div className="flex font-poppins px-2 flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
-            <div className="flex items-center gap-3">
+            <div className="flex  items-center gap-3">
               <div>
                 <h3 className="md:font-medium text-lg font-poppins md:text-xl">
-                  {movie?.production_companies?.[0]?.name || "Official Studio"}
+                  {movie?.vote_count?.toLocaleString()} votes ~{" "}
+                  <a
+                    href="https://www.imdb.com/title/tt0111161/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    IMDB
+                  </a>
                 </h3>
-                <p className="text-xs text-gray-400">
-                  {movie?.vote_count?.toLocaleString()} votes ~ IMDB
-                </p>
+                <h4 className="text-xs text-gray-400 ">
+                  {movie?.production_companies?.[0]?.name || "Official Studio"}
+                </h4>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 pr-[1vw]">
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="bg-zinc-800 p-2 rounded-full hover:bg-zinc-700 transition"
-              >
-                <Share2 size={16} />
-              </button>
-            </div>
           </div>
 
-          <div className="flex items-center gap-4 mb-8 text-zinc-400 text-sm italic bg-zinc-900/20 p-3 rounded-lg border border-white/5 w-fit">
-            <Users className="size-4 text-primary animate-pulse" />
-            <span>
-              Over {getDynamicViewerCount()} people are exploring this{" "}
-              {mediaType} right now
-            </span>
-          </div>
-
-          <div className="bg-transparent rounded-xl px-2 mb-10">
-            <div className="mb-10">
-              <h2 className="text-2xl font-poppins font-medium mb-4 flex items-center gap-2">
-                <Film className="size-6 text-primary" />
-                Storyline & Context
+          <div className="b rounded-xl px-2  mt-10 ">
+            <div className="mb-5">
+              <h2 className="text-sm lg:text-lg  text-black bg-primary px-4 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium mb-[1vw] ">
+                {/* <Film className="size-6 text-primary" /> */}
+                Storyline & Context :
               </h2>
-              <p className="text-base md:text-xl font-light font-comfortaa w-full md:w-[95%] text-zinc-300 leading-relaxed italic border-l-[3px] border-primary/40 pl-5 py-2">
+              <p className="text-sm md:text-xl font-light font-comfortaa w-full md:w-[95%] text-red-50 leading-relaxed italic py-2">
                 {getExpandedStoryline()}
               </p>
             </div>
@@ -475,20 +537,20 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               (watchProviders.streaming.length > 0 ||
                 watchProviders.renting.length > 0) && (
                 <div className="mb-10 py-5 bg-zinc-900/30 rounded-xl border border-white/5">
-                  <h2 className="text-xl font- pb-1 border-b inline-flex font-poppins mb-5 border-primary/40 items-center gap-2">
+                  <h2 className="text-xl font- pb-1 border-b inline-flex font-poppins mb-5 border-primary/40 items-center text-primary gap-2">
                     <PlayIcon
                       className="size-5 text-primary"
                       fill="currentColor"
                     />
                     Where to Watch
                   </h2>
-                  <div className="space-y-[1.3vw]">
+                  <div className="space-y-6 md:space-y-[1.3vw]">
                     {watchProviders.streaming.length > 0 && (
                       <div>
-                        <h4 className="text-xs uppercase font-poppins font-bold text-zinc-500 mb-3 tracking-widest">
+                        <h4 className="text-xs uppercase font-poppins font-semibold text-zinc-400 mb-3 tracking-widest">
                           Streaming Platforms
                         </h4>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-6">
                           {watchProviders.streaming.slice(0, 6).map((p) => (
                             <div
                               key={p.provider_id}
@@ -501,9 +563,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                                   className="w-full h-full rounded-xl shadow-lg group-hover:scale-110 transition-transform object-cover"
                                 />
                               </div>
-                              <span className="text-[10px] text-white group-hover:text-white transition-colors">
+                              {/* <span className="text-[10px] text-white group-hover:text-white transition-colors">
                                 {p.provider_name}
-                              </span>
+                              </span> */}
                             </div>
                           ))}
                         </div>
@@ -511,10 +573,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     )}
                     {watchProviders.renting.length > 0 && (
                       <div className="font-poppins">
-                        <h4 className="text-xs uppercase font-bold text-zinc-500 mb-3 tracking-widest">
+                        <h4 className="text-xs uppercase font-semibold text-zinc-400 mb-3 tracking-widest">
                           Buy or Rent
                         </h4>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-6">
                           {watchProviders.renting.slice(0, 6).map((p) => (
                             <div
                               key={p.provider_id}
@@ -527,9 +589,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                                   className="w-full h-full rounded-xl shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all object-cover"
                                 />
                               </div>
-                              <span className="text-[10px] text-white group-hover:text-white transition-colors">
+                              {/* <span className="text-[10px] text-white group-hover:text-white transition-colors">
                                 {p.provider_name}
-                              </span>
+                              </span> */}
                             </div>
                           ))}
                         </div>
@@ -637,6 +699,40 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <Reviews movieId={id} type={movie?.media_type || "movie"} />
               </div>
             </div>
+
+            {/* Internal Linking Clusters (SEO) */}
+            <div className="mt-12 pt-8 border-t hidden md:block border-white/5">
+              <h2 className="text-xl font-poppins font-medium mb-6 text-primary flex items-center gap-2">
+                <TrendingUp size={20} />
+                Explore Related Collections
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    name: `Top 10 ${movie?.genres?.[0]?.name || "Featured"} Movies`,
+                    slug: `${movie?.genres?.[0]?.name?.toLowerCase() || "popular"}-${movie?.genres?.[0]?.id || ""}`,
+                  },
+                  {
+                    name: `Best of ${movie?.release_date ? new Date(movie.release_date).getFullYear() : "2024"} Cinema`,
+                    slug: `new-releases?year=${movie?.release_date ? new Date(movie.release_date).getFullYear() : "2024"}`,
+                  },
+                  { name: "Global Trending Now", slug: "trending" },
+                ].map((cluster, i) => (
+                  <Link
+                    key={i}
+                    href={`/discover/${cluster.slug}`}
+                    className="bg-white/10 p-5 shadow-2xl shadow-white/40 rounded-xl border border-white/5 hover:shadow-white/60 transition-all group"
+                  >
+                    <h3 className="text-2xl font-medium text-white group-hover:text-primary transition-colors">
+                      {cluster.name}
+                    </h3>
+                    <p className="text-sm flex gap-2 items-center  text-gray-400 mt-1  ">
+                      Explore Collection <ArrowRight size={16} />
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -669,10 +765,11 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeTab === tab.id
+                  className={`px-4 py-1.5 rounded-full font-poppins text-xs font- whitespace-nowrap transition-all border ${
+                    activeTab === tab.id
                       ? "bg-white text-black border-white"
                       : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                    }`}
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -696,8 +793,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   >
                     <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                       <img
-                        src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
-                          }`}
+                        src={`https://image.tmdb.org/t/p/w300${
+                          rec.backdrop_path || rec.poster_path
+                        }`}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         alt={rec.title || rec.name}
                       />
