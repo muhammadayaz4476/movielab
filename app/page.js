@@ -52,16 +52,54 @@ async function getInitialData() {
     }
 
     const requests = Object.entries(urls).map(async ([key, url]) => {
-      const res = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
-      if (!res.ok) return [key, []];
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [key, { results: [], keywords: [] }];
       const data = await res.json();
       let results = data.results || [];
       if (key === "hero") results = results.slice(0, 5);
-      return [key, results];
+
+      // Fetch keywords for the first 3 movies in each row (except hero)
+      let rowKeywords = [];
+      if (key !== "hero") {
+        try {
+          const topMovies = results.slice(0, 3);
+          const keywordRequests = topMovies.map((movie) =>
+            fetch(`${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`, {
+              next: { revalidate: 86400 },
+            }).then((res) => res.json()),
+          );
+          const keywordsData = await Promise.all(keywordRequests);
+          const allKeywords = keywordsData.flatMap(
+            (d) => d.keywords || d.results || [],
+          );
+          const uniqueKeywordsMap = new Map();
+          allKeywords.forEach((k) => {
+            if (!uniqueKeywordsMap.has(k.id)) {
+              uniqueKeywordsMap.set(k.id, k);
+            }
+          });
+          rowKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 15);
+        } catch (err) {
+          console.error(`Failed to fetch keywords for ${key}`, err);
+        }
+      }
+
+      return [key, { results, keywords: rowKeywords }];
     });
 
-    const results = await Promise.all(requests);
-    return { ...Object.fromEntries(results), trendingKeywords };
+    const resultsArr = await Promise.all(requests);
+    const results = Object.fromEntries(resultsArr);
+
+    return {
+      hero: results.hero.results,
+      trendingToday: results.trendingToday.results,
+      trendingTodayKeywords: results.trendingToday.keywords,
+      horrorMovies: results.horrorMovies.results,
+      horrorMoviesKeywords: results.horrorMovies.keywords,
+      sciFiMovies: results.sciFiMovies.results,
+      sciFiMoviesKeywords: results.sciFiMovies.keywords,
+      trendingKeywords,
+    };
   } catch (error) {
     console.error("Server-side fetch error:", error);
     return {

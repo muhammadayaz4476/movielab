@@ -6,6 +6,7 @@ import MovieRow from "./MovieRow";
 import Link from "next/link";
 import Footer from "./Footer";
 import axios from "axios";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Home = ({ initialData = {} }) => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
@@ -22,12 +23,27 @@ const Home = ({ initialData = {} }) => {
   // Mark server-fetched keys as "already fetching/fetched"
   useEffect(() => {
     Object.keys(initialData).forEach((key) => {
-      fetchingKeysRef.current.add(key);
-      // Populate seen IDs for deduplication
-      initialData[key].forEach((movie) => {
-        if (movie.id) seenIdsRef.current.add(movie.id);
-      });
+      // Look for keys ending in Keywords or the base row keys
+      if (!key.endsWith("Keywords") && initialData[key]) {
+        fetchingKeysRef.current.add(key);
+        // Populate seen IDs for deduplication
+        initialData[key].forEach((movie) => {
+          if (movie.id) seenIdsRef.current.add(movie.id);
+        });
+      }
     });
+
+    // Initialize rowData with both movies and keywords from initialData
+    const initialRowData = {};
+    Object.keys(initialData).forEach((key) => {
+      if (!key.endsWith("Keywords")) {
+        initialRowData[key] = {
+          results: initialData[key] || [],
+          keywords: initialData[`${key}Keywords`] || [],
+        };
+      }
+    });
+    setRowData(initialRowData);
   }, [initialData]);
 
   const unsafeKeywords = ["porn", "xxx", "erotic", "nude", "18+", "nsfw"];
@@ -76,12 +92,42 @@ const Home = ({ initialData = {} }) => {
           if (url.includes("page=") || allUniqueMovies.length >= 20) break;
         }
 
-        setRowData((prev) => ({ ...prev, [key]: allUniqueMovies }));
+        // Fetch keywords for the first few movies in the row
+        let rowKeywords = [];
+        try {
+          const topMovies = allUniqueMovies.slice(0, 3);
+          const keywordRequests = topMovies.map((movie) =>
+            axios.get(
+              `${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`,
+            ),
+          );
+          const keywordsRes = await Promise.all(keywordRequests);
+          const allKeywords = keywordsRes.flatMap(
+            (r) => r.data.keywords || r.data.results || [],
+          );
+          const uniqueKeywordsMap = new Map();
+          allKeywords.forEach((k) => {
+            if (!uniqueKeywordsMap.has(k.id)) {
+              uniqueKeywordsMap.set(k.id, k);
+            }
+          });
+          rowKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 15);
+        } catch (err) {
+          console.error(`Failed to fetch keywords for ${key}`, err);
+        }
+
+        setRowData((prev) => ({
+          ...prev,
+          [key]: { results: allUniqueMovies, keywords: rowKeywords },
+        }));
       } catch (err) {
         console.error(`Failed fetching ${key}`, err);
         // Allow retry if it failed (don't keep in fetchingKeysRef if error)
         fetchingKeysRef.current.delete(key);
-        setRowData((prev) => ({ ...prev, [key]: [] }));
+        setRowData((prev) => ({
+          ...prev,
+          [key]: { results: [], keywords: [] },
+        }));
       }
     },
     [API_KEY, BASE_URL],
@@ -127,7 +173,8 @@ const Home = ({ initialData = {} }) => {
         <div ref={rowRef} className="min-h-[380px]">
           <MovieRow
             title={title}
-            movies={rowData[rowKey]}
+            movies={rowData[rowKey]?.results || []}
+            keywords={rowData[rowKey]?.keywords || []}
             viewAllLink={viewAllLink}
             isPriority={isPriority}
           />
@@ -140,30 +187,29 @@ const Home = ({ initialData = {} }) => {
     <main className="w-full min-h-screen bg-black text-white pb-20">
       <Navbar />
       <Hero initialMovies={initialData.hero} />
-
-      <div className="flex flex-col gap-4 lg:gap-[4vw] relative z-10">
+      <div className="flex lg:hidden overflow-x-auto gap-3 px-4 pb-2 scrollbar-hide py-3">
+        {[
+          { name: "New", slug: "/discover/new-releases" },
+          { name: "Trending", slug: "/discover/trending" },
+          { name: "Sci-Fi", slug: "/discover/sci-fi-878" },
+          { name: "Horror", slug: "/discover/horror-27" },
+          { name: "Top Rated", slug: "/discover/top-rated" },
+          { name: "Action", slug: "/discover/action-28" },
+          { name: "Comedy", slug: "/discover/comedy-35" },
+          { name: "Korean", slug: "/discover/korean" },
+          { name: "Bollywood", slug: "/discover/bollywood" },
+        ].map((tab) => (
+          <Link
+            key={tab.name}
+            href={tab.slug}
+            className="shrink-0 px-5 py-2 font-poppins rounded-full text-sm font- text-primary transition-all bg-zinc-900 text-gry-300 border border-white/5 active:scale-95 active:bg-primary active:text-white"
+          >
+            {tab.name}
+          </Link>
+        ))}
+      </div>
+      <div className="flex flex-col gap-4 lg:gap-[1vw] relative z-10">
         {/* Mobile Category Tabs */}
-        <div className="flex lg:hidden overflow-x-auto gap-3 px-4 pb-2 scrollbar-hide py-3">
-          {[
-            { name: "New", slug: "/discover/new-releases" },
-            { name: "Trending", slug: "/discover/trending" },
-            { name: "Sci-Fi", slug: "/discover/sci-fi-878" },
-            { name: "Horror", slug: "/discover/horror-27" },
-            { name: "Top Rated", slug: "/discover/top-rated" },
-            { name: "Action", slug: "/discover/action-28" },
-            { name: "Comedy", slug: "/discover/comedy-35" },
-            { name: "Korean", slug: "/discover/korean" },
-            { name: "Bollywood", slug: "/discover/bollywood" },
-          ].map((tab) => (
-            <Link
-              key={tab.name}
-              href={tab.slug}
-              className="shrink-0 px-5 py-2 font-poppins rounded-full text-sm font- text-primary transition-all bg-zinc-900 text-gry-300 border border-white/5 active:scale-95 active:bg-primary active:text-white"
-            >
-              {tab.name}
-            </Link>
-          ))}
-        </div>
 
         <LazyMovieRow
           priority={true}
@@ -268,7 +314,10 @@ const Home = ({ initialData = {} }) => {
         <section className="px-4 lg:px-[5vw] py-16 font-poppins lg:py-20 ">
           <div className=" mx-auto text-center space-y-8">
             <h2 className="text-3xl lg:text-5xl font-medium font-comfortaa text-white mb-6">
-              About <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">Movieslab</span>
+              About{" "}
+              <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">
+                Movieslab
+              </span>
             </h2>
             <p className="text-xl lg:text-2xl  text-gray-300 italic font-light">
               Your Ultimate Free Streaming Destination @MoviesLab
@@ -277,31 +326,61 @@ const Home = ({ initialData = {} }) => {
             <div className="grid md:grid-cols-3 gap-8 mt-12">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-8 h-8 text-primary"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-medium text-white">100,000+ Movies</h3>
+                <h3 className="text-xl font-medium text-white">
+                  100,000+ Movies
+                </h3>
                 <p className="text-gray-400">Huge library of HD content</p>
               </div>
 
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-8 h-8 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-xl font-medium text-white">No Registration</h3>
+                <h3 className="text-xl font-medium text-white">
+                  No Registration
+                </h3>
                 <p className="text-gray-400">Watch instantly without signup</p>
               </div>
 
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-8 h-8 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-xl font-medium text-white">Fast Streaming</h3>
+                <h3 className="text-xl font-medium text-white">
+                  Fast Streaming
+                </h3>
                 <p className="text-gray-400">1080p HD with no buffering</p>
               </div>
             </div>
@@ -309,34 +388,112 @@ const Home = ({ initialData = {} }) => {
             <div className="bg-white/8 lg:mt-[5vw]  justify-between items-center flex-wrap backdrop-blur-sm rounded-3xl flex p-4 gap-10 lg:gap-0 py-10 border border-white/10 mt-12">
               <div className="w-full lg:w-1/3">
                 <h2 className="text-2xl lg:text-3xl font-medium text-white mb-6">
-                  Why Choose <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">Movieslab</span> for Free Streaming?
+                  Why Choose{" "}
+                  <span className="font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">
+                    Movieslab
+                  </span>{" "}
+                  for Free Streaming?
                 </h2>
 
-
                 <div className="flex flex-wrap gap-3 justify-center mt-8">
-                  {['Free Movies Online', 'HD Streaming', 'No Registration', 'TV Series', '1080p Quality', 'Latest Movies'].map((keyword, index) => (
-                    <span key={index} className="px-4 py-2 bg-primary/10 rounded-full text-sm text-gray-300 border border-primary/20">
+                  {[
+                    "Free Movies Online",
+                    "HD Streaming",
+                    "No Registration",
+                    "TV Series",
+                    "1080p Quality",
+                    "Latest Movies",
+                  ].map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 bg-primary/10 rounded-full text-sm text-gray-300 border border-primary/20"
+                    >
                       {keyword}
                     </span>
                   ))}
                 </div>
               </div>
               <div className="space-y-4 grid md:grid-cols-2 text-left text-gray-300 w-full lg:w-2/3 font-light text-lg leading-relaxed">
-               <div>
-                 <p className="p-[3vw]">
-                  Welcome to <strong className="text-primary font-comfortaa">Movieslab</strong>, the premier platform for streaming high-definition movies and TV series absolutely free. We offer a vast library of over <strong>100,000+ titles</strong> in stunning <strong>1080p HD </strong>.
-                </p>
-                <p className="p-[3vw]">
-                  At <span className="text-primary font-comfortaa">Movieslab</span>, we believe entertainment should be accessible to everyone. Watch movies online without registration or subscription fees. Enjoy seamless viewing with vidsrc fast, buffer-free streaming servers.
-                </p>
-               </div>
-               <div>
-                <p className="p-[3vw]">
-                  Whether you're into <Link href="/discover/action" className="text-primary hover:underline font-medium"><>Action</></Link>, <Link href="/discover/horror" className="text-primary hover:underline font-medium"><>Horror</></Link>, <Link href="/discover/romance" className="text-primary hover:underline font-medium"><>Romance</></Link>, or <Link href="/discover/sci-fi" className="text-primary hover:underline font-medium"><>Sci-Fi</></Link>, MoviesLab has something for every movie enthusiast. Stay updated with daily additions to our collection.
-                </p>
-                <p className="p-[3vw]">
-                  Explore  curated collections including <Link href="/discover/trending" className="text-primary hover:underline font-medium">trending movies</Link>, <Link href="/discover/top-rated" className="text-primary hover:underline font-medium">top-rated films</Link>, and <Link href="/discover/new-releases" className="text-primary hover:underline font-medium">latest releases</Link>. Join millions of users who trust Movieslab for their daily entertainment needs.
-                </p>
+                <div>
+                  <p className="p-[3vw]">
+                    Welcome to{" "}
+                    <strong className="text-primary font-comfortaa">
+                      Movieslab
+                    </strong>
+                    , the premier platform for streaming high-definition movies
+                    and TV series absolutely free. We offer a vast library of
+                    over <strong>100,000+ titles</strong> in stunning{" "}
+                    <strong>1080p HD </strong>.
+                  </p>
+                  <p className="p-[3vw]">
+                    At{" "}
+                    <span className="text-primary font-comfortaa">
+                      Movieslab
+                    </span>
+                    , we believe entertainment should be accessible to everyone.
+                    Watch movies online without registration or subscription
+                    fees. Enjoy seamless viewing with vidsrc fast, buffer-free
+                    streaming servers.
+                  </p>
+                </div>
+                <div>
+                  <p className="p-[3vw]">
+                    Whether you're into{" "}
+                    <Link
+                      href="/discover/action"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      <>Action</>
+                    </Link>
+                    ,{" "}
+                    <Link
+                      href="/discover/horror"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      <>Horror</>
+                    </Link>
+                    ,{" "}
+                    <Link
+                      href="/discover/romance"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      <>Romance</>
+                    </Link>
+                    , or{" "}
+                    <Link
+                      href="/discover/sci-fi"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      <>Sci-Fi</>
+                    </Link>
+                    , MoviesLab has something for every movie enthusiast. Stay
+                    updated with daily additions to our collection.
+                  </p>
+                  <p className="p-[3vw]">
+                    Explore curated collections including{" "}
+                    <Link
+                      href="/discover/trending"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      trending movies
+                    </Link>
+                    ,{" "}
+                    <Link
+                      href="/discover/top-rated"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      top-rated films
+                    </Link>
+                    , and{" "}
+                    <Link
+                      href="/discover/new-releases"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      latest releases
+                    </Link>
+                    . Join millions of users who trust Movieslab for their daily
+                    entertainment needs.
+                  </p>
                 </div>
               </div>
             </div>
@@ -346,7 +503,10 @@ const Home = ({ initialData = {} }) => {
         <section className="px-4 lg:px-[5vw] py-12 font-poppins bg-zinc-950 border-t border-white/5">
           <div className=" mx-auto">
             <h3 className="text-3xl   text-white mb-8">
-              Explore <span className="text-priary font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">Movieslab</span>
+              Explore{" "}
+              <span className="text-priary font-comfortaa text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text ">
+                Movieslab
+              </span>
             </h3>
 
             <div className="space-y-8">
@@ -442,7 +602,7 @@ const Home = ({ initialData = {} }) => {
               </div>
             </div>
           </div>
-        </section> 
+        </section>
 
         <Footer />
       </div>

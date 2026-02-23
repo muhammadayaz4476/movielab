@@ -39,7 +39,7 @@ const Hero = ({ initialMovies = [] }) => {
     if (movies.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % movies.length);
-    }, 6000);
+    }, 8000);
     return () => clearInterval(interval);
   }, [movies]);
 
@@ -55,7 +55,7 @@ const Hero = ({ initialMovies = [] }) => {
 
   return (
     <div className="lg:px-[0vw] lg:py-[0] relative overflow-hidden">
-      <div className="relative w-full h-[70vh] lg:h-[70vh]  overflow-hidden group shadow-2xl">
+      <div className="relative w-full h-[70vh] lg:h-[50vh]  overflow-hidden group shadow-2xl">
         {/* Background Images with Fade */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -128,7 +128,7 @@ const Hero = ({ initialMovies = [] }) => {
         </div>
 
         {/* Slider Indicators */}
-        <div className="absolute bottom-8 right-8 z-30 flex gap-2">
+        {/* <div className="absolute bottom-8 right-8 z-30 flex gap-2">
           {movies.map((_, i) => (
             <button
               key={i}
@@ -138,7 +138,7 @@ const Hero = ({ initialMovies = [] }) => {
               }`}
             />
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );

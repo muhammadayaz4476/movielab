@@ -192,13 +192,13 @@ const Navbar = () => {
   return (
     <>
       <header className="absolute top-0 left-0 w-full z-50 ">
-        <div className="w-full  z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+        <div className="w-full   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
           <Marquee
-            speed={40} // Sets the speed (approx. matches the previous 40s animation duration)
+            speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
             gradient={false} // Assuming you don't need the fade gradient effect
             loop={0} // 0 means infinite loop
           >
-            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
+            <span className="mx-[10px] lg:mx-[3vw]    text-white/80 md:text-base text-[12px]">
               Please Install the{" "}
               <Link
                 href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"

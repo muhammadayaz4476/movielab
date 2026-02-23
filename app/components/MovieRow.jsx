@@ -11,6 +11,7 @@ const MovieRow = ({
   fetchURL,
   viewAllLink,
   movies: propMovies,
+  keywords = [],
   isPriority = false,
 }) => {
   const [movies, setMovies] = useState(propMovies || []);
@@ -66,16 +67,34 @@ const MovieRow = ({
 
   return (
     <div className="px-4 lg:px-[5vw] py-8">
-      <div className="flex items-center justify-between mb-4 lg:mb-[1vw]">
-        <h2 className="text-xl lg:text-3xl font-comfortaa font-bold text-white">
-          {title}
-        </h2>
-        <Link
+      <div className="flex flex-col  mb-6 gap-4">
+        <div className="flex flex-col gap-2 pb-[1vw]">
+            <div className="flex items-center  w-full justify-between">
+              <h2 className="text-xl lg:text-3xl font-poppins font-medium text-white">
+            {title}
+          </h2>
+          <Link
           href={viewAllLink || "/"}
-          className="text-sm lg:text-base bg-container hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg transition-colors cursor-pointer"
+          className="text-sm lg:text-base w-[100px] flex items-center justify-center bg-container hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg transition-colors cursor-pointer"
         >
           View All
         </Link>
+            </div>
+          {keywords.length > 0 && (
+            <div className="flex overflow-x-auto mt-3 scrollbar-hide md:flex-wrap gap-2 lg:w-3/4 x pb-2">
+              {keywords.slice(0, 12).map((keyword) => (
+                <Link
+                  key={keyword.id}
+                  href={`/search/kw-${keyword.id}-${encodeURIComponent(keyword.name.replace(/\s+/g, "-").toLowerCase())}`}
+                  className="px-4 py-2 md:px-[1.3vw] shrink-0 hover:scale-110 transition-all ease-in-out duration-100 hover:shadow-2xl shadow-white/30 font-light md:py-[0.5vw] bg-white/8 rounded-full text-sm md:text-lg text-white/95 border border-white/10"
+                >
+                  #{keyword.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+        
       </div>
 
       <div className="flex items-start gap-4 lg:gap-[1.5vw] overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
