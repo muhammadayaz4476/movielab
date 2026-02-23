@@ -6,7 +6,6 @@ export default function robots() {
         "/",
         "/movie/",
 
-        "/search/",
         "/discover/",
         "/about/",
         "/contact/",
@@ -16,7 +15,9 @@ export default function robots() {
         "/movies.xml",
         "/webseries.xml",
       ],
-      disallow: ["/api/", "/admin/", "/watch/", "/watch-later/", "/_next/"],
+      disallow: ["/api/", "/admin/", "/watch/", "/watch-later/", "/_next/", "/search/",
+
+      ],
       crawlDelay: 1,
     },
     sitemap: ["https://movies.umairlab.com/sitemap.xml"],
