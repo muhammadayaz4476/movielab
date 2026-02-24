@@ -232,6 +232,10 @@ export async function POST(request) {
       const finalDate = date || (details && (details.release_date || details.first_air_date)) || "";
       const expandedStoryline = getExpandedStoryline(title, type, details, credits, overview, finalDate);
 
+      // Get image URL (poster or backdrop)
+      const posterPath = details?.poster_path || item.poster_path;
+      const imageUrl = posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : null;
+
       return {
         page_url: `https://movies.umairlab.com/movie/${slug}`,
         item_title: title,
@@ -243,6 +247,7 @@ export async function POST(request) {
         writers: writers,
         tags: tags,
         arrayofcast: cast,
+        image_url: imageUrl,
       };
     }));
 
@@ -306,6 +311,7 @@ export async function OPTIONS(request) {
 // writers (array[string])
 // tags (array[string])
 // arrayofcast (array[string]) — top cast (up to 5)
+// image_url (string or null) — poster image URL from TMDB (w500 size, null if unavailable)
 // Sample response:
 // {
 //   "results": [
@@ -319,7 +325,8 @@ export async function OPTIONS(request) {
 //       "director": "Christopher Nolan",
 //       "writers": ["Christopher Nolan"],
 //       "tags": ["dream", "heist"],
-//       "arrayofcast": ["Leonardo DiCaprio","Joseph Gordon-Levitt"]
+//       "arrayofcast": ["Leonardo DiCaprio","Joseph Gordon-Levitt"],
+//       "image_url": "https://image.tmdb.org/t/p/w500/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg"
 //     }
 //   ],
 //   "total": 123
