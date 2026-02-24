@@ -70,7 +70,10 @@ export async function POST(request) {
     }
 
     const body = await request.json();
+    const issearch = body?.issearch !== false; // default true (search mode)
+    const isdiscover = body?.isdiscover === true; // default false
     const query = (body?.query || "").toString().trim();
+    
     if (!query) {
       const res = NextResponse.json({ error: "Missing query" }, { status: 400 });
       return addCorsHeaders(res);
@@ -129,12 +132,33 @@ export async function POST(request) {
     const unsafeKeywords = ["sexy", "erotic", "porn", "xxx", "nude", "breast", "sex", "18+"];
 
     while (collected.length < offset + quantity && page <= totalPages) {
-      const searchUrl = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&page=${page}`;
+      let searchUrl;
+      
+      if (isdiscover) {
+        // Discover mode: filter by genre
+        let discoverPath = "multi";
+        if (requestedType === "movie") discoverPath = "movie";
+        else if (requestedType === "tv") discoverPath = "tv";
+        searchUrl = `${BASE_URL}/discover/${discoverPath}?api_key=${API_KEY}&with_genres=${encodeURIComponent(query)}&include_adult=false&sort_by=popularity.desc&page=${page}`;
+      } else {
+        // Search mode: search by query text
+        searchUrl = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&page=${page}`;
+      }
+      
       const searchRes = await fetchJson(searchUrl);
       const rawResults = (searchRes && searchRes.results) || [];
       totalPages = searchRes?.total_pages || 1;
 
-      const mediaResults = rawResults.filter(r => (r.media_type === "movie" || r.media_type === "tv"));
+      // For discover mode, determine media_type from context; for search mode, filter by media_type
+      let mediaResults;
+      if (isdiscover) {
+        mediaResults = rawResults.map(r => ({
+          ...r,
+          media_type: requestedType === "tv" || requestedType === "movie" ? requestedType : (r.title ? "movie" : "tv")
+        }));
+      } else {
+        mediaResults = rawResults.filter(r => (r.media_type === "movie" || r.media_type === "tv"));
+      }
 
       for (const r of mediaResults) {
         if (collected.length >= offset + quantity) break;
@@ -290,18 +314,26 @@ export async function OPTIONS(request) {
 
 // Request body (JSON):
 
-// query (string) — required. Search text.
+// query (string) — required. Search text or genre ID for discovery.
+// issearch (boolean) — optional; if true, searches by query text; if false with isdiscover, used for other modes (default true).
+// isdiscover (boolean) — optional; if true, query is treated as genre ID for discover mode (default false).
 // type (string) — optional. movie, tv, or all (default all).
 // year (string or number) — optional legacy single year (e.g. 2020).
 // years (string or array) — optional; single year ("2020"), comma list ("2018,2020"), or range ("2010-2015").
 // offset (integer) — optional; number of matching items to skip (default 0).
 // quantity (integer) — optional; how many items to return (default 10, max 50).
 // has_image (boolean) — optional; if true, only returns items with poster images (default false).
-// Example — PowerShell:
-// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10,"has_image":true}'
+// Example (Search mode) — PowerShell:
+// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","issearch":true,"type":"movie","years":"2010-2015","quantity":10,"has_image":true}'
 
-// Example — curl (WSL/Git Bash):
-// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10,"has_image":true}'
+// Example (Discover mode by genre) — PowerShell:
+// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"10749","isdiscover":true,"type":"movie","quantity":10}'
+
+// Example (Search mode) — curl (WSL/Git Bash):
+// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"inception","issearch":true,"type":"movie","years":"2010-2015","quantity":10,"has_image":true}'
+
+// Example (Discover mode by genre) — curl (WSL/Git Bash):
+// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"10749","isdiscover":true,"type":"movie","quantity":10}'
 // Response (JSON):
 
 // results: array of item objects (length ≤ quantity)
@@ -341,9 +373,11 @@ export async function OPTIONS(request) {
 
 // Notes & behavior:
 
+// Search mode (issearch=true, isdiscover=false): Searches by query text across titles and overviews.
+// Discover mode (isdiscover=true): Filters by genre ID(s). Query should be genre ID(s) (e.g., "10749" for Romance).
 // Results are deduplicated (by id+media_type) and sorted by popularity to match site ordering.
 // offset+quantity allow retrieving the "next" set of results (e.g., set offset:10 to get results after the first 10).
 // years accepts single, list, or range; year remains supported for compatibility.
 // has_image filter, when set to true, excludes results without poster images.
 // The endpoint fetches details, credits and keywords from TMDB to enrich items; this makes the response slower than a plain search.
-// If you want extra filters (e.g., min_popularity) or field-selection, tell me which and I'll add them.
+// Common TMDB Genre IDs: 28=Action, 12=Adventure, 16=Animation, 35=Comedy, 80=Crime, 18=Drama, 10751=Family, 14=Fantasy, 27=Horror, 10749=Romance, 878=Sci-Fi, 10770=TV Movie, 53=Thriller, 10752=War, 37=Western
