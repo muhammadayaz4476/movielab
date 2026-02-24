@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, DownloadCloudIcon } from "lucide-react";
 
-const NoticeModal = ({ isOpen, onClose, message }) => {
+const NoticeModal = ({ isOpen, onClose, message, downloadLink, title }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -14,7 +14,7 @@ const NoticeModal = ({ isOpen, onClose, message }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 z-100 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/80 z-[100] backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -22,29 +22,50 @@ const NoticeModal = ({ isOpen, onClose, message }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-[#0f0f0f] border border-zinc-800 rounded-3xl z-101 shadow-2xl p-8 text-center"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-[#0f0f0f] border border-zinc-800 rounded-3xl z-[101] shadow-2xl p-8 text-center"
           >
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <AlertCircle className="w-8 h-8 text-primary" />
+                {/* <AlertCircle className="w-8 h-8 text-primary" /> */}
+                <DownloadCloudIcon className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors" />
               </div>
             </div>
 
             <h3 className="text-xl font-bold text-white mb-2 font-comfortaa">
-              Feature Coming Soon
+              {downloadLink ? "Download HD" : "Feature Coming Soon"}
             </h3>
 
-            <p className="text-gray-400 text-sm font-poppins leading-relaxed mb-8">
+            <p className="text-gray-400 text-sm font-poppins leading-relaxed mb-4">
+              {title && (
+                <span className="block text-white font-semibold font-poppins italic mb-2">
+                  "
+                  {title}
+                  "
+                </span>
+              )}
               {message ||
-                "We are still working on this feature. Please check back later!"}
+                (downloadLink
+                  ? "For 1080px or 4k quality, Please use IDM(Internet Download Manager) on watch page."
+                  : "We are still working on this feature. Please check back later!")}
             </p>
 
-            <button
-              onClick={onClose}
-              className="w-full bg-primary hover:bg-primary/90 text-black font-semibold text-lg py-4 rounded-2xl transition-all active:scale-95 font-poppins"
-            >
-              Got it
-            </button>
+            {downloadLink ? (
+              <a
+                href={downloadLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-primary hover:bg-primary/90 text-black font-semibold text-lg py-4 rounded-2xl transition-all active:scale-95 font-poppins mb-3"
+              >
+                Download 780px HD
+              </a>
+            ) : (
+              <button
+                onClick={onClose}
+                className="w-full bg-primary hover:bg-primary/90 text-black font-semibold text-lg py-4 rounded-2xl transition-all active:scale-95 font-poppins mb-3"
+              >
+                Got it
+              </button>
+            )}
 
             <button
               onClick={onClose}

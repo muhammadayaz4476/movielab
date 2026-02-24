@@ -1,11 +1,25 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Share2, Check, Plus, MoreVertical } from "lucide-react";
+import {
+  Share2,
+  Check,
+  Plus,
+  MoreVertical,
+  Clock,
+  Calendar,
+  Star,
+  Info,
+  DownloadCloudIcon,
+} from "lucide-react";
 import Link from "next/link";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
+import NoticeModal from "../../components/NoticeModal";
 import TrailerModal from "../../components/TrailerModal";
 import Reviews from "../../components/Reviews";
 import { motion } from "framer-motion";
@@ -17,6 +31,84 @@ const SidebarSkeleton = () => (
     <div className="flex-1 space-y-2">
       <div className="h-4 bg-zinc-900 rounded w-full" />
       <div className="h-3 bg-zinc-900 rounded w-1/2" />
+    </div>
+  </div>
+);
+
+const EpisodeCard = ({ episode: e, isActive, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`group relative flex flex-col bg-white/15 rounded-lg  overflow-hidden cursor-pointer transition-all duration-300 border-2 ${
+      isActive
+        ? "border-primary/50 ring-4 ring-primary/20 scale-[1.02] bg-zinc-900"
+        : "border-transparent hover:border-zinc-700 hover:bg-zinc-800"
+    }`}
+  >
+    {/* Thumbnail */}
+    <div className="relative aspect-video overflow-hidden">
+      {e.still_path ? (
+        <img
+          src={`https://image.tmdb.org/t/p/w500${e.still_path}`}
+          alt={e.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
+          <Info size={32} className="opacity-20" />
+        </div>
+      )}
+
+      {/* Episode Tag */}
+      {/* <div className="absolute top-3 left-3 px-3 py-1 bg-black/80 backdrop-blur-md rounded-full text-[10px] font-bold text-white border border-white/10">
+        Ep {e.episode_number}
+      </div> */}
+
+      {/* Play Overlay */}
+      <div
+        className={`absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? "opacity-100" : ""}`}
+      >
+        <div className="size-12  bg-primary text-black rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+          <Play fill="black" size={18} className="ml-1" />
+        </div>
+      </div>
+    </div>
+
+    {/* Content */}
+    <div className="p-4 flex flex-col gap-2">
+      <h3
+        className={`font-medium text-sm line-clamp-1 transition-colors ${isActive ? "text-primary" : "text-white group-hover:text-primary"}`}
+      >
+        {e.name}
+      </h3>
+
+      <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
+        <div className="flex items-center gap-3">
+          {e.runtime && (
+            <span className="flex items-center gap-1">
+              <Clock size={10} />
+              {e.runtime}m
+            </span>
+          )}
+          {e.air_date && (
+            <span className="flex items-center gap-1">
+              <Calendar size={10} />
+              {new Date(e.air_date).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        {/* {e.vote_average > 0 && (
+          <span className="flex items-center gap-1 text-primary">
+            <Star size={10} fill="currentColor" />
+            {e.vote_average.toFixed(1)}
+          </span>
+        )} */}
+      </div>
+
+      <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
+        <span className="text-lg font-poppins text-white transition-colors">
+           Episode {e.episode_number}
+        </span>
+      </div>
     </div>
   </div>
 );
@@ -140,6 +232,24 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setSelectedSeason(s);
     setSelectedEpisode(1);
     fetchEpisodes(s);
+  };
+
+  const sliderSettings = {
+    dots: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 1.2,
+    slidesToScroll: 1,
+    arrows: false,
+    responsive: [
+      {
+        breakpoint: 640,
+        settings: {
+          slidesToShow: 1.1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
   };
 
   // 2. Fetch Sidebar Content (Infinite Scroll)
@@ -354,8 +464,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 2, ease: "easeInOut" }}
             src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-            alt={`Watch ${movie.title || movie.name} (${(movie.release_date || movie.first_air_date || "").split("-")[0]
-              }) Cinematic Background HD`}
+            alt={`Watch ${movie.title || movie.name} (${
+              (movie.release_date || movie.first_air_date || "").split("-")[0]
+            }) Cinematic Background HD`}
             title={`Watch ${movie.title || movie.name} Full HD`}
             className="w-full h-screen object-cover lg:opacity-100 blur-xs opacity-70  "
           />
@@ -413,10 +524,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={provider.name}
                   onClick={() => setSelectedServer(provider)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${selectedServer.name === provider.name
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                    selectedServer.name === provider.name
                       ? "bg-primary text-black"
                       : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
-                    }`}
+                  }`}
                 >
                   {provider.name}
                 </button>
@@ -426,8 +538,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             {/* User Note */}
             <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
               <span className="text-white font- mr-1">Note:</span>
-              Try changing{" "}
-              <span className="text-primary font-">Server</span> or{" "}
+              Try changing <span className="text-primary font-">
+                Server
+              </span> or{" "}
               <button
                 onClick={() => window.location.reload()}
                 className="underline text-primary hover:text-white transition-colors"
@@ -439,15 +552,15 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
             {/* TV Selectors */}
             {mediaType === "tv" && (
-              <div className="flex flex-wrap  px-2  items-center gap-4 mb-6">
-                <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
-                  <label className="text-[10px] uppercase font-bold text-gray-500">
-                    Season
+              <div className="flex flex-col  gap-6 mb-10 px-2 lg:px-0">
+                <div className="flex items-center flex-wrap justify-between w-full   gap-2  ">
+                  <label className="text-lg  font-poppins text-">
+                    Season Selection :
                   </label>
                   <select
                     value={selectedSeason}
                     onChange={handleSeasonChange}
-                    className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
+                    className="bg-zinc-900 border  w-full md:w-1/2   border-zinc-800 text-white text-sm rounded-md focus:ring-primary focus:border-primary block w-full p-3 outline-none cursor-pointer transition-all hover:border-zinc-700"
                   >
                     {seasons.map((s) => (
                       <option key={s.id} value={s.season_number}>
@@ -456,47 +569,64 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     ))}
                   </select>
                 </div>
-                <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
-                  <label className="text-[10px] uppercase font-bold text-gray-500">
-                    Episode
-                  </label>
-                  <select
-                    value={selectedEpisode}
-                    onChange={(e) =>
-                      setSelectedEpisode(parseInt(e.target.value))
-                    }
-                    className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none cursor-pointer"
-                    disabled={loadingTV}
-                  >
-                    {loadingTV ? (
-                      <option>Loading...</option>
-                    ) : (
-                      episodes.map((e) => (
-                        <option key={e.id} value={e.episode_number}>
-                          Ep {e.episode_number}: {e.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-              </div>
-            )}
 
-            <div className="flex flex-col  px-2  gap-6 relative z-10">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div className="flex items-start justify-between w-full">
-                  <div>
-                    <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-2">
-                      {mediaType === "movie"
-                        ? movie.title
-                        : movie.name +
-                        ` (S${selectedSeason} E${selectedEpisode})`}
-                    </h1>
-                    {/* Watch Later Button (Mobile/Desktop) */}
-                    <div className="flex items-center gap-4 mt-2">
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg md:text-xl  font-bold font-comfortaa text-white flex items-center gap-2">
+                      <div className="w-2 h-8 bg-primary rounded-full" />
+                      Episodes List
+                      <span className="text-zinc-500 text-sm font-light ml-2">
+                        Season {selectedSeason} ({episodes.length} episodes)
+                      </span>
+                    </h2>
+                  </div>
+
+                  {loadingTV ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="aspect-video bg-zinc-900 rounded-2xl animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Mobile Slider */}
+                      <div className="sm:hidden -mx-2">
+                        <Slider {...sliderSettings}>
+                          {episodes.map((e) => (
+                            <div key={e.id} className="px-2 pb-4">
+                              <EpisodeCard
+                                episode={e}
+                                isActive={selectedEpisode === e.episode_number}
+                                onClick={() =>
+                                  setSelectedEpisode(e.episode_number)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </Slider>
+                      </div>
+
+                      {/* Desktop Grid */}
+                      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {episodes.map((e) => (
+                          <EpisodeCard
+                            key={e.id}
+                            episode={e}
+                            isActive={selectedEpisode === e.episode_number}
+                            onClick={() => setSelectedEpisode(e.episode_number)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex  flex-wrap items-center gap-4 mt-4">
                       <button
                         onClick={() => toggleWatchLater(movie)}
-                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
+                        className="flex items-center gap-2 text-white transition-colors text-md font-poppins bg-primary/15 px-3 py-4 rounded-lg"
                       >
                         {isSaved ? (
                           <>
@@ -515,13 +645,36 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       {trailer && (
                         <button
                           onClick={() => setIsTrailerModalOpen(true)}
-                          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-bold bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5 hover:border-primary/50"
+                          className="flex items-center gap-2 text-white hover:text-white transition-colors text-md backdrop-blur-sm font-poppins bg-white/10 px-4 cursor-pointer  py-4 rounded-lg  "
                         >
                           <Play size={16} fill="currentColor" />
                           <span>Watch Trailer</span>
                         </button>
                       )}
+                      <button
+                        onClick={() => setIsNoticeModalOpen(true)}
+                        className="flex items-center gap-2 text-black transition-all duration-300 ease-in-out text-md font-poppins bg-primary px-4 cursor-pointer shadow-xl shadow-white/30 hover:shadow-2xl  py-3 rounded-lg border border-white/5 hover:border-primary/50"
+                        >
+                        <DownloadCloudIcon className="" size={18} />
+                        <span>Download <span className="font-bold">EP-{selectedEpisode}</span></span>
+                      </button>
                     </div>
+              </div>
+            )}
+
+            <div className="flex flex-col  pt-[6vw]  px-2  gap-6 relative z-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex items-start justify-between w-full">
+                  <div>
+                    
+                    <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-2">
+                      {mediaType === "movie"
+                        ? movie.title
+                        : movie.name +
+                          ` (S${selectedSeason} E${selectedEpisode})`}
+                    </h1>
+                    {/* Watch Later Button (Mobile/Desktop) */}
+                    
                   </div>
 
                   <button
@@ -640,10 +793,11 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeTab === tab.id
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                      activeTab === tab.id
                         ? "bg-white text-black border-white"
                         : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                      }`}
+                    }`}
                   >
                     {tab.label}
                   </button>
@@ -667,8 +821,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     >
                       <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                         <img
-                          src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
-                            }`}
+                          src={`https://image.tmdb.org/t/p/w300${
+                            rec.backdrop_path || rec.poster_path
+                          }`}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           alt={rec.title || rec.name}
                         />
@@ -755,10 +910,19 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           onClose={() => setIsTrailerModalOpen(false)}
           trailerKey={trailer?.key}
         />
+        <NoticeModal
+          isOpen={isNoticeModalOpen}
+          onClose={() => setIsNoticeModalOpen(false)}
+          title={movie?.title || movie?.name}
+          downloadLink={
+            mediaType === "movie"
+              ? `https://dl.vidsrc.vip/movie/${id}`
+              : `https://dl.vidsrc.vip/tv/${id}/${selectedSeason}/${selectedEpisode}`
+          }
+        />
       </div>
 
       {/* Reviews Section */}
-
     </main>
   );
 };

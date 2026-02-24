@@ -474,7 +474,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 onClick={() => setIsNoticeModalOpen(true)}
                 className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >
-                Download
+                Download Now
                 <DownloadCloudIcon className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors" />
               </button>
               <button
@@ -886,7 +886,8 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       <NoticeModal
         isOpen={isNoticeModalOpen}
         onClose={() => setIsNoticeModalOpen(false)}
-        message="We are still working on this feature. Please check back later!"
+        title={movie?.title || movie?.name}
+        downloadLink={`https://dl.vidsrc.vip/${mediaType === "tv" ? "tv" : "movie"}/${id}${mediaType === "tv" ? "/1/1" : ""}`}
       />
     </main>
   );
