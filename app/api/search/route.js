@@ -26,6 +26,42 @@ async function fetchJson(url) {
   return res.json();
 }
 
+function getExpandedStoryline(title, type, details, credits, overview, releaseDate) {
+  // Build genre string
+  const genres = (details?.genres || []).map(g => g.name).join(", ") || "film";
+
+  // Get primary production company
+  const studio = details?.production_companies?.[0]?.name;
+
+  // Get tagline if available
+  const tagline = details?.tagline;
+
+  // Extract year from release date
+  const year = releaseDate ? new Date(releaseDate).getFullYear() : "";
+
+  // Start with base overview
+  let narrative = overview || "Explore the full details of this title on MovieLab.";
+  narrative += " ";
+
+  // Add tagline if available
+  if (tagline) {
+    narrative += `"${tagline}" — `;
+  }
+
+  // Add production context
+  narrative += `This ${year || "acclaimed"} ${genres} production ${studio ? `from ${studio}` : ""} brings a unique perspective to the screen. `;
+
+  // Add status or cast info
+  if (details?.status === "Planned" || details?.status === "Post Production") {
+    narrative += `Currently in its ${details.status.toLowerCase()} phase, anticipation continues to build for its full release.`;
+  } else if (credits?.cast && credits.cast.length > 0) {
+    const topCast = credits.cast.slice(0, 3).map(c => c.name).join(", ");
+    narrative += `Featuring a talented cast including ${topCast}, the project delivers a compelling ${type} experience.`;
+  }
+
+  return narrative;
+}
+
 export async function POST(request) {
   try {
     if (!API_KEY || !BASE_URL) {
@@ -192,13 +228,17 @@ export async function POST(request) {
 
       const slug = createSlug(title, id, type);
 
+      // Get expanded storyline
+      const finalDate = date || (details && (details.release_date || details.first_air_date)) || "";
+      const expandedStoryline = getExpandedStoryline(title, type, details, credits, overview, finalDate);
+
       return {
         page_url: `https://movies.umairlab.com/movie/${slug}`,
         item_title: title,
         media_type: type,
         popularity: item.popularity || 0,
-        storylineandcontext: overview || (details && details.overview) || "",
-        date: date || (details && (details.release_date || details.first_air_date)) || "",
+        storylineandcontext: expandedStoryline,
+        date: finalDate,
         director: director,
         writers: writers,
         tags: tags,
