@@ -17,34 +17,29 @@ const Home = ({ initialData = {} }) => {
   // Prevent duplicate fetches
   const fetchingKeysRef = React.useRef(new Set());
 
-  // Storage for row data - initialize with server data
-  const [rowData, setRowData] = useState(initialData);
+  // Storage for row data - initialize with server data if available
+  const [rowData, setRowData] = useState(() => {
+    if (initialData.rows) {
+      return initialData.rows;
+    }
+    return {};
+  });
 
-  // Mark server-fetched keys as "already fetching/fetched"
+  // Mark server-fetched keys as "already fetching/fetched" and sync deduplication
   useEffect(() => {
-    Object.keys(initialData).forEach((key) => {
-      // Look for keys ending in Keywords or the base row keys
-      if (!key.endsWith("Keywords") && initialData[key]) {
-        fetchingKeysRef.current.add(key);
-        // Populate seen IDs for deduplication
-        initialData[key].forEach((movie) => {
-          if (movie.id) seenIdsRef.current.add(movie.id);
-        });
-      }
-    });
-
-    // Initialize rowData with both movies and keywords from initialData
-    const initialRowData = {};
-    Object.keys(initialData).forEach((key) => {
-      if (!key.endsWith("Keywords")) {
-        initialRowData[key] = {
-          results: initialData[key] || [],
-          keywords: initialData[`${key}Keywords`] || [],
-        };
-      }
-    });
-    setRowData(initialRowData);
-  }, [initialData]);
+    if (initialData.rows) {
+      Object.keys(initialData.rows).forEach((key) => {
+        const row = initialData.rows[key];
+        if (row && row.results) {
+          fetchingKeysRef.current.add(key);
+          row.results.forEach((movie) => {
+            if (movie.id) seenIdsRef.current.add(movie.id);
+          });
+        }
+      });
+      setRowData(initialData.rows);
+    }
+  }, [initialData.rows]);
 
   const unsafeKeywords = ["porn", "xxx", "erotic", "nude", "18+", "nsfw"];
 
@@ -186,7 +181,7 @@ const Home = ({ initialData = {} }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
       <Navbar />
-      <Hero initialMovies={initialData.hero} />
+      <Hero initialMovies={initialData.rows?.hero?.results || []} />
       <div className="flex lg:hidden overflow-x-auto gap-3 px-4 pb-2 scrollbar-hide py-3">
         {[
           { name: "New", slug: "/discover/new-releases" },

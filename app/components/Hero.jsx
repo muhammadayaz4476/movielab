@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Using standard img tag for direct TMDB asset loading & reliability
 
 const Hero = ({ initialMovies = [] }) => {
-  const [movies, setMovies] = useState(initialMovies);
+  const [movies, setMovies] = useState(initialMovies || []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(initialMovies.length === 0);
 
@@ -12,7 +12,11 @@ const Hero = ({ initialMovies = [] }) => {
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
   useEffect(() => {
-    if (initialMovies.length > 0) return;
+    if (initialMovies && initialMovies.length > 0) {
+      setMovies(initialMovies);
+      setLoading(false); // Ensure loading is set to false if initialMovies are provided
+      return;
+    }
 
     const fetchTrending = async () => {
       try {
@@ -117,11 +121,15 @@ const Hero = ({ initialMovies = [] }) => {
             </div> */}
             <div className="lg:w-full space-y-4 md:mt-[10vw] mt-[120px] ">
               <h1 className="text-3xl text-white lg:text-5xl leading-normal lg:leading-[4vw] font-semibold lg:font-light font-comfortaa">
-                <span className="font-comfortaa  text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text">Movieslab</span> <span className="pb-1 border-b">Watch & Download</span> Your{" "}
+                <span className="font-comfortaa  text-transparent bg-gradient-to-tr from-[#b622a7] to-primary bg-clip-text">
+                  Movieslab
+                </span>{" "}
+                <span className="pb-1 border-b">Watch & Download</span> Your{" "}
                 <br className="hidden lg:block" /> Favorite Movies Here.
               </h1>
               <p className="md:w-3/4 w-[90%]  lg:text-lg font-poppins text-gray-300">
-                No Wonders Just Watch unlimited movies online or download for free.
+                No Wonders Just Watch unlimited movies online or download for
+                free.
               </p>
             </div>
           </motion.div>
