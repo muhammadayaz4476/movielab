@@ -112,6 +112,7 @@ export async function POST(request) {
     const requestedType = (body?.type || "all").toString().toLowerCase(); // movie | tv | all
     let quantity = parseInt(body?.quantity ?? 10, 10);
     const offset = parseInt(body?.offset ?? 0, 10); // how many initial items to skip
+    const hasImageFilter = body?.has_image === true; // optional: only return items with images
 
     if (Number.isNaN(quantity) || quantity <= 0) quantity = 10;
     if (Number.isNaN(offset) || offset < 0) {
@@ -181,7 +182,7 @@ export async function POST(request) {
     const totalAvailable = deduped.length;
     const slice = deduped.slice(offset, offset + quantity);
 
-    const enriched = await Promise.all(slice.map(async (item) => {
+    let enriched = await Promise.all(slice.map(async (item) => {
       const type = item.media_type === "tv" ? "tv" : "movie";
       const id = item.id;
       const title = item.title || item.name || "";
@@ -251,6 +252,11 @@ export async function POST(request) {
       };
     }));
 
+    // Apply has_image filter if requested
+    if (hasImageFilter) {
+      enriched = enriched.filter(item => item.image_url !== null);
+    }
+
     const res = NextResponse.json({ results: enriched, total: totalAvailable });
     return addCorsHeaders(res);
   } catch (err) {
@@ -290,11 +296,12 @@ export async function OPTIONS(request) {
 // years (string or array) — optional; single year ("2020"), comma list ("2018,2020"), or range ("2010-2015").
 // offset (integer) — optional; number of matching items to skip (default 0).
 // quantity (integer) — optional; how many items to return (default 10, max 50).
+// has_image (boolean) — optional; if true, only returns items with poster images (default false).
 // Example — PowerShell:
-// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
+// Invoke-RestMethod -Uri "https://movies.umairlab.com/api/search" -Method POST -ContentType "application/json" -Body '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10,"has_image":true}'
 
 // Example — curl (WSL/Git Bash):
-// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10}'
+// curl -X POST "https://movies.umairlab.com/api/search" -H "Content-Type: application/json" -d '{"query":"inception","type":"movie","years":"2010-2015","offset":10,"quantity":10,"has_image":true}'
 // Response (JSON):
 
 // results: array of item objects (length ≤ quantity)
@@ -337,6 +344,6 @@ export async function OPTIONS(request) {
 // Results are deduplicated (by id+media_type) and sorted by popularity to match site ordering.
 // offset+quantity allow retrieving the "next" set of results (e.g., set offset:10 to get results after the first 10).
 // years accepts single, list, or range; year remains supported for compatibility.
+// has_image filter, when set to true, excludes results without poster images.
 // The endpoint fetches details, credits and keywords from TMDB to enrich items; this makes the response slower than a plain search.
-// If you want extra filters (e.g., min_popularity, has_image) or field-selection, tell me which and I’ll add them.
-// Would you like this added to a README file in the repo?
+// If you want extra filters (e.g., min_popularity) or field-selection, tell me which and I'll add them.
