@@ -106,7 +106,7 @@ const EpisodeCard = ({ episode: e, isActive, onClick }) => (
 
       <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
         <span className="text-lg font-poppins text-white transition-colors">
-           Episode {e.episode_number}
+          Episode {e.episode_number}
         </span>
       </div>
     </div>
@@ -118,6 +118,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [loading, setLoading] = useState(!initialData);
   const [trailer, setTrailer] = useState(null);
   const [isTrailerModalOpen, setIsTrailerModalOpen] = useState(false);
+
+  // Storyline expansion state (controls truncation similar to YouTube description)
+  const [storyExpanded, setStoryExpanded] = useState(false);
 
   // Server Switcher States
   const providers = [
@@ -435,11 +438,78 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       .replace(/[^\w-]+/g, "")}-${id}`;
   };
 
+  const getUniqueSummary = () => {
+    const title = movie?.title || movie?.name;
+    const year =
+      movie?.release_date || movie?.first_air_date
+        ? new Date(movie.release_date || movie.first_air_date).getFullYear()
+        : "";
+    const genres = movie?.genres
+      ?.slice(0, 2)
+      .map((g) => g.name)
+      .join(" and ");
+    const rating = movie?.vote_average?.toFixed(1);
+
+    const summaries = [
+      `Experience the thrill of ${title} (${year}), a standout ${genres} masterpiece that has captivated audiences globally. With a solid ${rating}/10 rating, it's a must-watch on MovieLab.`,
+      `Dive into the world of ${title}, where ${genres} elements blend perfectly to create an unforgettable cinematic journey. Now streaming in high definition for all MovieLab users.`,
+      `Looking for the best ${genres} content? ${title} (${year}) delivers an emotional and visual spectacle that ranks high among recent releases. Explore this gem on our platform today.`,
+      `MovieLab Review: ${title} is a brilliant addition to the ${genres} genre, offering deep storytelling and impressive visuals that earned it a ${rating} rating from fans worldwide.`,
+      `${title} (${year}) brings together powerful storytelling and engaging ${genres} moments that keep viewers hooked from start to finish. Rated ${rating}/10, it's definitely worth adding to your watchlist.`,
+      `If you're a fan of ${genres} movies, ${title} is one film you shouldn't miss. Released in ${year}, it combines emotion, suspense, and stunning visuals into one memorable experience.`,
+      `${title} stands out as one of the most talked-about ${genres} films of ${year}. With a strong audience rating of ${rating}, it continues to impress movie lovers worldwide.`,
+      `From gripping scenes to unforgettable performances, ${title} (${year}) delivers everything fans expect from a great ${genres} movie. Stream it now on MovieLab.`,
+      `${title} offers a refreshing take on the ${genres} genre, blending storytelling and cinematic visuals beautifully. No surprise it holds a ${rating}/10 rating among viewers.`,
+      `Released in ${year}, ${title} captures the essence of great ${genres} filmmaking with compelling characters and an engaging storyline that keeps audiences invested.`,
+      `Whether you're discovering it for the first time or rewatching a favorite, ${title} remains a strong pick for anyone who enjoys quality ${genres} entertainment.`,
+      `${title} (${year}) is a cinematic experience filled with drama, excitement, and memorable moments, making it a standout title in the ${genres} category.`,
+      `With its engaging narrative and impressive production quality, ${title} has quickly become a favorite among fans of ${genres} movies worldwide.`,
+      `Searching for something exciting to watch tonight? ${title} combines ${genres} storytelling with strong performances, earning its ${rating} rating from audiences.`,
+    ];
+
+    const hash = id
+      .toString()
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return summaries[hash % summaries.length];
+  };
+
+  const getExpandedStoryline = () => {
+    const genres = movie?.genres?.map((g) => g.name).join(", ");
+    const studio = movie?.production_companies?.[0]?.name;
+    const tagline = movie?.tagline;
+    const year =
+      movie?.release_date || movie?.first_air_date
+        ? new Date(movie.release_date || movie.first_air_date).getFullYear()
+        : "";
+    const title = movie?.title || movie?.name;
+
+    let narrative = getUniqueSummary() + " ";
+    if (tagline) narrative += `"${tagline}" — `;
+
+    narrative += `This ${year} ${genres} production ${studio ? `from ${studio}` : ""} brings a unique perspective to the screen. `;
+    narrative +=
+      movie?.overview || "Explore the full details of this title on MovieLab.";
+
+    if (movie?.status === "Planned" || movie?.status === "Post Production") {
+      narrative += ` Currently in its ${movie.status.toLowerCase()} phase, anticipation continues to build for its full release.`;
+    } else if (movie?.credits?.cast?.length > 0) {
+      narrative += ` Featuring a talented cast including ${movie.credits.cast
+        .slice(0, 3)
+        .map((c) => c.name)
+        .join(
+          ", ",
+        )}, the project delivers a compelling ${mediaType} experience.`;
+    }
+
+    return narrative;
+  };
+
   if (loading)
     return (
       <main className="w-full min-h-screen bg-black text-white">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
+        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[2vw] md:py-[8vw] py-[40vw] animate-pulse">
           <div className="flex-1">
             <div className="w-full aspect-video bg-zinc-900 rounded-xl mb-4" />
           </div>
@@ -475,7 +545,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
       <div className="relative z-10">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-[4vw] justify-center lg:px-[5vw] md:py-[8vw] py-[160px]">
+        <div className="flex flex-col lg:flex-row gap-10 justify-center lg:px-[2vw] md:py-[8vw] py-[160px]">
           <div className="flex-1 md:pb-0 pb-10">
             {/* Main Player */}
             <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
@@ -516,18 +586,18 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
 
             {/* Server Switcher */}
-            <div className="flex flex-wrap  px-2  items-center gap-2 mb-4">
-              <span className="text-xs uppercase font-bold text-gray-500 mr-2">
+            <div className="flex flex-wrap  font-poppins    items-center gap-2 mb-4">
+              {/* <span className="text-xs uppercase font-bold text-gray-500 mr-2">
                 Servers:
-              </span>
+              </span> */}
               {providers.map((provider) => (
                 <button
                   key={provider.name}
                   onClick={() => setSelectedServer(provider)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition ${
                     selectedServer.name === provider.name
                       ? "bg-primary text-black"
-                      : "bg-zinc-800 text-gray-400 hover:bg-zinc-700"
+                      : "bg-white/15 text-gray-300 hover:bg-zinc-700"
                   }`}
                 >
                   {provider.name}
@@ -536,8 +606,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
 
             {/* User Note */}
-            <div className="bg-zinc-900  px-2  font-poppins text-[10px] lg:text-xs text-zinc-400 py-2 px-2 rounded-lg w-fit mb-6 border border-white/5">
-              <span className="text-white font- mr-1">Note:</span>
+            <div className="bg-white/10 backdrop-blur-sm  lg:w-fit  w-[98%]  px-2  font-poppins text-[12px] lg:text-xs  text-gray-300 py-2 px-2 rounded-lg   border border-white/5">
+              {/* <span className="text-white font- mr-1">Note:</span> */}
               Try changing <span className="text-primary font-">
                 Server
               </span> or{" "}
@@ -624,73 +694,117 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   )}
                 </div>
                 <div className="flex  flex-wrap items-center gap-4 mt-4">
-                      <button
-                        onClick={() => toggleWatchLater(movie)}
-                        className="flex items-center gap-2 text-white transition-colors text-md font-poppins bg-primary/15 px-3 py-4 rounded-lg"
-                      >
-                        {isSaved ? (
-                          <>
-                            <div className="bg-primary text-black rounded-full p-0.5">
-                              <Check size={14} strokeWidth={3} />
-                            </div>
-                            <span>Saved</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus size={16} />
-                            <span>Watch Later</span>
-                          </>
-                        )}
-                      </button>
-                      {trailer && (
-                        <button
-                          onClick={() => setIsTrailerModalOpen(true)}
-                          className="flex items-center gap-2 text-white hover:text-white transition-colors text-md backdrop-blur-sm font-poppins bg-white/10 px-4 cursor-pointer  py-4 rounded-lg  "
-                        >
-                          <Play size={16} fill="currentColor" />
-                          <span>Watch Trailer</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setIsNoticeModalOpen(true)}
-                        className="flex items-center gap-2 text-black transition-all duration-300 ease-in-out text-md font-poppins bg-primary px-4 cursor-pointer shadow-xl shadow-white/30 hover:shadow-2xl  py-3 rounded-lg border border-white/5 hover:border-primary/50"
-                        >
-                        <DownloadCloudIcon className="" size={18} />
-                        <span>Download <span className="font-bold">EP-{selectedEpisode}</span></span>
-                      </button>
-                    </div>
+                  <button
+                    onClick={() => toggleWatchLater(movie)}
+                    className="flex items-center gap-2 text-white transition-colors text-md font-poppins bg-primary/15 px-3 py-4 rounded-lg"
+                  >
+                    {isSaved ? (
+                      <>
+                        <div className="bg-primary text-black rounded-full p-0.5">
+                          <Check size={14} strokeWidth={3} />
+                        </div>
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} />
+                        <span>Watch Later</span>
+                      </>
+                    )}
+                  </button>
+                  {trailer && (
+                    <button
+                      onClick={() => setIsTrailerModalOpen(true)}
+                      className="flex items-center gap-2 text-white hover:text-white transition-colors text-md backdrop-blur-sm font-poppins bg-white/10 px-4 cursor-pointer  py-4 rounded-lg  "
+                    >
+                      <Play size={16} fill="currentColor" />
+                      <span>Watch Trailer</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsNoticeModalOpen(true)}
+                    className="flex items-center gap-2 text-black transition-all duration-300 ease-in-out text-md font-poppins bg-primary px-4 cursor-pointer shadow-xl shadow-white/30 hover:shadow-2xl  py-3 rounded-lg border border-white/5 hover:border-primary/50"
+                  >
+                    <DownloadCloudIcon className="" size={18} />
+                    <span>
+                      Download{" "}
+                      <span className="font-bold">EP-{selectedEpisode}</span>
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col  pt-[6vw]  px-2  gap-6 relative z-10">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col   pt-[2vh] lg:pt-[1vw]   px-2  gap-6 relative z-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between ">
                 <div className="flex items-start justify-between w-full">
                   <div>
-                    
-                    <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-2">
+                    <h1 className="text-2xl md:text-4xl font-bold font-comfortaa text-white mb-4">
                       {mediaType === "movie"
                         ? movie.title
                         : movie.name +
                           ` (S${selectedSeason} E${selectedEpisode})`}
                     </h1>
+                    <div className="flex flex-nowrap  items-center md:mt-[4vw] gap-3 lg:gap-[1vw]">
+                      <Link
+                        href={`/movie/${createSlug(
+                          movie?.title || movie?.name,
+                          movie?.id,
+                          mediaType,
+                        )}`}
+                        rel="nofollow"
+                        className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
+                      >
+                        Watch Trailer
+                      </Link>
+                      <button
+                        onClick={() => setIsNoticeModalOpen(true)}
+                        className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
+                      >
+                        Download Now
+                        <DownloadCloudIcon className="group-hover:text-primary size-3 lg:size-[1.3vw] transition-colors" />
+                      </button>
+                      <button
+                        onClick={() => toggleWatchLater(movie)}
+                        className="bg-white/10 backdrop-blur-md text-white p-2 lg:p-[0.9vw] rounded-md md:rounded-[0.51vw] font-bold border border-white/10 hover:bg-zinc-700 hover:border-primary/50 transition-all group"
+                        title={
+                          isSaved
+                            ? "Remove from Watch Later"
+                            : "Add to Watch Later"
+                        }
+                      >
+                        {isSaved ? (
+                          <div className="flex items-center gap-2">
+                            <div className="bg-primary text-black rounded-full p-0.5">
+                              <Check size={20} strokeWidth={3} />
+                            </div>
+                            <span className="sr-only">Saved</span>
+                          </div>
+                        ) : (
+                          <Plus
+                            size={24}
+                            className="text-zinc-400 group-hover:text-white transition-colors"
+                          />
+                        )}
+                      </button>
+                    </div>
                     {/* Watch Later Button (Mobile/Desktop) */}
-                    
                   </div>
-
+                  {/* 
                   <button
                     onClick={() => setIsShareModalOpen(true)}
                     className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition md:hidden"
                   >
                     <Share2 size={18} />
-                  </button>
+                  </button> */}
                 </div>
 
-                <button
+                {/* <button
                   onClick={() => setIsShareModalOpen(true)}
                   className="bg-zinc-900 p-2 rounded-full hover:bg-zinc-800 transition hidden md:block"
                 >
                   <Share2 size={18} />
-                </button>
+                </button> */}
               </div>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
@@ -712,13 +826,76 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     ? `${movie?.number_of_seasons} Seasons`
                     : `${movie?.runtime} min`}
                 </p>
-                <p className="text-sm md:text-lg font-light w-full md:w-[80%] text-zinc-400 leading-relaxed cursor-pointer transition-all">
-                  {movie?.overview}
-                </p>
+                <motion.div
+                  layout
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                  className=" relative w-full md:w-[95%] bg-white/10  backdrop-blur-md rounded-xl  p-[1vw]"
+                >
+                  {(() => {
+                    const words = getExpandedStoryline().split(" ");
+                    const PREVIEW_LIMIT = 25; // Approximate words that fit in 3 lines
+                    const previewText = words.slice(0, PREVIEW_LIMIT).join(" ");
+                    const remainingWords = words.slice(PREVIEW_LIMIT);
+
+                    return (
+                      <p
+                        className={`text-sm md:text-xl font-light p-2  font-poppins w-full overflow-hidden text-red-50 leading-relaxed transition-all ${storyExpanded ? "" : "h-[100px] md:h-[90px]"}`}
+                      >
+                        <span>{previewText} </span>
+                        <motion.span
+                          initial="hidden"
+                          animate={storyExpanded ? "visible" : "hidden"}
+                          variants={{
+                            visible: {
+                              transition: {
+                                staggerChildren: 0.04,
+                              },
+                            },
+                          }}
+                        >
+                          {remainingWords.map((word, i) => (
+                            <motion.span
+                              key={i}
+                              variants={{
+                                hidden: {
+                                  opacity: 0,
+                                  y: 10,
+                                  filter: "blur(10px)",
+                                },
+                                visible: {
+                                  opacity: 1,
+                                  y: 0,
+                                  filter: "blur(0px)",
+                                  transition: { duration: 1, ease: "easeOut" },
+                                },
+                              }}
+                              className="inline-block mr-1.5"
+                            >
+                              {word}
+                            </motion.span>
+                          ))}
+                        </motion.span>
+                      </p>
+                    );
+                  })()}
+
+                  {/* gradient fade shown only when collapsed */}
+                  {!storyExpanded && (
+                    <div className="absolute  hidden  bottom-0 left-0 rounded-2xl  w-full h-3/4 md:h-1/2 pointer-events-none bg-gradient-to-b from-transparent to-white/50" />
+                  )}
+                  {getExpandedStoryline().length > 200 && (
+                    <button
+                      onClick={() => setStoryExpanded((prev) => !prev)}
+                      className="text-primary    absolute -bottom-5  md:bottom-2 right-1/2 translate-x-1/4 text-sm md:text-sm mt-1 font-poppins"
+                    >
+                      {storyExpanded ? "" : "Read more"}
+                    </button>
+                  )}
+                </motion.div>
 
                 {/* Top Cast Section */}
                 {movie?.credits?.cast?.length > 0 && (
-                  <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
+                  <div className="pt-6 lg:pt-[3vw] mt-[4vh] w-full md:w-[90%]">
                     <h2 className="text-lg   font-poppins mb-4 text-white">
                       Top Cast
                     </h2>
@@ -764,9 +941,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           </div>
 
-          <div className="w-full  px-2  lg:w-[25vw] flex flex-col gap-4">
-            <div className="mb-2 overflow-x-auto scrollbar-hide">
-              <div className="flex items-center gap-2 pb-2">
+          <div className="w-full  px-2  lg:w-[28vw] flex flex-col gap-4">
+            <div className="mb-2 overflow-x-auto scrollbar-hide scroll-smooth">
+              <div className="flex items-center gap-2 pb-2 scroll-smooth">
                 {[
                   { id: "all", label: "All" },
                   { id: "related", label: "Related" },
@@ -793,10 +970,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                    className={`px-4 py-1.5 rounded-full font-poppins text-sm  font-medium whitespace-nowrap transition-all border ${
                       activeTab === tab.id
                         ? "bg-white text-black border-white"
-                        : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                        : "bg-white/10 backdrop-blur-md  text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
                     }`}
                   >
                     {tab.label}

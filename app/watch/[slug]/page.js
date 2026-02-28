@@ -27,7 +27,7 @@ export async function generateMetadata({ params }) {
 
     // Enhanced keywords generation
     const keywords = new Set();
-    
+
     // Primary keywords
     if (title) {
       keywords.add(title);
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }) {
       keywords.add(`${title} full ${mediaType}`);
       keywords.add(`${title} live stream`);
     }
-    
+
     // Genre keywords
     if (data.genres) {
       data.genres.forEach((g) => {
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }) {
         keywords.add(`${g.name} watch`);
       });
     }
-    
+
     // Cast keywords (top 3)
     if (data.credits && data.credits.cast) {
       data.credits.cast.slice(0, 3).forEach((actor) => {
@@ -60,30 +60,32 @@ export async function generateMetadata({ params }) {
         keywords.add(`watch ${actor.name}`);
       });
     }
-    
+
     // Crew keywords (director)
     if (data.credits && data.credits.crew) {
-      const director = data.credits.crew.find(person => person.job === "Director");
+      const director = data.credits.crew.find(
+        (person) => person.job === "Director",
+      );
       if (director) {
         keywords.add(director.name);
         keywords.add(`${director.name} films`);
         keywords.add(`${director.name} movies`);
       }
     }
-    
+
     // TMDB keywords
     if (data.keywords) {
       const kws = data.keywords.keywords || data.keywords.results || [];
       kws.forEach((k) => keywords.add(k.name));
     }
-    
+
     // Year-based keywords
     if (year) {
       keywords.add(`${year} movies`);
       keywords.add(`${year} ${mediaType}s`);
       keywords.add(`watch ${year} movies`);
     }
-    
+
     // Quality and platform keywords
     keywords.add("watch movies");
     keywords.add("online streaming");
@@ -99,13 +101,16 @@ export async function generateMetadata({ params }) {
     const genreNames = data.genres
       ? data.genres.map((g) => g.name).join(", ")
       : "Entertainment";
-    
+
     const director = data.credits?.crew?.find(
       (person) => person.job === "Director",
     )?.name;
-    
-    const topActors = data.credits?.cast?.slice(0, 3).map(actor => actor.name).join(", ");
-    
+
+    const topActors = data.credits?.cast
+      ?.slice(0, 3)
+      .map((actor) => actor.name)
+      .join(", ");
+
     const prefix = `Watch ${title} (${year})${director ? ` directed by ${director}` : ""} Full ${mediaType === "tv" ? "Series" : "Movie"} Online Live. `;
     const storyBrief = overview ? `${overview.substring(0, 120)}... ` : "";
     const castInfo = topActors ? `Starring ${topActors}. ` : "";
@@ -155,15 +160,19 @@ export async function generateMetadata({ params }) {
         type: isTV ? "video.episode" : "video.movie",
         locale: "en_US",
         countryName: "United States",
-        videos: data.videos?.results?.find(v => v.type === "Trailer" && v.site === "YouTube") ? [
-          {
-            url: `https://www.youtube.com/watch?v=${data.videos.results.find(v => v.type === "Trailer" && v.site === "YouTube").key}`,
-            type: "text/html",
-            name: `${title} Official Trailer`,
-            description: `Watch the official trailer for ${title}`,
-            uploadDate: data.release_date || data.first_air_date,
-          }
-        ] : [],
+        videos: data.videos?.results?.find(
+          (v) => v.type === "Trailer" && v.site === "YouTube",
+        )
+          ? [
+              {
+                url: `https://www.youtube.com/watch?v=${data.videos.results.find((v) => v.type === "Trailer" && v.site === "YouTube").key}`,
+                type: "text/html",
+                name: `${title} Official Trailer`,
+                description: `Watch the official trailer for ${title}`,
+                uploadDate: data.release_date || data.first_air_date,
+              },
+            ]
+          : [],
       },
       twitter: {
         card: "summary_large_image",
@@ -192,7 +201,8 @@ export async function generateMetadata({ params }) {
   } catch (error) {
     return {
       title: "Watch Movie | MovieLab - Watch Movies Online Free",
-      description: "Watch movies and TV shows online for free on MovieLab. Stream in HD quality with no ads and instant playback.",
+      description:
+        "Watch movies and TV shows online for free on MovieLab. Stream in HD quality with no ads and instant playback.",
       robots: {
         index: true,
         follow: true,
@@ -218,26 +228,34 @@ export default async function Page({ params }) {
   }
 
   // Enhanced Schema Markup (JSON-LD) for watch page
-  const director = data?.credits?.crew?.find(person => person.job === "Director");
+  const director = data?.credits?.crew?.find(
+    (person) => person.job === "Director",
+  );
   const topActors = data?.credits?.cast?.slice(0, 5);
   const productionCompany = data?.production_companies?.[0];
-  const trailer = data?.videos?.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
-  
+  const trailer = data?.videos?.results?.find(
+    (v) => v.type === "Trailer" && v.site === "YouTube",
+  );
+
   const schemaData = {
     "@context": "https://schema.org",
     "@type": isTV ? "TVSeries" : "Movie",
     name: data?.title || data?.name,
     alternateName: data?.original_title || data?.original_name,
     image: [
-      data?.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
-      data?.backdrop_path ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` : ""
+      data?.poster_path
+        ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+        : "",
+      data?.backdrop_path
+        ? `https://image.tmdb.org/t/p/original${data.backdrop_path}`
+        : "",
     ].filter(Boolean),
     description: data?.overview,
     datePublished: data?.release_date || data?.first_air_date,
     dateCreated: data?.release_date || data?.first_air_date,
     inLanguage: data?.original_language || "en",
-    genre: data?.genres?.map(g => g.name) || [],
-    keywords: data?.keywords?.keywords?.map(k => k.name)?.join(", ") || "",
+    genre: data?.genres?.map((g) => g.name) || [],
+    keywords: data?.keywords?.keywords?.map((k) => k.name)?.join(", ") || "",
     contentRating: data?.adult ? "R" : "PG-13",
     duration: isTV ? undefined : `PT${data?.runtime || 0}M`,
     aggregateRating: {
@@ -248,26 +266,32 @@ export default async function Page({ params }) {
       ratingCount: data?.vote_count || 0,
       reviewingOrganization: {
         "@type": "Organization",
-        name: "TMDB"
-      }
+        name: "TMDB",
+      },
     },
-    director: director ? {
-      "@type": "Person",
-      name: director.name,
-      sameAs: director.profile_path ? `https://image.tmdb.org/t/p/w185${director.profile_path}` : undefined
-    } : undefined,
-    actor: topActors?.map(actor => ({
+    director: director
+      ? {
+          "@type": "Person",
+          name: director.name,
+          sameAs: director.profile_path
+            ? `https://image.tmdb.org/t/p/w185${director.profile_path}`
+            : undefined,
+        }
+      : undefined,
+    actor: topActors?.map((actor) => ({
       "@type": "Person",
       name: actor.name,
       role: {
         "@type": "PerformanceRole",
-        characterName: actor.character
-      }
+        characterName: actor.character,
+      },
     })),
-    productionCompany: productionCompany ? {
-      "@type": "Organization",
-      name: productionCompany.name
-    } : undefined,
+    productionCompany: productionCompany
+      ? {
+          "@type": "Organization",
+          name: productionCompany.name,
+        }
+      : undefined,
     offers: {
       "@type": "Offer",
       price: "0",
@@ -276,18 +300,20 @@ export default async function Page({ params }) {
       seller: {
         "@type": "Organization",
         name: "MovieLab",
-        url: "https://movies.umairlab.com"
+        url: "https://movies.umairlab.com",
       },
-      validFrom: data?.release_date || data?.first_air_date
+      validFrom: data?.release_date || data?.first_air_date,
     },
-    trailer: trailer ? {
-      "@type": "VideoObject",
-      name: `${data?.title || data?.name} Official Trailer`,
-      description: `Watch the official trailer for ${data?.title || data?.name}`,
-      thumbnailUrl: `https://img.youtube.com/vi/${trailer.key}/maxresdefault.jpg`,
-      embedUrl: `https://www.youtube.com/embed/${trailer.key}`,
-      uploadDate: data?.release_date || data?.first_air_date
-    } : undefined,
+    trailer: trailer
+      ? {
+          "@type": "VideoObject",
+          name: `${data?.title || data?.name} Official Trailer`,
+          description: `Watch the official trailer for ${data?.title || data?.name}`,
+          thumbnailUrl: `https://img.youtube.com/vi/${trailer.key}/maxresdefault.jpg`,
+          embedUrl: `https://www.youtube.com/embed/${trailer.key}`,
+          uploadDate: data?.release_date || data?.first_air_date,
+        }
+      : undefined,
     potentialAction: {
       "@type": "WatchAction",
       target: {
@@ -296,10 +322,10 @@ export default async function Page({ params }) {
         inLanguage: "en",
         actionPlatform: [
           "https://schema.org/DesktopWebPlatform",
-          "https://schema.org/MobileWebPlatform"
-        ]
+          "https://schema.org/MobileWebPlatform",
+        ],
       },
-      actionStatus: "ActiveActionStatus"
+      actionStatus: "ActiveActionStatus",
     },
     broadcastEvent: {
       "@type": "BroadcastEvent",
@@ -307,18 +333,18 @@ export default async function Page({ params }) {
       startDate: new Date().toISOString(),
       endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
       name: `Watch ${data?.title || data?.name} Live`,
-      description: `Live streaming of ${data?.title || data?.name} on MovieLab`
-    }
+      description: `Live streaming of ${data?.title || data?.name} on MovieLab`,
+    },
   };
 
   // Add TV series specific schema
   if (isTV && data?.number_of_seasons) {
     schemaData.numberOfSeasons = data.number_of_seasons;
-    schemaData.containsSeason = data.seasons?.slice(0, 3).map(season => ({
+    schemaData.containsSeason = data.seasons?.slice(0, 3).map((season) => ({
       "@type": "TVSeason",
       name: season.name,
       seasonNumber: season.season_number,
-      numberOfEpisodes: season.episode_count
+      numberOfEpisodes: season.episode_count,
     }));
   }
 

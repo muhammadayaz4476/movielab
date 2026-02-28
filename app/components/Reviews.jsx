@@ -251,7 +251,7 @@ const Reviews = ({ movieId, type = "movie" }) => {
             rel="noopener noreferrer"
             className="text-primary hover:text-primary/80 text-sm font-medium inline-flex items-center gap-1"
           >
-            Read full review on TMDB
+            Read full review 
             <svg
               className="w-4 h-4"
               fill="none"

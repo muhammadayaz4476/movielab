@@ -170,6 +170,32 @@ const Navbar = () => {
       .replace(/[^\w-]+/g, "")}-${id}`;
   };
 
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Always show at the very top
+      if (currentScrollY < 50) {
+        setIsVisible(true);
+      } else {
+        // Hide if scrolling down past a threshold, show if scrolling up
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   const hubs = [
     { name: "Hollywood", slug: "hollywood" },
     { name: "Bollywood", slug: "bollywood" },
@@ -191,8 +217,13 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="absolute top-0 left-0 w-full z-50 ">
-        <div className="w-full   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+      <motion.header
+        initial={{ y: 0 }}
+        animate={{ y: isVisible ? 0 : "-100%" }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        className={`fixed top-0 left-0 w-full z-100 ${isVisible ? "b" : ""}`}
+      >
+        {/* <div className="w-full   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
           <Marquee
             speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
             gradient={false} // Assuming you don't need the fade gradient effect
@@ -245,8 +276,8 @@ const Navbar = () => {
               | Movies lab |
             </span>
           </Marquee>
-        </div>
-        <nav className="px-4   py-6 w-full flex lg:flex-row flex-col lg:px-[5vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
+        </div> */}
+        <nav className="px-4   py-6 w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
           <div className="flex items-center justify-between w-full lg:w-auto">
             <Link
               href="/"
@@ -257,6 +288,20 @@ const Navbar = () => {
                 Movies<span className="text-primary font-comfortaa">lab</span>
               </div>
             </Link>
+            <div className=" md:hidden flex items-center gap-6">
+              <Link
+                href="/watch-later"
+                className="text-sm font-medium text-white  hover:scale-110 transition-transform"
+              >
+                <PlayIcon fill="white" />
+              </Link>
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
+              >
+                <Menu className="text-white group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center w-full lg:w-fit gap-2 pt-5 md:pt-0 lg:gap-[1vw]">
@@ -360,7 +405,7 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            <div className="hidden lg:flex items-center gap-6">
+            <div className=" hidden lg:flex items-center gap-6">
               <Link
                 href="/watch-later"
                 className="text-sm font-medium text-white  hover:scale-110 transition-transform"
@@ -373,36 +418,10 @@ const Navbar = () => {
               >
                 <Menu className="text-white group-hover:scale-110 transition-transform" />
               </button>
-
-              {/* {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-zinc-400 text-xs">
-                Hello,{" "}
-                <span className="text-white font-bold">{user.username}</span>
-              </span>
-              <button
-                onClick={logout}
-                className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-full transition-colors border border-white/5"
-              >
-                Sign Out
-              </button>
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">
-                {user.username[0].toUpperCase()}
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2 text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full border border-white/10 transition-all font-comfortaa"
-            >
-              <User size={16} />
-              Sign In
-            </button>
-          )} */}
             </div>
           </div>
         </nav>
-      </header>
+      </motion.header>
 
       {/* Sidebar Component */}
       <AnimatePresence>
@@ -414,7 +433,7 @@ const Navbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-100"
             />
 
             {/* Sidebar: Changed left-0 to right-0 and removed lg:hidden */}
@@ -423,7 +442,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "circOut" }}
-              className="fixed top-0 right-0 bottom-0 w-[300px] lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
+              className="fixed top-0 right-0 bottom-0 w-full lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold font-comfortaa text-white">
@@ -445,7 +464,7 @@ const Navbar = () => {
               >
                 {/* Hubs Section */}
                 <div className="mb-10">
-                  <h4 className="text-primary text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                  <h4 className="text-primary text-md font-medium  mb-4 uppercase  font-poppins">
                     Cinema Hubs
                   </h4>
                   <div className="grid grid-cols-2 gap-3">

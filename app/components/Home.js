@@ -192,7 +192,7 @@ const Home = ({ initialData = {} }) => {
           { name: "Action", slug: "/discover/action-28" },
           { name: "Comedy", slug: "/discover/comedy-35" },
           { name: "Korean", slug: "/discover/korean" },
-          { name: "Bollywood", slug: "/discover/bollywood" },
+          // { name: "Bollywood", slug: "/discover/bollywood" },
         ].map((tab) => (
           <Link
             key={tab.name}
@@ -243,12 +243,12 @@ const Home = ({ initialData = {} }) => {
           url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2025&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/new-releases"
         />
-        <LazyMovieRow
+        {/* <LazyMovieRow
           rowKey="movies2026"
           title="Upcoming 2026"
           url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2026&sort_by=popularity.desc&include_adult=false`}
           viewAllLink="/discover/new-releases"
-        />
+        /> */}
 
         <LazyMovieRow
           rowKey="actionMovies"
@@ -306,7 +306,7 @@ const Home = ({ initialData = {} }) => {
         />
 
         {/* Simplified About Section */}
-        <section className="px-4 lg:px-[5vw] py-16 font-poppins lg:py-20 ">
+        <section className="px-4 lg:px-[2vw] py-16 font-poppins lg:py-20 ">
           <div className=" mx-auto text-center space-y-8">
             <h2 className="text-3xl lg:text-5xl font-medium font-comfortaa text-white mb-6">
               About{" "}
@@ -495,7 +495,7 @@ const Home = ({ initialData = {} }) => {
           </div>
         </section>
 
-        <section className="px-4 lg:px-[5vw] py-12 font-poppins bg-zinc-950 border-t border-white/5">
+        <section className="px-4 lg:px-[2vw] py-12 font-poppins bg-zinc-950 border-t border-white/5">
           <div className=" mx-auto">
             <h3 className="text-3xl   text-white mb-8">
               Explore{" "}

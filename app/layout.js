@@ -123,18 +123,6 @@ export default function RootLayout({ children }) {
           href="https://image.tmdb.org"
           crossOrigin="anonymous"
         />
-        <script src="https://seo-fixer.writesonic.com/site-audit/fixer-script/index.js" id="wsAiSeoMb" type="application/javascript"></script>
-        <script
-          id="wsAiSeoInitScript"
-          dangerouslySetInnerHTML={{
-            __html: `
-              wsSEOfixer.configure({
-                hostURL: 'https://seo-fixer.writesonic.com',
-                siteID: '699e7412d21743210dc239a5'
-              });
-            `,
-          }}
-        />
       </head>
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         <script

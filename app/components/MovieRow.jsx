@@ -66,11 +66,11 @@ const MovieRow = ({
   };
 
   return (
-    <div className="px-4 lg:px-[5vw] py-8">
+    <div className="px-4 lg:px-[2vw] py-8">
       <div className="flex flex-col  mb-6 gap-4">
         <div className="flex flex-col gap-2 pb-[1vw]">
             <div className="flex items-center  w-full justify-between">
-              <h2 className="text-xl lg:text-3xl font-poppins font-medium text-white">
+              <h2 className="text-xl lg:text-3xl uppercase font-poppins font-medium text-white">
             {title}
           </h2>
           <Link
@@ -82,7 +82,7 @@ const MovieRow = ({
             </div>
           {keywords.length > 0 && (
             <div className="flex overflow-x-auto mt-3 scrollbar-hide md:flex-wrap gap-2 lg:w-3/4 x pb-2">
-              {keywords.slice(0, 12).map((keyword) => (
+              {keywords.slice(0, 8).map((keyword) => (
                 <Link
                   key={keyword.id}
                   href={`/search/kw-${keyword.id}-${encodeURIComponent(keyword.name.replace(/\s+/g, "-").toLowerCase())}`}

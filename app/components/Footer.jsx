@@ -40,7 +40,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="px-4 lg:px-[5vw] py-10  ">
+    <footer className="px-4 lg:px-[2vw] py-10  ">
       <div className="   flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-zinc-500 text-sm font-poppins">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
@@ -89,9 +89,12 @@ const Footer = () => {
           onSubmit={handleSubmit}
           className="w-full md:w-1/2 lg:w-1/3  bg-zinc-900 border border-white/5 p-4 rounded-lg"
         >
-          <h5 className="text-white font-poppins text-lg  mb-2">Send us a message</h5>
+          <h5 className="text-white font-poppins text-lg  mb-1">Send us a message</h5>
+              {status?.success && (
+              <span className="text-green-400">{status.success}</span>
+            )}
           <div className="flex  gap-2">
-
+              
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -126,9 +129,7 @@ const Footer = () => {
             >
               {loading ? "Sending..." : "Send"}
             </button>
-            {status?.success && (
-              <span className="text-green-400">{status.success}</span>
-            )}
+        
             {status?.error && (
               <span className="text-red-400">{status.error}</span>
             )}

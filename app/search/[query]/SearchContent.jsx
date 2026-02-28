@@ -278,7 +278,7 @@ const SearchContent = ({ query }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="px-4 lg:px-[5vw] md:py-[10vw] py-[40vw]">
+      <div className="px-4 lg:px-[2vw] md:py-[10vw] py-[40vw]">
         {/* Header & Filter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <h1 className="text-2xl lg:text-3xl font-comfortaa font-bold">
@@ -383,14 +383,14 @@ const SearchContent = ({ query }) => {
                           No Image
                         </div>
                       )}
-                      
+
                       {/* Hover Overlay */}
-                      <HoverOverlay 
-                        movie={item} 
-                        isSaved={isSaved} 
-                        toggleWatchLater={toggleWatchLater} 
+                      <HoverOverlay
+                        movie={item}
+                        isSaved={isSaved}
+                        toggleWatchLater={toggleWatchLater}
                       />
-                      
+
                       {/* Badge Overlay (Visible when not hovering/mobile) */}
                       <div className="absolute top-2 right-2 font-poppins lg:group-hover:hidden transition-opacity duration-200">
                         <div className="px-2 py-0.5 flex items-center justify-center bg-primary rounded-full backdrop-blur-sm bg-opacity-90">
@@ -423,14 +423,15 @@ const SearchContent = ({ query }) => {
               })}
             </div>
 
-            {/* {loadingMore && (
-              <div className="w-full py-10 flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">
-                  Loading Page {page}...
-                </p>
+            <div ref={observerRef} className="h-10 w-full" />
+
+            {loadingMore && (
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[2vw] mt-8">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <SkeletonCard key={`more-skeleton-${i}`} />
+                ))}
               </div>
-            )} */}
+            )}
 
             {!hasMore && !loadingMore && filteredResults.length > 10 && (
               <>

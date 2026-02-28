@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 // Standard img tags used instead of next/image for better reliability with TMDB direct CDN
 import dynamic from "next/dynamic";
 import Reviews from "@/app/components/Reviews";
@@ -51,6 +52,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [trailer, setTrailer] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [loading, setLoading] = useState(!initialData);
+
+  // Storyline expansion state (controls truncation similar to YouTube description)
+  const [storyExpanded, setStoryExpanded] = useState(false);
 
   // Recommendations / Sidebar State
   const [recommendations, setRecommendations] = useState([]);
@@ -373,7 +377,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     return (
       <main className="w-full min-h-screen bg-black text-white">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[5vw] md:py-[8vw] py-[40vw] animate-pulse">
+        <div className="flex flex-col lg:flex-row gap-6 px-2 lg:px-[2vw] md:py-[8vw] py-[40vw] animate-pulse">
           <div className="flex-1">
             <div className="w-full aspect-video bg-gray-900 rounded-xl mb-4" />
             <div className="h-8 bg-gray-900 rounded w-1/2 my-[3vw]" />
@@ -391,7 +395,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[5vw] md:py-[8vw] py-[160px]">
+      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[2vw] md:py-[8vw] py-[160px]">
         <div className="flex-1">
           <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
             {trailer && showTrailer ? (
@@ -435,30 +439,31 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
           <div className="flex flex-col items- px-2  gap-3 justify-between flex-wrap md:gap-0 -[2vw] ">
             <div className="flex pb-[10px] md:pb-[1vw] items-center gap-2 justify-between  my-2 lg:my-[1vw] text-gray-300 text-sm italic bg-zinc-900/20   ">
-              <div className="flex text-xs md:text-sm items-center gap-2">
+              {/* <div className="flex text-xs md:text-sm items-center gap-2">
                 <Eye className="size-4 text-red-500" />
                 <span>
                   {getDynamicViewerCount()} people are exploring this{" "}
                   {mediaType} right now
                 </span>
-              </div>
+              </div> */}
               <div className="flex items-center gap-2 ">
-                <button
-                  title="share"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="b p-2 text-primary rounded-full hover:bg-zinc-700 transition"
-                >
-                  <Share2 size={18} />
-                </button>
+               
               </div>
             </div>
-            <h1 className="text-2xl lg:text-4xl w-full md:w-[70%] font-bold font-comfortaa leading-tight">
+            <h1 className="text-2xl lg:text-3xl w-full md:w-[90%] font-bold font-comfortaa leading-tight">
               {movie?.title || movie?.name}{" "}
               <span className="text-gray-500 hidden md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
                 {mediaType === "tv" ? "~ Series Trailer" : "~ Movie Trailer"}
               </span>
             </h1>
-            <div className="flex flex-nowrap items-center mt-[1vw] gap-3 lg:gap-[1vw]">
+             {/* <button
+                  title="share"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="b p-2 text-primary rounded-full hover:bg-zinc-700 transition"
+                >
+                  <Share2 size={18} />
+                </button> */}
+            <div className="flex flex-nowrap  items-center md:mt-[4vw] gap-3 lg:gap-[1vw]">
               <Link
                 href={`/watch/${createSlug(
                   movie?.title || movie?.name,
@@ -522,18 +527,80 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
 
           <div className="b rounded-xl px-2  mt-10 ">
-            <div className="mb-5">
-              <h2 className="text-sm lg:text-lg  text-black bg-primary px-4 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium mb-[1vw] ">
-                {/* <Film className="size-6 text-primary" /> */}
+            <div className="mb-5 ">
+              <h2 className="text-xs lg:text-lg   text-black bg-primary px-3 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium lg:mb-[1vw] mb-[2vh] ">
                 Storyline & Context :
               </h2>
-              <p className="text-sm md:text-xl font-light font-comfortaa w-full md:w-[95%] text-red-50 leading-relaxed italic py-2">
-                {getExpandedStoryline()}
-              </p>
+              <motion.div
+                layout
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+                className=" relative w-full md:w-[95%] bg-white/15  rounded-xl  lg:p-[1vw] p-[1vh] "
+              >
+                {(() => {
+                  const words = getExpandedStoryline().split(" ");
+                  const PREVIEW_LIMIT = 25; // Approximate words that fit in 3 lines
+                  const previewText = words.slice(0, PREVIEW_LIMIT).join(" ");
+                  const remainingWords = words.slice(PREVIEW_LIMIT);
+                  
+                  return (
+                    <p
+                      className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] md:h-[100px]"}`}
+                    >
+                      <span>{previewText} </span>
+                      <motion.span
+                        initial="hidden"
+                        animate={storyExpanded ? "visible" : "hidden"}
+                        variants={{
+                          visible: {
+                            transition: {
+                              staggerChildren: 0.04,
+                            },
+                          },
+                        }}
+                      >
+                        {remainingWords.map((word, i) => (
+                          <motion.span
+                            key={i}
+                            variants={{
+                              hidden: {
+                                opacity: 0,
+                                y: 10,
+                                filter: "blur(10px)",
+                              },
+                              visible: {
+                                opacity: 1,
+                                y: 0,
+                                filter: "blur(0px)",
+                                transition: { duration: 1, ease: "easeOut" },
+                              },
+                            }}
+                            className="inline-block mr-1.5"
+                          >
+                            {word}
+                          </motion.span>
+                        ))}
+                      </motion.span>
+                    </p>
+                  );
+                })()}
+
+                {/* gradient fade shown only when collapsed */}
+                {!storyExpanded && (
+                  <div className="absolute bottom-0 left-0  w-full h-3/4 md:h-1/2 pointer-events-none bg-gradient-to-b from-transparent to-black" />
+                )}
+                {getExpandedStoryline().length > 200 && (
+                  <button
+                    onClick={() => setStoryExpanded((prev) => !prev)}
+                    className="text-primary   absolute bottom-0 right-1/2 translate-x-1/4 text-xs md:text-sm mt-1 font-poppins"
+                  >
+                    {storyExpanded ? "" : "Read more"}
+                  </button>
+                )}
+              </motion.div>
             </div>
 
             {/* Where to Watch Section */}
-            {watchProviders &&
+            {/* {watchProviders &&
               (watchProviders.streaming.length > 0 ||
                 watchProviders.renting.length > 0) && (
                 <div className="mb-10 py-5 bg-zinc-900/30 rounded-xl border border-white/5">
@@ -563,9 +630,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                                   className="w-full h-full rounded-xl shadow-lg group-hover:scale-110 transition-transform object-cover"
                                 />
                               </div>
-                              {/* <span className="text-[10px] text-white group-hover:text-white transition-colors">
-                                {p.provider_name}
-                              </span> */}
+                            
                             </div>
                           ))}
                         </div>
@@ -589,9 +654,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                                   className="w-full h-full rounded-xl shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all object-cover"
                                 />
                               </div>
-                              {/* <span className="text-[10px] text-white group-hover:text-white transition-colors">
-                                {p.provider_name}
-                              </span> */}
+                            
                             </div>
                           ))}
                         </div>
@@ -599,10 +662,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
 
             {/* Production & Crew Section */}
-            <div className="flex flex-wrap gap-[2vw] mt-[2.7vw]  mb-10">
+            <div className="flex flex-wrap gap-[2vw] mt-[6vh]  md:mt-[2.7vw]  mb-10">
               {director && (
                 <div>
                   <h4 className="text-sm uppercase font-bold text-zinc-500 mb-2">
