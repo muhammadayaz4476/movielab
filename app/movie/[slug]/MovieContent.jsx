@@ -105,7 +105,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         try {
           setLoading(true);
           const res = await axios.get(
-            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,recommendations,similar`,
           );
           setMovie(res.data);
           console.log(res.data);
@@ -124,12 +124,52 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setIsFallbackMode(false);
   }, [id, initialData, mediaType]);
 
-  // 2. Fetch Sidebar Content (Infinite Scroll)
+  // 2. Similarity Scoring Function
+  const getSimilarityScore = (item, currentMovie) => {
+    let score = 0;
+    if (!item || !currentMovie) return 0;
+
+    // 1. Franchise / Collection Priority (Highest)
+    if (currentMovie.belongs_to_collection && item.belongs_to_collection?.id === currentMovie.belongs_to_collection.id) {
+      score += 100;
+    }
+
+    // 2. Genre Parity
+    const currentGenres = currentMovie.genres?.map(g => g.id) || [];
+    const itemGenres = item.genre_ids || item.genres?.map(g => g.id) || [];
+    const matchingGenres = itemGenres.filter(id => currentGenres.includes(id));
+    score += matchingGenres.length * 20;
+
+    // 3. Keyword / Topic Overlap
+    const currentKeywords = (currentMovie.keywords?.keywords || currentMovie.keywords?.results || []).map(k => k.id);
+    const itemKeywords = (item.keywords?.keywords || item.keywords?.results || []).map(k => k.id);
+    if (currentKeywords.length > 0 && itemKeywords.length > 0) {
+       const matchingKeywords = itemKeywords.filter(id => currentKeywords.includes(id));
+       score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
+    }
+
+    // 4. Cast Overlap
+    const currentCast = currentMovie.credits?.cast?.slice(0, 5).map(c => c.id) || [];
+    const itemCast = item.credits?.cast?.slice(0, 5).map(c => c.id) || [];
+    if (currentCast.length > 0 && itemCast.length > 0) {
+      const matchingCast = itemCast.filter(id => currentCast.includes(id));
+      score += matchingCast.length * 10;
+    }
+
+    // 5. Popularity/Vote Weight
+    score += (item.vote_average || 0) * 2;
+    score += Math.min((item.popularity || 0) / 100, 10);
+
+    return score;
+  };
+
+  // 3. Fetch Sidebar Content (Infinite Scroll)
   const fetchSidebarData = async (pageNum) => {
     if (!id) return;
     try {
       setLoadingMoreRecs(true);
       let endpoint = "";
+      let newItems;
 
       const primaryGenreId = movie?.genres?.[0]?.id;
       const primaryStudioId = movie?.production_companies?.[0]?.id;
@@ -153,21 +193,60 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_keywords=${firstKeywordId}&page=${pageNum}&sort_by=popularity.desc`;
           break;
         default:
-          endpoint = isFallbackMode
-            ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
-            : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
+          // 1. If page 1 and we have recommendations in movie metadata, use them
+          if (pageNum === 1 && movie?.id?.toString() === id.toString() && movie?.recommendations?.results?.length > 0) {
+            newItems = movie.recommendations.results;
+            break;
+          }
+
+          if (isFallbackMode) {
+             // Find movies with same genres and highest popularity
+             const genreIds = movie?.genres?.slice(0, 2).map(g => g.id).join(',') || primaryGenreId;
+             const keywords = movie?.keywords?.keywords || movie?.keywords?.results || [];
+             const keywordIds = keywords.slice(0, 3).map(k => k.id).join('|');
+ 
+             // Use discover with Genre + Keyword OR match
+             endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&with_keywords=${keywordIds}&vote_count.gte=50&page=${pageNum}&sort_by=popularity.desc`;
+             
+             // If still no results or first page of fallback, try broader discover
+             if (!keywordIds || pageNum > 1) {
+                 endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
+             }
+          } else {
+            endpoint = `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
+          }
       }
 
-      const res = await axios.get(endpoint);
-      const newItems = res.data.results;
+      if (!newItems && endpoint) {
+        // 1. Fetch from calculated endpoint (discover or recommendations)
+        const res = await axios.get(endpoint);
+        newItems = res.data.results || [];
+        
+        // 2. If Page 1 and movie belongs to a collection, fetch that collection!
+        if (pageNum === 1 && movie?.belongs_to_collection?.id && activeTab === "all") {
+             try {
+                const collectionRes = await axios.get(`${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`);
+                if (collectionRes.data?.parts) {
+                    // Prepend collection parts to newItems so they are guaranteed to be evaluated
+                    const collectionParts = collectionRes.data.parts.filter(p => p.id !== parseInt(id));
+                    newItems = [...collectionParts, ...newItems];
+                }
+             } catch(e) {
+                console.error("Failed to fetch collection for scoring", e);
+             }
+        }
 
-      if (newItems.length === 0) {
-        if (activeTab === "all" && !isFallbackMode) {
+        // Handle fallback trigger
+        if (newItems.length === 0 && activeTab === "all" && !isFallbackMode) {
           setIsFallbackMode(true);
           setRecPage(1);
-        } else {
-          setHasMoreRecs(false);
+          setLoadingMoreRecs(false);
+          return;
         }
+      }
+
+      if (!newItems || newItems.length === 0) {
+        setHasMoreRecs(false);
         setLoadingMoreRecs(false);
         return;
       }
@@ -182,21 +261,37 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         "sex",
         "18+",
       ];
-      const safeResults = newItems.filter((item) => {
-        const title = (item.title || "").toLowerCase();
-        const overview = (item.overview || "").toLowerCase();
-        const hasUnsafe = unsafeKeywords.some(
-          (k) => title.includes(k) || overview.includes(k),
-        );
-        return (
-          !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
-        );
+      const scoredResults = newItems.map(item => ({
+        ...item,
+        _similarityScore: getSimilarityScore(item, movie)
+      }));
+
+      const safeResults = scoredResults
+        .filter((item) => {
+          const title = (item.title || "").toLowerCase();
+          const overview = (item.overview || "").toLowerCase(); // Keep overview check for safety
+          const hasUnsafe = unsafeKeywords.some(
+            (k) => title.includes(k) || overview.includes(k)
+          );
+          return (
+            !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
+          );
+        })
+        .sort((a, b) => b._similarityScore - a._similarityScore);
+
+      // Deduplicate results
+      const uniqueResultsMap = new Map();
+      safeResults.forEach(item => {
+          if (!uniqueResultsMap.has(item.id)) {
+              uniqueResultsMap.set(item.id, item);
+          }
       });
+      const uniqueSafeResults = Array.from(uniqueResultsMap.values());
 
       setRecommendations((prev) =>
         pageNum === 1 && !isFallbackMode
-          ? safeResults
-          : [...prev, ...safeResults],
+          ? uniqueSafeResults
+          : [...prev, ...uniqueSafeResults],
       );
 
       if (res.data.page >= res.data.total_pages) {
@@ -213,7 +308,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   useEffect(() => {
     fetchSidebarData(recPage);
-  }, [recPage, isFallbackMode, id, mediaType, activeTab]);
+  }, [recPage, isFallbackMode, id, mediaType, activeTab, movie?.id]);
 
   // Handle Tab Change
   useEffect(() => {
@@ -221,7 +316,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setRecPage(1);
     setHasMoreRecs(true);
     setIsFallbackMode(false);
-    fetchSidebarData(1);
+    // fetchSidebarData is handled by the higher-level recPage effect
   }, [activeTab]);
 
   // Infinite Scroll Intersection Observer
@@ -867,6 +962,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       <h3 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                         {rec.title || rec.name}
                       </h3>
+                      {/* <span className="font-comfortaa capitalize font-bold text-lg md:text-xl lg:text-2xl mt-10 md:mt-20">
+                        More Like This
+                      </span> */}
                       <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(

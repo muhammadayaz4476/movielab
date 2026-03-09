@@ -18,17 +18,24 @@ const SkeletonCard = () => (
   </div>
 );
 
-const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
+const DiscoverContent = ({
+  slug,
+  initialResults = [],
+  initialYear = "",
+  initialLastPage = 1,
+}) => {
   const decodedSlug = decodeURIComponent(slug);
 
   const [results, setResults] = useState(initialResults);
-  const [loading, setLoading] = useState(initialResults.length === 0);
+  const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(initialLastPage);
+  const [hasMore, setHasMore] = useState(initialResults.length >= 10);
 
   // Filters
-  const [mediaType, setMediaType] = useState("movie"); // 'movie' or 'tv'
+  const [mediaType, setMediaType] = useState(
+    decodedSlug === "web-series" ? "tv" : "movie",
+  );
   const [year, setYear] = useState(initialYear);
 
   const observerRef = useRef();
@@ -44,59 +51,25 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
     yearOverride = null,
   ) => {
     if (!decodedSlug) return;
+
     const currentType = typeOverride || mediaType;
     const currentYear = yearOverride !== null ? yearOverride : year;
 
+    setLoading(true);
     try {
-      let endpoint = "";
       let sortBy = "popularity.desc";
-      const commonFilters = `&include_adult=false${
-        currentType === "tv" ? "&vote_count.gte=0" : "&vote_count.gte=10"
-      }`;
-
-      if (decodedSlug === "new-releases") sortBy = "release_date.desc";
-      if (decodedSlug === "hidden-gems") sortBy = "vote_average.desc";
-
+      const commonFilters = `&include_adult=false&vote_count.gte=0`; // Relaxed for full catalog surfacing
       const yearParam =
         currentType === "tv" ? "first_air_date_year" : "primary_release_year";
       const yearFilter = currentYear ? `&${yearParam}=${currentYear}` : "";
       const baseParams = `&page=${pageNum}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
 
-      const getGenreString = (baseGenres) => {
-        if (currentType === "movie") return baseGenres;
-        const genreMap = {
-          28: 10759,
-          12: 10759,
-          878: 10765,
-          14: 10765,
-          27: "9648|10765|18",
-          10752: "10768|18",
-          53: "9648|80|18",
-          36: 18,
-          10402: 18,
-          10749: 18,
-        };
-        return baseGenres
-          .split(",")
-          .map((id) => genreMap[Number(id)] || id)
-          .join(",");
-      };
-
+      let endpoint = "";
       if (
         ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
           decodedSlug,
         )
       ) {
-        const capitals = {
-          hollywood: "Hollywood",
-          bollywood: "Bollywood",
-          korean: "Korean",
-          anime: "Anime",
-          japanese: "Japanese",
-        };
-        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
-        if (pageNum === 1) setTitle(`${capitals[decodedSlug]} ${mediaLabel}`);
-
         const langMap = {
           hollywood: "en",
           bollywood: "hi",
@@ -104,13 +77,8 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
           anime: "ja",
           japanese: "ja",
         };
-        if (decodedSlug === "anime") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString("16")}&with_original_language=ja${baseParams}`;
-        } else if (decodedSlug === "hollywood") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=en${baseParams}`;
-        } else {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug]}${baseParams}`;
-        }
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug] || "en"}${baseParams}`;
+        if (decodedSlug === "anime") endpoint += "&with_genres=16";
       } else if (
         [
           "trending",
@@ -122,64 +90,34 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
           "web-series",
         ].includes(decodedSlug)
       ) {
-        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
-        const categoryTitles = {
-          trending: `Trending ${mediaLabel} Today`,
-          "top-rated": `Top Rated ${mediaLabel}`,
-          popular: `Popular ${mediaLabel} Now`,
-          "new-releases": `New ${mediaLabel} Releases`,
-          "hidden-gems": `Hidden Gem ${mediaLabel}`,
-          "feel-good": `Feel Good ${mediaLabel}`,
-          "web-series": "Web Series",
-        };
-        if (pageNum === 1) setTitle(categoryTitles[decodedSlug]);
-
         if (
           (decodedSlug === "trending" ||
             decodedSlug === "top-rated" ||
             decodedSlug === "popular") &&
           !currentYear
         ) {
-          const endpoints = {
-            trending: `${BASE_URL}/trending/${currentType}/day?api_key=${API_KEY}${baseParams}`,
-            "top-rated": `${BASE_URL}/${currentType}/top_rated?api_key=${API_KEY}${baseParams}`,
-            popular: `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${baseParams}`,
-          };
-          endpoint = endpoints[decodedSlug];
-        } else if (decodedSlug === "new-releases") {
-          const releaseTypeFilter =
-            !currentYear || parseInt(currentYear) >= 2024
-              ? "&with_release_type=2|3"
-              : "";
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}${baseParams}${releaseTypeFilter}`;
-        } else if (decodedSlug === "hidden-gems") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300${baseParams}`;
-        } else if (decodedSlug === "feel-good") {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString("35,10749")}${baseParams}`;
-        } else if (decodedSlug === "web-series") {
-          endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}${baseParams}`;
+          endpoint = `${BASE_URL}/${decodedSlug === "trending" ? "trending/" + currentType + "/day" : currentType + "/" + decodedSlug.replace("-", "_")}?api_key=${API_KEY}&page=${pageNum}`;
         } else {
-          // Fallback to discover for year filtering
           endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}${baseParams}`;
+          if (decodedSlug === "new-releases")
+            endpoint += "&with_release_type=2|3";
+          if (decodedSlug === "hidden-gems")
+            endpoint += "&vote_average.gte=7&vote_count.lte=300";
+          if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
+          if (decodedSlug === "web-series")
+            endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}&page=${pageNum}`;
         }
+      } else if (decodedSlug.startsWith("actor-")) {
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_cast=${decodedSlug.split("-").pop()}${baseParams}`;
+      } else if (decodedSlug.startsWith("country-")) {
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_origin_country=${decodedSlug.split("-").pop().toUpperCase()}${baseParams}`;
       } else {
-        const parts = decodedSlug.split("-");
-        const id = parts.pop();
-        const name = parts.join(" ");
-        const mediaLabel = currentType === "movie" ? "Movies" : "TV Shows";
-        if (pageNum === 1)
-          setTitle(
-            `${name.charAt(0).toUpperCase() + name.slice(1)} ${mediaLabel}`,
-          );
-
-        if (!id || isNaN(id)) {
-          setLoading(false);
-          return;
-        }
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${getGenreString(id)}${baseParams}`;
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${decodedSlug.split("-").pop()}${baseParams}`;
       }
 
       const req = await axios.get(endpoint);
+      const newResults = req.data.results || [];
+
       const unsafeKeywords = [
         "sexy",
         "erotic",
@@ -192,23 +130,21 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
         "sex",
         "18+",
       ];
-      const safeResults = req.data.results.filter((item) => {
-        const title = (item.title || item.name || "").toLowerCase();
-        const overview = (item.overview || "").toLowerCase();
-        const isAdult = item.adult;
-        const hasUnsafeKeyword = unsafeKeywords.some(
-          (keyword) => title.includes(keyword) || overview.includes(keyword),
+      const safeBatch = newResults.filter((item) => {
+        const titleText = (item.title || item.name || "").toLowerCase();
+        const overviewText = (item.overview || "").toLowerCase();
+        return (
+          !item.adult &&
+          !unsafeKeywords.some(
+            (k) => titleText.includes(k) || overviewText.includes(k),
+          )
         );
-        return !isAdult && !hasUnsafeKeyword;
       });
 
-      if (safeResults.length === 0) {
-        if (req.data.results.length === 0) setHasMore(false);
-      } else {
-        setResults((prev) =>
-          pageNum === 1 ? safeResults : [...prev, ...safeResults],
-        );
-      }
+      setResults((prev) =>
+        pageNum === 1 ? safeBatch : [...prev, ...safeBatch],
+      );
+      setHasMore(pageNum < req.data.total_pages && newResults.length > 0);
       setLoading(false);
     } catch (error) {
       console.error("Error discovering:", error);
@@ -226,6 +162,42 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
     fetchDiscovery(1, newType, newYear);
   };
 
+  // Initialization
+  useEffect(() => {
+    const initialType = decodedSlug === "web-series" ? "tv" : mediaType;
+    setMediaType(initialType);
+    setYear(initialYear);
+
+    if (initialResults.length > 0) {
+      setResults(initialResults);
+      setPage(initialLastPage);
+      setLoading(false);
+      setHasMore(initialResults.length >= 10);
+    } else {
+      setResults([]);
+      setPage(1);
+      setHasMore(true);
+      fetchDiscovery(1, initialType, initialYear);
+    }
+  }, [decodedSlug, initialYear]);
+
+  // Infinite Scroll Effect
+  useEffect(() => {
+    if (page > 1 && page > initialLastPage) {
+      fetchDiscovery(page);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    if (loading || !hasMore) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) setPage((prev) => prev + 1);
+    });
+    if (observerRef.current) observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [loading, hasMore]);
+
+  // Title Effect
   useEffect(() => {
     const mediaLabel = mediaType === "movie" ? "Movies" : "TV Shows";
     let finalTitle = "";
@@ -253,57 +225,33 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
         "web-series",
       ].includes(decodedSlug)
     ) {
-      const categoryTitles = {
-        trending: `Trending ${mediaLabel} Today`,
-        "top-rated": `Top Rated ${mediaLabel}`,
-        popular: `Popular ${mediaLabel} Now`,
-        "new-releases": `New ${mediaLabel} Releases`,
-        "hidden-gems": `Hidden Gem ${mediaLabel}`,
-        "feel-good": `Feel Good ${mediaLabel}`,
+      const titles = {
+        trending: "Trending",
+        "top-rated": "Top Rated",
+        popular: "Popular",
+        "new-releases": "New Releases",
+        "hidden-gems": "Hidden Gems",
+        "feel-good": "Feel Good",
         "web-series": "Web Series",
       };
-      finalTitle = categoryTitles[decodedSlug];
+      finalTitle = `${titles[decodedSlug]} ${mediaLabel}`;
+    } else if (
+      decodedSlug.startsWith("actor-") ||
+      decodedSlug.startsWith("country-")
+    ) {
+      const parts = decodedSlug.split("-");
+      const name = parts
+        .slice(1, -1)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ");
+      finalTitle = `${name} ${mediaType === "tv" ? "Series" : "Productions"}`;
     } else {
       const parts = decodedSlug.split("-");
-      parts.pop();
-      const name = parts.join(" ");
+      const name = parts.slice(0, -1).join(" ");
       finalTitle = `${name.charAt(0).toUpperCase() + name.slice(1)} ${mediaLabel}`;
     }
-
-    const yearSuffix = year ? ` in ${year}` : "";
-    setTitle(`${finalTitle}${yearSuffix}`);
+    setTitle(`${finalTitle}${year ? " in " + year : ""}`);
   }, [decodedSlug, year, mediaType]);
-
-  useEffect(() => {
-    // If we have initialResults and it's the first mount for this slug,
-    // we don't need to fetch page 1 again.
-    const initialType = decodedSlug === "web-series" ? "tv" : "movie";
-    setMediaType(initialType);
-    setYear(initialYear);
-
-    if (initialResults.length > 0 && page === 1) {
-      setLoading(false);
-    } else {
-      setResults([]);
-      setPage(1);
-      setHasMore(true);
-      setLoading(true);
-      fetchDiscovery(1, initialType, initialYear);
-    }
-  }, [decodedSlug, initialYear]);
-
-  useEffect(() => {
-    if (page > 1) fetchDiscovery(page);
-  }, [page]);
-
-  useEffect(() => {
-    if (loading) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore) setPage((prev) => prev + 1);
-    });
-    if (observerRef.current) observer.observe(observerRef.current);
-    return () => observer.disconnect();
-  }, [loading, hasMore]);
 
   const createSlug = (title, id, type = "movie") => {
     if (!title) return id;
@@ -331,21 +279,13 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
             <div className="bg-container p-1 rounded-lg flex">
               <button
                 onClick={() => handleFilterChange("movie", year)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  mediaType === "movie"
-                    ? "bg-primary text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mediaType === "movie" ? "bg-primary text-white" : "text-gray-400 hover:text-white"}`}
               >
                 Movies
               </button>
               <button
                 onClick={() => handleFilterChange("tv", year)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  mediaType === "tv"
-                    ? "bg-primary text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mediaType === "tv" ? "bg-primary text-white" : "text-gray-400 hover:text-white"}`}
               >
                 TV Shows
               </button>
@@ -373,7 +313,7 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[1.5vw]">
           {results.map((item, index) => (
             <Link
-              href={`/movie/${createSlug(
+              href={`/${mediaType === "tv" ? "movie" : "movie"}/${createSlug(
                 item.title || item.name,
                 item.id,
                 mediaType,
@@ -389,8 +329,8 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
                     alt={item.title || item.name}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">
-                    No Image
+                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-2 italic bg-gray-900 rounded-xl">
+                    No Image Available
                   </div>
                 )}
 
@@ -426,89 +366,24 @@ const DiscoverContent = ({ slug, initialResults = [], initialYear = "" }) => {
               </div>
             </Link>
           ))}
-          {(loading || hasMore) &&
-            Array.from({ length: 4 }).map((_, i) => (
-              <div ref={i === 0 ? observerRef : null} key={i}>
-                <SkeletonCard />
-              </div>
-            ))}
         </div>
 
-        {/* SEO Content Section */}
-        {!loading && results.length > 0 && (
-          <div className="mt-20 pt-10 border-t border-white/5">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-xl lg:text-2xl font-comfortaa font-bold mb-6 text-primary">
-                Unlocking the Best {title} Experience
-              </h2>
-              <p className="text-gray-400 leading-relaxed font-light mb-8">
-                At MovieLab, we pride ourselves on delivering a premium
-                streaming experience for all film enthusiasts. Our {title}{" "}
-                collection is meticulously curated to include highly-rated
-                masterpieces, cult classics, and the latest trending hits.
-                Whether you're looking to watch online in stunning 1080p HD or
-                download for offline viewing, our platform ensures fast
-                buffering and zero interruptions. Dive into our{" "}
-                {mediaType === "tv" ? "TV show" : "movie"} universe today and
-                discover why millions choose MovieLab for their daily dose of
-                entertainment.
-              </p>
+        {/* Sentinel for Infinite Scroll */}
+        {hasMore && (
+          <div ref={observerRef} className="h-10 w-full" aria-hidden="true" />
+        )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 text-left">
-                <div className="bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
-                  <h4 className="font-bold text-white mb-2">
-                    Instant HD Streaming
-                  </h4>
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    Optimized servers for lag-free playback in full high
-                    definition.
-                  </p>
-                </div>
-                <div className="bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
-                  <h4 className="font-bold text-white mb-2">
-                    Zero Registration
-                  </h4>
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    Start watching immediately without creating an account or
-                    signing up.
-                  </p>
-                </div>
-                <div className="bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
-                  <h4 className="font-bold text-white mb-2">Safe & Secure</h4>
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    Verified content and secure streaming with no intrusive
-                    pop-ups.
-                  </p>
-                </div>
-              </div>
-            </div>
+        {loading && (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[1.5vw] mt-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
 
-            {/* Related Categories linking */}
-            <div className="mt-16 text-center">
-              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6 font-poppins">
-                Explore More Collections
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {[
-                  "trending",
-                  "new-releases",
-                  "top-rated",
-                  "bollywood",
-                  "hollywood",
-                  "anime",
-                ]
-                  .filter((cat) => cat !== decodedSlug)
-                  .map((cat) => (
-                    <Link
-                      key={cat}
-                      href={`/discover/${cat}`}
-                      className="px-6 py-2 bg-zinc-900 border border-white/5 rounded-full text-xs font-medium hover:border-primary/50 transition-all font-poppins capitalize"
-                    >
-                      {cat.replace(/-/g, " ")}
-                    </Link>
-                  ))}
-              </div>
-            </div>
+        {!loading && results.length === 0 && (
+          <div className="py-20 text-center text-gray-500 italic">
+            No content found for this category. try changing filters!
           </div>
         )}
       </div>

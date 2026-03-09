@@ -261,10 +261,16 @@ const SearchContent = ({ query }) => {
   }, [loading, loadingMore, hasMore, filteredResults.length]);
 
   useEffect(() => {
-    setFilteredResults(
-      [...results].sort((a, b) => b.popularity - a.popularity),
-    );
-  }, [results]);
+    // Only sort on initial load or when filters change, not on pagination
+    if (page === 1) {
+      setFilteredResults(
+        [...results].sort((a, b) => b.popularity - a.popularity),
+      );
+    } else {
+      // For pagination, maintain the original order (new items at the end)
+      setFilteredResults(results);
+    }
+  }, [results, page]);
 
   const createSlug = (title, id, type = "movie") => {
     if (!title) return id;

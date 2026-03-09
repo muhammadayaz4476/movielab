@@ -463,8 +463,8 @@ const Navbar = () => {
                 className="overflow-y-auto flex-1 pr-2 custom-scrollbar smooth-native-scroll"
               >
                 {/* Hubs Section */}
-                <div className="mb-10">
-                  <h4 className="text-primary text-md font-medium  mb-4 uppercase  font-poppins">
+                <div className="mb-8">
+                  <h4 className="text-primary text-md font-medium mb-4 uppercase font-poppins">
                     Cinema Hubs
                   </h4>
                   <div className="grid grid-cols-2 gap-3">
@@ -473,11 +473,44 @@ const Navbar = () => {
                         key={hub.slug}
                         href={`/discover/${hub.slug}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="bg-zinc-900 font-poppins border border-white/5 p-3 rounded-xl text-center hover:bg-primary hover:border-primary transition-all  text-sm"
+                        className="bg-zinc-900 font-poppins border border-white/5 p-3 rounded-xl text-center hover:bg-primary hover:border-primary transition-all text-sm"
                       >
                         {hub.name}
                       </Link>
                     ))}
+                  </div>
+                </div>
+
+                {/* Explore More - New Section */}
+                <div className="mb-8">
+                  <h4 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                    Explore More
+                  </h4>
+                  <div className="flex flex-col gap-1">
+                    <Link
+                      href="/actors"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                    >
+                      <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
+                        Popular Actors
+                      </span>
+                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                        ›
+                      </span>
+                    </Link>
+                    <Link
+                      href="/countries"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                    >
+                      <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
+                        Browse by Country
+                      </span>
+                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                        ›
+                      </span>
+                    </Link>
                   </div>
                 </div>
 
@@ -496,7 +529,7 @@ const Navbar = () => {
                         onClick={() => setIsSidebarOpen(false)}
                         className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                       >
-                        <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all">
+                        <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
                           {genre.name}
                         </span>
                         <span className="text-gray-700 group-hover:text-primary transition-colors">

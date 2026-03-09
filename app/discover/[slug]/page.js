@@ -73,15 +73,63 @@ async function getDiscoveryData(slug, page = 1, year = "") {
       // Use discover for year filtering on trending/popular categories
       endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}${baseParams}`;
     }
+  } else if (decodedSlug.startsWith("actor-")) {
+    const actorId = decodedSlug.split("-").pop();
+    if (!actorId || isNaN(actorId)) return { results: [] };
+    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}${baseParams}`;
+  } else if (decodedSlug.startsWith("country-")) {
+    const countryCode = decodedSlug.split("-").pop().toUpperCase();
+    if (!countryCode || countryCode.length < 2) return { results: [] };
+    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_origin_country=${countryCode}${baseParams}`;
   } else {
-    const genreId = decodedSlug.split("-").pop();
+    const parts = decodedSlug.split("-");
+    const genreId = parts.pop();
+    if (!genreId || isNaN(genreId)) return { results: [] };
     endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreId}${baseParams}`;
   }
 
   try {
     const res = await fetch(endpoint, { next: { revalidate: 3600 } });
     if (!res.ok) return { results: [] };
-    return res.json();
+    const data = await res.json();
+
+    // Simplified Buffering for actor pages (no vote count restriction)
+    if (decodedSlug.startsWith("actor-")) {
+      const actorId = decodedSlug.split("-").pop();
+      const commonFilters = `&include_adult=false&vote_count.gte=0`; // Relaxed for dedicated pages
+      const yearFilter = year
+        ? `&${mediaType === "tv" ? "first_air_date_year" : "primary_release_year"}=${year}`
+        : "";
+
+      let allResults = [];
+      let currentPage = 1;
+      const maxPagesToBuffer = 5;
+      const targetCount = 60;
+
+      while (
+        allResults.length < targetCount &&
+        currentPage <= maxPagesToBuffer &&
+        currentPage <= data.total_pages
+      ) {
+        const fetchUrl = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}&page=${currentPage}&sort_by=popularity.desc${commonFilters}${yearFilter}`;
+        const currentRes = await fetch(fetchUrl, { cache: "no-store" });
+        if (!currentRes.ok) break;
+        const currentData = await currentRes.json();
+        const results = currentData.results || [];
+
+        allResults = [...allResults, ...results];
+        if (results.length === 0) break;
+        currentPage++;
+      }
+
+      return {
+        ...data,
+        results: allResults,
+        lastPageFetched: currentPage - 1,
+      };
+    }
+
+    return { ...data, lastPageFetched: page };
   } catch (error) {
     return { results: [] };
   }
@@ -129,6 +177,18 @@ export async function generateMetadata({ params, searchParams }) {
       "web-series": "Must Watch Web Series",
     };
     title = categoryTitles[decodedSlug] || "Discover";
+  } else if (decodedSlug.startsWith("actor-")) {
+    const nameParts = decodedSlug.split("-").slice(1, -1);
+    const actorName = nameParts
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(" ");
+    title = `${actorName}'s Movies & Series`;
+  } else if (decodedSlug.startsWith("country-")) {
+    const nameParts = decodedSlug.split("-").slice(1, -1);
+    const countryName = nameParts
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(" ");
+    title = `${countryName} Cinema`;
   } else {
     const parts = decodedSlug.split("-");
     parts.pop();
@@ -238,6 +298,7 @@ export default async function Page({ params, searchParams }) {
         slug={slug}
         initialResults={initialData.results || []}
         initialYear={year}
+        initialLastPage={initialData.lastPageFetched || 1}
       />
     </>
   );

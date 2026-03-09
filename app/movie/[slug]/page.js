@@ -249,7 +249,7 @@ export default async function Page({ params }) {
     data = await getTMDBData(
       mediaType,
       id,
-      "videos,credits,keywords,release_dates,external_ids,watch/providers",
+      "videos,credits,keywords,release_dates,external_ids,watch/providers,recommendations,similar",
     );
   } catch (error) {
     console.error("Error fetching content in server component:", error);
