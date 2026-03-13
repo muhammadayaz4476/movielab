@@ -8,11 +8,12 @@ async function getDiscoveryData(slug, page = 1, year = "") {
   const mediaType = slug === "web-series" ? "tv" : "movie";
 
   let endpoint = "";
-  const commonFilters = `&include_adult=false${mediaType === "tv" ? "&vote_count.gte=0" : "&vote_count.gte=10"}`;
+  const sortBy = mediaType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
+  const commonFilters = `&include_adult=false&vote_count.gte=10`;
   const yearParam =
     mediaType === "tv" ? "first_air_date_year" : "primary_release_year";
   const yearFilter = year ? `&${yearParam}=${year}` : "";
-  const baseParams = `&page=${page}&sort_by=popularity.desc${commonFilters}${yearFilter}`;
+  const baseParams = `&page=${page}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
 
   if (
     ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
@@ -42,37 +43,14 @@ async function getDiscoveryData(slug, page = 1, year = "") {
       "web-series",
     ].includes(decodedSlug)
   ) {
-    if (
-      (decodedSlug === "trending" ||
-        decodedSlug === "top-rated" ||
-        decodedSlug === "popular") &&
-      !year
-    ) {
-      const endpoints = {
-        trending: `${BASE_URL}/trending/${mediaType}/day?api_key=${API_KEY}&page=${page}`,
-        "top-rated": `${BASE_URL}/${mediaType}/top_rated?api_key=${API_KEY}&page=${page}`,
-        popular: `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${page}`,
-      };
-      endpoint = endpoints[decodedSlug];
-    } else if (decodedSlug === "new-releases") {
-      const releaseTypeFilter =
-        !year || parseInt(year) >= 2024 ? "&with_release_type=2|3" : "";
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}${baseParams}${releaseTypeFilter}`;
-    } else if (decodedSlug === "hidden-gems")
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300${baseParams}`;
-    else if (decodedSlug === "feel-good")
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=35,10749${baseParams}`;
-    else if (decodedSlug === "web-series") {
-      endpoint = year
-        ? `${BASE_URL}/discover/tv?api_key=${API_KEY}${baseParams}`
-        : `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`;
-    } else if (
-      ["trending", "top-rated", "popular"].includes(decodedSlug) &&
-      year
-    ) {
-      // Use discover for year filtering on trending/popular categories
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}${baseParams}`;
-    }
+    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}${baseParams}`;
+    if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
+    else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
+    else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
+    else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
+    else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
+    else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
+    else if (decodedSlug === "web-series" && mediaType === "tv") endpoint += "&with_original_language=hi";
   } else if (decodedSlug.startsWith("actor-")) {
     const actorId = decodedSlug.split("-").pop();
     if (!actorId || isNaN(actorId)) return { results: [] };
@@ -111,7 +89,7 @@ async function getDiscoveryData(slug, page = 1, year = "") {
         currentPage <= maxPagesToBuffer &&
         currentPage <= data.total_pages
       ) {
-        const fetchUrl = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}&page=${currentPage}&sort_by=popularity.desc${commonFilters}${yearFilter}`;
+        const fetchUrl = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}&page=${currentPage}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
         const currentRes = await fetch(fetchUrl, { cache: "no-store" });
         if (!currentRes.ok) break;
         const currentData = await currentRes.json();

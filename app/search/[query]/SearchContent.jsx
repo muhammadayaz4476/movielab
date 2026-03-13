@@ -73,8 +73,8 @@ const SearchContent = ({ query }) => {
         let endpoints = [];
 
         // Define base params based on filter type
-        const movieBase = `${BASE_URL}/discover/movie?api_key=${API_KEY}&include_adult=false&sort_by=popularity.desc&page=${pageNum}`;
-        const tvBase = `${BASE_URL}/discover/tv?api_key=${API_KEY}&include_adult=false&sort_by=popularity.desc&page=${pageNum}`;
+        const movieBase = `${BASE_URL}/discover/movie?api_key=${API_KEY}&include_adult=false&sort_by=primary_release_date.desc&vote_count.gte=10&page=${pageNum}`;
+        const tvBase = `${BASE_URL}/discover/tv?api_key=${API_KEY}&include_adult=false&sort_by=first_air_date.desc&vote_count.gte=10&page=${pageNum}`;
 
         let movieQuery = "";
         let tvQuery = "";
@@ -129,12 +129,25 @@ const SearchContent = ({ query }) => {
           }
         });
       } else {
-        const res = await axios.get(
-          `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${decodedQuery}&include_adult=false&page=${pageNum}`,
-        );
-        newResults = res.data.results || [];
+        if (isInitial) {
+          // Fetch up to 3 pages horizontally to build a good chunk without pagination-shuffle
+          const pageReqs = [1, 2, 3].map(p =>
+            axios.get(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${decodedQuery}&include_adult=false&page=${p}`).catch(() => null)
+          );
+          const responses = await Promise.all(pageReqs);
+          
+          responses.forEach(res => {
+            if (res?.data?.results) {
+              newResults = [...newResults, ...res.data.results];
+            }
+          });
+          setHasMore(false); // Stop pagination shuffle for text searches
+        } else {
+          setHasMore(false);
+          return;
+        }
 
-        if (isInitial && pageNum === 1 && newResults.length > 0) {
+        if (isInitial && newResults.length > 0) {
           const topResult = newResults[0];
           if (topResult.media_type === "person" && topResult.profile_path) {
             const queryLower = decodedQuery.toLowerCase().trim();
@@ -155,8 +168,6 @@ const SearchContent = ({ query }) => {
             }
           }
         }
-
-        if (res.data.page >= res.data.total_pages) setHasMore(false);
       }
 
       const unsafeKeywords = [
@@ -198,9 +209,18 @@ const SearchContent = ({ query }) => {
 
       setResults((prev) => {
         const merged = isInitial ? filtered : [...prev, ...filtered];
-        return Array.from(
+        const uniqueMerged = Array.from(
           new Map(merged.map((i) => [i.id + i.media_type, i])).values(),
         );
+
+        return uniqueMerged.sort((a, b) => {
+          const dateA = a.release_date || a.first_air_date;
+          const dateB = b.release_date || b.first_air_date;
+          const timeA = dateA ? new Date(dateA).getTime() : 0;
+          const timeB = dateB ? new Date(dateB).getTime() : 0;
+          if (timeA !== timeB) return timeB - timeA;
+          return (b.popularity || 0) - (a.popularity || 0);
+        });
       });
 
       if (filtered.length === 0 && hasMore) {
@@ -261,16 +281,8 @@ const SearchContent = ({ query }) => {
   }, [loading, loadingMore, hasMore, filteredResults.length]);
 
   useEffect(() => {
-    // Only sort on initial load or when filters change, not on pagination
-    if (page === 1) {
-      setFilteredResults(
-        [...results].sort((a, b) => b.popularity - a.popularity),
-      );
-    } else {
-      // For pagination, maintain the original order (new items at the end)
-      setFilteredResults(results);
-    }
-  }, [results, page]);
+    setFilteredResults(results);
+  }, [results]);
 
   const createSlug = (title, id, type = "movie") => {
     if (!title) return id;
@@ -328,29 +340,41 @@ const SearchContent = ({ query }) => {
 
         {/* Starring Section (Only for exact person match) */}
         {personInfo && (
-          <div className="mb-10 w-full bg-linear-to-r from-zinc-900 to-black border border-white/10 p-6 rounded-2xl flex items-center gap-6">
-            <div className="w-20 h-20 md:w-26 md:h-26 shrink-0 rounded-full overflow-hidden relative">
-              {personInfo.profile_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w200${personInfo.profile_path}`}
-                  alt={personInfo.name}
-                  className="w-full h-full object-cover object-top"
-                />
-              ) : (
-                <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-lg font-bold text-gray-500">
-                  {personInfo.name?.[0]}
+          <Link
+            href={`/actor/${createSlug(personInfo.name, personInfo.id, "person")}`}
+            className="mb-10 block group/person"
+          >
+            <div className="w-full bg-linear-to-r from-zinc-900 to-black border border-white/10 p-6 rounded-2xl flex items-center gap-6 hover:border-primary/50 transition-all shadow-xl">
+              <div className="w-20 h-20 md:w-26 md:h-26 shrink-0 rounded-full overflow-hidden relative border-2 border-transparent group-hover/person:border-primary/50 transition-all">
+                {personInfo.profile_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w200${personInfo.profile_path}`}
+                    alt={personInfo.name}
+                    className="w-full h-full object-cover object-top group-hover/person:scale-110 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-lg font-bold text-gray-500">
+                    {personInfo.name?.[0]}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl md:text-3xl font-bold font-comfortaa text-white group-hover/person:text-primary transition-colors">
+                    {personInfo.name}
+                  </h2>
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full border border-primary/20">
+                    Star Profile
+                  </span>
                 </div>
-              )}
+                <p className="text-zinc-400 text-xs md:text-sm mt-1 flex items-center gap-2">
+                  <span>Found {results.length} titles featuring this actor</span>
+                  <span className="w-1 h-1 bg-zinc-700 rounded-full" />
+                  <span className="text-primary font-bold">View Full Portfolio</span>
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold font-comfortaa text-white">
-                {personInfo.name}
-              </h2>
-              <p className="text-zinc-400 text-xs md:text-sm mt-1">
-                Found {results.length} titles featuring this actor.
-              </p>
-            </div>
-          </div>
+          </Link>
         )}
 
         {loading || (hasMore && filteredResults.length === 0) ? (
@@ -395,6 +419,8 @@ const SearchContent = ({ query }) => {
                         movie={item}
                         isSaved={isSaved}
                         toggleWatchLater={toggleWatchLater}
+                        createSlug={createSlug}
+                        mediaType={item.media_type || "movie"}
                       />
 
                       {/* Badge Overlay (Visible when not hovering/mobile) */}

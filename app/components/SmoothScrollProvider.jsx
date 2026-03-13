@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 const CustomScrollbar = dynamic(() => import("./CustomScrollbar"), {
   ssr: false,
@@ -10,9 +11,19 @@ const LoginModal = dynamic(() => import("@/components/LoginModal"), {
 });
 
 const SmoothScrollProvider = ({ children }) => {
+  const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const lenisRef = useRef(null);
   const rafRef = useRef(null);
+
+  // Scroll to top on navigation
+  useEffect(() => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const checkMobile = () => {

@@ -23,11 +23,11 @@ const ActorCard = ({ actor, showMovies = false }) => {
 
   return (
     <motion.div
-      className={`group bg-white/6 ${knownFor?'lg:h-[500px]':''}  rounded-md overflow-hidden hover:shadow-2xl shadow-white/60  transition-all flex flex-col`}
+      className={`group bg-white/6 ${knownFor?'lg:h-[500px] h-[400px]':''}  rounded-md overflow-hidden hover:shadow-2xl shadow-white/60  transition-all flex flex-col`}
     >
       <Link
-        // href={`/actor/${actor.name.toLowerCase().replace(/ /g, "-")}-${actor.id}`}
-        href={`/search/${actor.name.toLowerCase()}`}
+        href={`/actor/${actor.name.toLowerCase().replace(/ /g, "-")}-${actor.id}`}
+        // href={`/search/${actor.name.toLowerCase()}`}
         className="relative aspect-[3/4] overflow-hidden bg-zinc-800"
       >
         {actor.profile_path ? (
@@ -124,23 +124,38 @@ const ActorsPage = () => {
     try {
       setLoading(true);
 
+      const getLatestWorkDate = (actor) => {
+        const dates = (actor.known_for || [])
+          .map(m => m.release_date || m.first_air_date)
+          .filter(Boolean);
+        return dates.length > 0 ? Math.max(...dates.map(d => new Date(d).getTime())) : 0;
+      };
+
+      const sortActorsByFreshness = (list) => {
+        return [...list].sort((a, b) => {
+          const dateA = getLatestWorkDate(a);
+          const dateB = getLatestWorkDate(b);
+          if (dateA !== dateB) return dateB - dateA;
+          return (b.popularity || 0) - (a.popularity || 0);
+        });
+      };
+
       // Deep fetch to find high-quality content across 10+ pages for a rich pool
-      const [t1, t2, t3, p1, p2, p3, p4, p5, p6, p7, td1] = await Promise.all([
+      // Fetching first 5 pages of popular actors immediately to provide a stable, large sorted batch
+      const pagePromises = [1, 2, 3, 4, 5].map(p =>
+        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=${p}`)
+      );
+      const [t1, t2, t3, ...pResponses] = await Promise.all([
         axios.get(`${BASE_URL}/trending/person/week?api_key=${API_KEY}&page=1`),
         axios.get(`${BASE_URL}/trending/person/week?api_key=${API_KEY}&page=2`),
         axios.get(`${BASE_URL}/trending/person/week?api_key=${API_KEY}&page=3`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=1`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=2`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=3`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=4`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=5`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=6`),
-        axios.get(`${BASE_URL}/person/popular?api_key=${API_KEY}&page=7`),
+        ...pagePromises,
         axios.get(`${BASE_URL}/trending/person/day?api_key=${API_KEY}&page=1`),
       ]);
 
+      const td1 = pResponses.pop(); // The last trending day response
       const allTrending = [...t1.data.results, ...t2.data.results, ...t3.data.results, ...td1.data.results];
-      const allPopular = [...p1.data.results, ...p2.data.results, ...p3.data.results, ...p4.data.results, ...p5.data.results, ...p6.data.results, ...p7.data.results];
+      const allPopular = pResponses.flatMap(r => r.data.results || []);
 
       // 1. Trending Actors
       const filteredTrending = allTrending
@@ -155,10 +170,16 @@ const ActorsPage = () => {
       setTrending(uniqueTrending);
 
       // 2. Main Popular Grid
-      const initialPopular = p1.data.results?.filter(a => a.known_for_department === "Acting" && a.adult !== true) || [];
-      // Deduplicate to be safe
+      const initialPopular = allPopular.filter(a =>
+        a.known_for_department === "Acting" &&
+        a.adult !== true &&
+        a.profile_path // Mandatory image for grid
+      );
+      // Deduplicate and sort by freshness
       const uniqueInitial = Array.from(new Map(initialPopular.map(item => [item.id, item])).values());
-      setPopular(uniqueInitial);
+      const sorted = sortActorsByFreshness(uniqueInitial);
+      setPopular(sorted);
+      setPage(5); // We fetched 5 pages consolidated now
 
       // 3. Born Today Section - Search Maximum Depth (Top 120 people total)
       const detailPool = Array.from(new Map([...allPopular, ...allTrending].map(item => [item.id, item])).values()).slice(0, 120); 
@@ -206,24 +227,27 @@ const ActorsPage = () => {
       const res = await axios.get(
         `${BASE_URL}/person/popular?api_key=${API_KEY}&page=${nextPage}`,
       );
-      const newItems = (res.data.results || [])
-        .filter(a => a.adult !== true && (activeTab === "acting" ? a.known_for_department === "Acting" : true));
-      
-      if (newItems.length === 0 && (res.data.results || []).length > 0) {
-        setPage(nextPage);
-        return; 
-      }
+      const fetchedItems = res.data.results || [];
+      const newItems = fetchedItems.filter(a =>
+        a.adult !== true &&
+        a.profile_path && 
+        (activeTab === "acting" ? a.known_for_department === "Acting" : true)
+      );
 
       if (newItems.length === 0) {
+        if (fetchedItems.length > 0 && nextPage < 50) {
+          setPage(nextPage);
+          return;
+        }
         setHasMore(false);
-      } else {
-        setPopular((prev) => {
-          const combined = [...prev, ...newItems];
-          // Robust deduplication
-          return Array.from(new Map(combined.map(item => [item.id, item])).values());
-        });
-        setPage(nextPage);
+        return;
       }
+
+      setPopular((prev) => {
+        const combined = [...prev, ...newItems];
+        return Array.from(new Map(combined.map(item => [item.id, item])).values());
+      });
+      setPage(nextPage);
     } catch (error) {
       console.error("Error fetching more actors:", error);
     }
@@ -258,10 +282,8 @@ const ActorsPage = () => {
         
         // Apply strict filters to search results
         const filtered = (res.data.results || []).filter(item => 
-          item.profile_path && 
           item.known_for_department === "Acting" && 
           item.adult !== true
-          // No popularity threshold for search - if user searched for them, they likely want to see them
         );
         
         setSearchResults(filtered);
@@ -278,13 +300,14 @@ const ActorsPage = () => {
 
   const filteredPopular = popular.filter((actor) => {
     const matchesTab = actor.known_for_department.toLowerCase() === activeTab;
-    const matchesGender = genderFilter === "all" || 
-      (genderFilter === "female" && actor.gender === 1) || 
+    const matchesGender = genderFilter === "all" ||
+      (genderFilter === "female" && actor.gender === 1) ||
       (genderFilter === "male" && actor.gender === 2);
     const matchesSearch = actor.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    return matchesTab && matchesGender && matchesSearch;
+    const hasImage = !!actor.profile_path;
+    return matchesTab && matchesGender && matchesSearch && hasImage;
   });
 
   const displayList = searchQuery ? searchResults : filteredPopular;
@@ -294,7 +317,7 @@ const ActorsPage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative pt-32 pb-20 px-4  lg:px-[3vw]   overflow-hidden">
+      <div className="relative pt-54 lg:pt-32   pb-20 px-4  lg:px-[3vw]   overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden opacity-20 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/20 via-transparent to-black" />
         </div>
@@ -476,7 +499,7 @@ const ActorsPage = () => {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-y-6 gap-x-2 lg:gap-8">
             <AnimatePresence mode="popLayout">
               {loading || isSearching
                 ? Array.from({ length: 10 }).map((_, i) => (

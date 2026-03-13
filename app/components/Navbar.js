@@ -6,6 +6,7 @@ import {
   User,
   Menu,
   ListPlus,
+  ChevronRight,
   X,
   Layers,
   PlaySquareIcon,
@@ -148,7 +149,8 @@ const Navbar = () => {
         }`,
       );
     } else if (item.media_type === "person") {
-      router.push(`/search/${encodeURIComponent(item.name)}`);
+      const slug = createSlug(item.name, item.id, "person");
+      router.push(`/actor/${slug}`);
     } else {
       const slug = createSlug(
         item.title || item.name,
@@ -217,67 +219,15 @@ const Navbar = () => {
 
   return (
     <>
+    
       <motion.header
         initial={{ y: 0 }}
         animate={{ y: isVisible ? 0 : "-100%" }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className={`fixed top-0 left-0 w-full z-100 ${isVisible ? "b" : ""}`}
       >
-        <div className="w-full   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
-          <Marquee
-            speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
-            gradient={false} // Assuming you don't need the fade gradient effect
-            loop={0} // 0 means infinite loop
-          >
-            <span className="mx-[10px] lg:mx-[3vw]    text-white/80 md:text-base text-[12px]">
-              Please Install the{" "}
-              <Link
-                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-                target="_blank"
-                className=" text-primary underline font-semibold"
-              >
-                AdGuard browser extension
-              </Link>{" "}
-              {""}
-              or mobile app to block intrusive ads and popups
-            </span>
-            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-              | Movies lab |
-            </span>
-            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
-              Please Install the{" "}
-              <Link
-                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-                target="_blank"
-                className=" text-primary underline font-semibold"
-              >
-                AdGuard browser extension
-              </Link>{" "}
-              {""}
-              or mobile app to block intrusive ads and popups
-            </span>
-            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-              | Movies lab |
-            </span>
-
-            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
-              Please Install the{" "}
-              <Link
-                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-                target="_blank"
-                className=" text-primary underline font-semibold"
-              >
-                AdGuard browser extension
-              </Link>{" "}
-              {""}
-              or mobile app to block intrusive ads and popups
-            </span>
-            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-              | Movies lab |
-            </span>
-          </Marquee>
-        </div>
-        <nav className="px-4   py-6 w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
+       
+        <nav className="px-4    w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
           <div className="flex items-center justify-between w-full lg:w-auto">
             <Link
               href="/"
@@ -304,7 +254,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center w-full lg:w-fit gap-2 pt-5 md:pt-0 lg:gap-[1vw]">
+          <div className="flex items-center w-full lg:w-fit gap-2 pt-2 md:pt-0 lg:gap-[1vw]">
             <div className="relative w-full lg:w-[25vw]" ref={searchRef}>
               <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
                 <SearchIcon className="text-primary/50 shrink-0" size={20} />
@@ -492,11 +442,12 @@ const Navbar = () => {
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >
-                      <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
+                      <span className="text-gray-300 group-hover:text-white  transition-all font-medium">
                         Popular Actors
                       </span>
                       <span className="text-gray-700 group-hover:text-primary transition-colors">
-                        ›
+                        <ChevronRight />
+                        
                       </span>
                     </Link>
                     <Link
@@ -504,11 +455,11 @@ const Navbar = () => {
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >
-                      <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
+                      <span className="text-gray-300 group-hover:text-white  transition-all font-medium">
                         Browse by Country
                       </span>
                       <span className="text-gray-700 group-hover:text-primary transition-colors">
-                        ›
+                        <ChevronRight />
                       </span>
                     </Link>
                   </div>
@@ -529,11 +480,11 @@ const Navbar = () => {
                         onClick={() => setIsSidebarOpen(false)}
                         className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                       >
-                        <span className="text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all font-medium">
+                        <span className="text-gray-300 group-hover:text-white transition-all font-medium">
                           {genre.name}
                         </span>
                         <span className="text-gray-700 group-hover:text-primary transition-colors">
-                          ›
+                          <ChevronRight />
                         </span>
                       </Link>
                     ))}

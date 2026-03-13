@@ -24,6 +24,8 @@ import TrailerModal from "../../components/TrailerModal";
 import Reviews from "../../components/Reviews";
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
+import Marquee from "react-fast-marquee";
+
 
 const SidebarSkeleton = () => (
   <div className="flex gap-3 animate-pulse px-1">
@@ -645,8 +647,62 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           />
         </div>
       )}
+       <div className="w-full opacity-60   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+          <Marquee
+            speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
+            gradient={false} // Assuming you don't need the fade gradient effect
+            loop={0} // 0 means infinite loop
+          >
+            <span className="mx-[10px] lg:mx-[3vw]    text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
 
-      <div className="relative z-10">
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+          </Marquee>
+        </div>
+
+      <div className="relative z-10 ">
         <Navbar />
         <div className="flex flex-col lg:flex-row gap-10 justify-center lg:px-[2vw] md:py-[8vw] py-[160px]">
           <div className="flex-1 md:pb-0 pb-10">

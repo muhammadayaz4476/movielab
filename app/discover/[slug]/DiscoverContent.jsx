@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 import Link from "next/link";
 import HoverOverlay from "@/app/components/HoverOverlay";
 import { useAuth } from "@/context/AuthContext";
+import { ChevronDown } from "lucide-react";
 
 // Skeleton Component
 const SkeletonCard = () => (
@@ -57,8 +58,8 @@ const DiscoverContent = ({
 
     setLoading(true);
     try {
-      let sortBy = "popularity.desc";
-      const commonFilters = `&include_adult=false&vote_count.gte=0`; // Relaxed for full catalog surfacing
+      let sortBy = currentType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
+      const commonFilters = `&include_adult=false&vote_count.gte=10`; // Relaxed for full catalog surfacing but strict enough to avoid unreleased garbage
       const yearParam =
         currentType === "tv" ? "first_air_date_year" : "primary_release_year";
       const yearFilter = currentYear ? `&${yearParam}=${currentYear}` : "";
@@ -90,23 +91,14 @@ const DiscoverContent = ({
           "web-series",
         ].includes(decodedSlug)
       ) {
-        if (
-          (decodedSlug === "trending" ||
-            decodedSlug === "top-rated" ||
-            decodedSlug === "popular") &&
-          !currentYear
-        ) {
-          endpoint = `${BASE_URL}/${decodedSlug === "trending" ? "trending/" + currentType + "/day" : currentType + "/" + decodedSlug.replace("-", "_")}?api_key=${API_KEY}&page=${pageNum}`;
-        } else {
-          endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}${baseParams}`;
-          if (decodedSlug === "new-releases")
-            endpoint += "&with_release_type=2|3";
-          if (decodedSlug === "hidden-gems")
-            endpoint += "&vote_average.gte=7&vote_count.lte=300";
-          if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
-          if (decodedSlug === "web-series")
-            endpoint = `${BASE_URL}/${currentType}/popular?api_key=${API_KEY}&page=${pageNum}`;
-        }
+        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}${baseParams}`;
+        if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
+        else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
+        else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
+        else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
+        else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
+        else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
+        else if (decodedSlug === "web-series" && currentType === "tv") endpoint += "&with_original_language=hi";
       } else if (decodedSlug.startsWith("actor-")) {
         endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_cast=${decodedSlug.split("-").pop()}${baseParams}`;
       } else if (decodedSlug.startsWith("country-")) {
@@ -179,6 +171,7 @@ const DiscoverContent = ({
       setHasMore(true);
       fetchDiscovery(1, initialType, initialYear);
     }
+    // console.log(initialResults);
   }, [decodedSlug, initialYear]);
 
   // Infinite Scroll Effect
@@ -270,7 +263,7 @@ const DiscoverContent = ({
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="px-4 lg:px-[5vw] md:py-[10vw] py-[40vw]">
+      <div className="px-4 lg:px-[3vw] md:py-[10vw] py-[40vw]">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <h1 className="text-2xl lg:text-3xl font-comfortaa font-bold capitalize">
             {title || "Discover"}
@@ -292,7 +285,7 @@ const DiscoverContent = ({
             </div>
             <div className="relative">
               <select
-                value={year}
+                value={year[0]}
                 onChange={(e) => handleFilterChange(mediaType, e.target.value)}
                 className="appearance-none bg-container text-white text-sm px-4 py-2 pr-8 rounded-lg outline-none focus:ring-1 focus:ring-primary cursor-pointer"
               >
@@ -304,7 +297,7 @@ const DiscoverContent = ({
                 ))}
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-xs">
-                ▼
+                <ChevronDown size={14} />
               </div>
             </div>
           </div>
@@ -335,6 +328,8 @@ const DiscoverContent = ({
                 )}
 
                 <HoverOverlay
+                createSlug={createSlug}
+                mediaType={mediaType}
                   movie={item}
                   isSaved={watchLater.some(
                     (watchItem) => watchItem.id === item.id.toString(),
@@ -343,9 +338,10 @@ const DiscoverContent = ({
                 />
 
                 <div className="absolute top-2 right-2 lg:top-[0.8vw] lg:right-[0.8vw] lg:group-hover:hidden transition-opacity duration-200">
-                  <div className="px-2 py-0.5 lg:px-2 lg:py-1 bg-primary rounded-md backdrop-blur-sm bg-opacity-90">
-                    <span className="text-[8px] lg:text-[10px] font-black text-black uppercase tracking-widest font-poppins">
-                      {mediaType === "tv" ? "Series" : "Movie"}
+                  <div className="px-2 py-0.5 lg:px-2 flex items-center justify-center lg:py-1 bg-primary rounded-md backdrop-blur-sm bg-opacity-90">
+                    <span className="text-xs lg:text-xs font-black text-black uppercase tracking-widest font-poppins">
+                      {/* {mediaType === "tv" ? "Series" : "Movie"} */}
+                      {item.original_language}
                     </span>
                   </div>
                 </div>
