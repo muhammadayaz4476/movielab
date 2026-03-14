@@ -506,11 +506,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           selectedEpisode,
         );
         try {
-          console.log(`Checking ${provider.name}...`);
           const res = await axios.post("/api/verify-server", { url: testUrl });
 
           if (res.data.working) {
-            console.log(`%c ${provider.name} is working!`, "color: green");
             setSelectedServer(provider);
             setVerifying(false);
             return;

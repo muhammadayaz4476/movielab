@@ -219,25 +219,81 @@ const Navbar = () => {
 
   return (
     <>
-    
       <motion.header
         initial={{ y: 0 }}
         animate={{ y: isVisible ? 0 : "-100%" }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className={`fixed top-0 left-0 w-full z-100 ${isVisible ? "b" : ""}`}
       >
-       
         <nav className="px-4    w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
-          <div className="flex items-center justify-between w-full lg:w-auto">
-            <Link
-              href="/"
-              className="text-white flex items-center w-fit gap-2 lg:gap-[0.1vw] text-xl font-comfortaa font-bold"
-            >
-              <PlayIcon className="text-primary lg:w-[2vw] lg:h-[1.4vw] rotate-45" />
-              <div className="flex gap-1">
-                Movies<span className="text-primary font-comfortaa">lab</span>
+          <div className="flex items-center justify-between w-full lg:w-full">
+            <div className=" flex lg:flex-row-reverse lg:justify-start justify-between w-full items-center gap-6">
+              <div className=" w-full hidden lg:flex items-center justify-center">
+                <div className="flex  gap-2   bg-white/15 text-sm rounded-full backdrop-blur-xl px-2 py-2 ">
+                  <Link
+                    href="/"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="px-4 py-2 rounded-full hover:bg-primary flex items-center justify-between group transition-all"
+                  >
+                    <span className="text-white   transition-all font-medium">
+                      Home
+                    </span>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      {/* <ChevronRight /> */}
+                    </span>
+                  </Link>
+                  <Link
+                    href={`/discover/${hubs[3].slug}`}
+                    // onClick={() => setIsSidebarOpen(false)}
+                    className=" font-poppins   py-2 px-4 rounded-full text-center hover:bg-primary hover:border-primary transition-all text-sm"
+                  >
+                    {hubs[3].name}
+                  </Link>
+                  <Link
+                    href={`/discover/${hubs[2].slug}`}
+                    // onClick={() => setIsSidebarOpen(false)}
+                    className=" font-poppins   py-2 px-4 rounded-full text-center hover:bg-primary hover:border-primary transition-all text-sm"
+                  >
+                    {hubs[2].name}
+                  </Link>
+                  <Link
+                    href="/actors"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="px-4 py-2 rounded-full hover:bg-primary flex items-center justify-between group transition-all"
+                  >
+                    <span className="text-white  transition-all font-medium">
+                      Actors
+                    </span>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      {/* <ChevronRight /> */}
+                    </span>
+                  </Link>
+                  <Link
+                    href="/countries"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="px-4 py-2 rounded-full hover:bg-primary flex items-center justify-between group transition-all"
+                  >
+                    <span className="text-white  transition-all font-medium">
+                      Countries
+                    </span>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      {/* <ChevronRight /> */}
+                    </span>
+                  </Link>
+                </div>
               </div>
-            </Link>
+
+              <Link
+                href="/"
+                className="text-white flex items-center w-fit gap-2 lg:gap-[0.1vw] text-xl font-comfortaa font-bold"
+              >
+                <PlayIcon className="text-primary lg:w-[2vw] lg:h-[1.4vw] rotate-45" />
+                <div className="flex gap-1">
+                  Movies<span className="text-primary font-comfortaa">lab</span>
+                </div>
+              </Link>
+            </div>
+
             <div className=" md:hidden flex items-center gap-6">
               <Link
                 href="/watch-later"
@@ -247,7 +303,7 @@ const Navbar = () => {
               </Link>
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
+                className="bg-white/15 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
               >
                 <Menu className="text-white group-hover:scale-110 transition-transform" />
               </button>
@@ -255,8 +311,8 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center w-full lg:w-fit gap-2 pt-2 md:pt-0 lg:gap-[1vw]">
-            <div className="relative w-full lg:w-[25vw]" ref={searchRef}>
-              <div className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
+            <div className="relative w-full lg:w-[20vw]" ref={searchRef}>
+              <div className="bg-white/15 backdrop-blur-xl border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-2 text-white focus-within:border-primary/50 transition-all relative overflow-hidden">
                 <SearchIcon className="text-primary/50 shrink-0" size={20} />
 
                 <div className="relative flex-1 h-6">
@@ -278,7 +334,7 @@ const Navbar = () => {
                         animate={{ y: 0, opacity: 0.5 }}
                         exit={{ y: -20, opacity: 0 }}
                         transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="absolute top-0 left-0 pointer-events-none text-sm lg:text-base text-gray-400 truncate w-full h-full flex items-center"
+                        className="absolute top-0 left-0 pointer-events-none text-sm lg:text-base text-gray-300 truncate w-full h-full flex items-center"
                       >
                         {phrases[currentPhraseIndex]}
                       </motion.span>
@@ -297,7 +353,7 @@ const Navbar = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-100"
+                    className="absolute top-full left-0 right-0 mt-2 bg-white/15 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black z-100"
                   >
                     {suggestions.map((item) => (
                       <button
@@ -364,7 +420,7 @@ const Navbar = () => {
               </Link>
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="bg-zinc-900/50 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
+                className="bg-white/15 backdrop-blur-xs  p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
               >
                 <Menu className="text-white group-hover:scale-110 transition-transform" />
               </button>
@@ -383,7 +439,7 @@ const Navbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-100"
+              className="fixed inset-0 bg-black/20 backdrop-blur-2xl z-100"
             />
 
             {/* Sidebar: Changed left-0 to right-0 and removed lg:hidden */}
@@ -392,7 +448,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "circOut" }}
-              className="fixed top-0 right-0 bottom-0 w-full lg:w-[350px] bg-zinc-950 border-l border-white/10 p-8 z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
+              className="fixed top-0 right-0 bottom-0 w-full lg:w-[350px] bg-white/15 backdrop-blur-xl border-l border-white/10 p-8 z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold font-comfortaa text-white">
@@ -423,7 +479,7 @@ const Navbar = () => {
                         key={hub.slug}
                         href={`/discover/${hub.slug}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="bg-zinc-900 font-poppins border border-white/5 p-3 rounded-xl text-center hover:bg-primary hover:border-primary transition-all text-sm"
+                        className="bg-gray-500/30 font-poppins  p-3 rounded text-center hover:bg-primary hover:border-primary transition-all text-sm"
                       >
                         {hub.name}
                       </Link>
@@ -432,7 +488,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Explore More - New Section */}
-                <div className="mb-8">
+                <div className="mb-8 lg:hidden">
                   <h4 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
                     Explore More
                   </h4>
@@ -447,7 +503,6 @@ const Navbar = () => {
                       </span>
                       <span className="text-gray-700 group-hover:text-primary transition-colors">
                         <ChevronRight />
-                        
                       </span>
                     </Link>
                     <Link
@@ -467,7 +522,7 @@ const Navbar = () => {
 
                 {/* Genres Section */}
                 <div>
-                  <h4 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                  <h4 className="text-primary text-md font-medium mb-4 uppercase font-poppins">
                     Browse Genres
                   </h4>
                   <div className="flex flex-col gap-1 pb-6">

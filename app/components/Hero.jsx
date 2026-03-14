@@ -22,7 +22,6 @@ const Hero = ({ initialMovies = [] }) => {
   useEffect(() => {
     if (initialMovies && initialMovies.length > 0) {
       setMovies(initialMovies);
-      console.log("Fetched Trending Movies/TV:", initialMovies);
 
       setLoading(false); // Ensure loading is set to false if initialMovies are provided
       return;
@@ -135,14 +134,14 @@ const Hero = ({ initialMovies = [] }) => {
                   currentMovie.media_type ||
                     (currentMovie.first_air_date ? "tv" : "movie"),
                 )}`}
-                className="bg-primary   text-white/89 px-4 py-3 lg:px-6 lg:py-4 rounded-full font-poppins transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-between gap-[0.3vw]"
+                className="bg-[#1c77b0]  text-white/89 px-4 py-3 lg:px-6 lg:py-4 rounded-full font-poppins transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-between gap-[0.3vw]"
               >
                 
                 Watch Now
               </Link>
               <button
                 onClick={() => setIsNoticeModalOpen(true)}
-                className="bg-white/4 flex items-center justify-center gap-2 hover:bg-white/10 text-white backdrop-blur-xs px-4 py-3 lg:px-10 lg:py-4 rounded-xl font-bold transition-all border border-white/10"
+                className="bg-white/15 flex items-center justify-center gap-2 cursor-pointer  hover:bg-white/10 text-white backdrop-blur-xl px-4 py-3 lg:px-10 lg:py-4 rounded-xl font-bold transition-all "
               >
                 Download
                 <CloudDownloadIcon />

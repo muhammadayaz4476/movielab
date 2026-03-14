@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 // Using standard img for direct TMDB asset loading & reliability
 import { Plus, Check, Play } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +15,7 @@ const MovieRow = ({
   keywords = [],
   isPriority = false,
 }) => {
+  const router = useRouter();
   const [movies, setMovies] = useState(propMovies || []);
   const [loading, setLoading] = useState(!propMovies);
   const { watchLater, toggleWatchLater } = useAuth();
@@ -81,12 +83,12 @@ const MovieRow = ({
             </Link>
           </div>
           {keywords.length > 0 && (
-            <div className="flex overflow-x-auto mt-3 scrollbar-hide md:flex-wrap gap-2 lg:w-full x pb-2">
-              {keywords.slice(0, 8).map((keyword) => (
+            <div className="flex overflow-x-auto mt-3 scrollbar-hide md:flex- gap-2 lg:w-full x pb-2">
+              {keywords.slice(0, 10).map((keyword) => (
                 <Link
                   key={keyword.id}
                   href={`/search/kw-${keyword.id}-${encodeURIComponent(keyword.name.replace(/\s+/g, "-").toLowerCase())}`}
-                  className="px-4 py-2 md:px-[1.3vw] shrink-0 hover:scale-110 transition-all ease-in-out duration-100 hover:shadow-2xl shadow-white/30 font-light md:py-[0.5vw] bg-white/8 rounded-full text-sm md:text-lg text-white/95 border border-white/10"
+                  className="px-4 py-2 md:px-[1.3vw] shrink-0 hover:scale-105 transition-all ease-in-out duration-100 hover:shadow-2xl shadow-white/30 font-light md:py-[0.5vw] bg-white/8 rounded-full text-sm md:text-lg text-gray-400 border border-white/10"
                 >
                   #{keyword.name}
                 </Link>
@@ -119,13 +121,15 @@ const MovieRow = ({
                 (item) => item.id === movie.id.toString(),
               );
               const isHighPriority = isPriority && index < 4;
+              const movieSlug = createSlug(
+                movie.title || movie.name,
+                movie.id,
+                movie.media_type || (movie.first_air_date ? "tv" : "movie"),
+              );
+
               return (
-                <Link
-                  href={`/movie/${createSlug(
-                    movie.title || movie.name,
-                    movie.id,
-                    movie.media_type || (movie.first_air_date ? "tv" : "movie"),
-                  )}`}
+                <div
+                  onClick={() => router.push(`/movie/${movieSlug}`)}
                   key={movie.id}
                   className="w-[45vw] lg:w-[16vw] group cursor-pointer shrink-0 relative transition-transform duration-300 z-0 hover:z-50 hover:scale-110"
                 >
@@ -174,6 +178,9 @@ const MovieRow = ({
 
                         <div className="flex items-center gap-2 pt-2">
                           <Link
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
                             href={`/movie/${createSlug(
                               movie.title || movie.name,
                               movie.id,
@@ -184,6 +191,9 @@ const MovieRow = ({
                             Trailer
                           </Link>
                           <Link
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
                             href={`/watch/${createSlug(
                               movie.title || movie.name,
                               movie.id,
@@ -238,7 +248,7 @@ const MovieRow = ({
                       </p>
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
       </div>

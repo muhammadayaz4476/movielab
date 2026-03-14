@@ -99,7 +99,6 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       // If the ID and mediaType match initialData, we don't need to refetch immediately
       if (initialData && initialData.id.toString() === id.toString()) {
         setMovie(initialData);
-        console.log(initialData);
         setLoading(false);
       } else {
         try {
@@ -108,7 +107,6 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,recommendations,similar`,
           );
           setMovie(res.data);
-          console.log(res.data);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching content details:", error);
