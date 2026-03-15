@@ -259,7 +259,7 @@ export async function POST(request) {
 
       // Get image URL (poster or backdrop)
       const posterPath = details?.poster_path || item.poster_path;
-      const imageUrl = posterPath ? `https://image.tmdb.org/t/p/w1000${posterPath}` : null;
+      const imageUrl = posterPath ? `https://image.tmdb.org/t/p/original${posterPath}` : null;
 
       return {
         page_url: `https://movies.umairlab.com/movie/${slug}`,
