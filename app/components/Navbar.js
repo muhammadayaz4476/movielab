@@ -448,7 +448,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "circOut" }}
-              className="fixed top-0 right-0 bottom-0 w-full lg:w-[350px] bg-white/15 backdrop-blur-xl border-l border-white/10 p-8 z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
+              className="fixed top-0 right-0 bottom-0 w-full lg:w-[350px] bg-white/20 backdrop-blur-xl border-l border-white/10 p-8 z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold font-comfortaa text-white">
@@ -456,7 +456,7 @@ const Navbar = () => {
                 </h3>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 hover:bg-primary/20 hover:text-primary text-gray-400 rounded-full transition-colors"
+                  className="p-2 hover:bg-primary/20 hover:text-primary text-gray-100 rounded-full transition-colors"
                 >
                   <X size={24} />
                 </button>
@@ -479,7 +479,7 @@ const Navbar = () => {
                         key={hub.slug}
                         href={`/discover/${hub.slug}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="bg-gray-500/30 font-poppins  p-3 rounded text-center hover:bg-primary hover:border-primary transition-all text-sm"
+                        className="bg-gray-500/40 font-poppins  p-3 rounded text-center hover:bg-primary hover:border-primary transition-all text-sm"
                       >
                         {hub.name}
                       </Link>
@@ -533,12 +533,12 @@ const Navbar = () => {
                           .toLowerCase()
                           .replace(/ /g, "-")}-${genre.id}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                        className="px-4 py-3 rounded-md hover:bg-white/5 flex items-center justify-between group transition-all"
                       >
-                        <span className="text-gray-300 group-hover:text-white transition-all font-medium">
+                        <span className="text-white group-hover:text-primary transition-all font-medium">
                           {genre.name}
                         </span>
-                        <span className="text-gray-700 group-hover:text-primary transition-colors">
+                        <span className="text-white group-hover:text-primary transition-colors">
                           <ChevronRight />
                         </span>
                       </Link>

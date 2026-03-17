@@ -142,8 +142,8 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     const currentKeywords = (currentMovie.keywords?.keywords || currentMovie.keywords?.results || []).map(k => k.id);
     const itemKeywords = (item.keywords?.keywords || item.keywords?.results || []).map(k => k.id);
     if (currentKeywords.length > 0 && itemKeywords.length > 0) {
-       const matchingKeywords = itemKeywords.filter(id => currentKeywords.includes(id));
-       score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
+      const matchingKeywords = itemKeywords.filter(id => currentKeywords.includes(id));
+      score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
     }
 
     // 4. Cast Overlap
@@ -198,18 +198,18 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           }
 
           if (isFallbackMode) {
-             // Find movies with same genres and highest popularity
-             const genreIds = movie?.genres?.slice(0, 2).map(g => g.id).join(',') || primaryGenreId;
-             const keywords = movie?.keywords?.keywords || movie?.keywords?.results || [];
-             const keywordIds = keywords.slice(0, 3).map(k => k.id).join('|');
- 
-             // Use discover with Genre + Keyword OR match
-             endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&with_keywords=${keywordIds}&vote_count.gte=50&page=${pageNum}&sort_by=popularity.desc`;
-             
-             // If still no results or first page of fallback, try broader discover
-             if (!keywordIds || pageNum > 1) {
-                 endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
-             }
+            // Find movies with same genres and highest popularity
+            const genreIds = movie?.genres?.slice(0, 2).map(g => g.id).join(',') || primaryGenreId;
+            const keywords = movie?.keywords?.keywords || movie?.keywords?.results || [];
+            const keywordIds = keywords.slice(0, 3).map(k => k.id).join('|');
+
+            // Use discover with Genre + Keyword OR match
+            endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&with_keywords=${keywordIds}&vote_count.gte=50&page=${pageNum}&sort_by=popularity.desc`;
+
+            // If still no results or first page of fallback, try broader discover
+            if (!keywordIds || pageNum > 1) {
+              endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
+            }
           } else {
             endpoint = `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
           }
@@ -219,19 +219,19 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         // 1. Fetch from calculated endpoint (discover or recommendations)
         const res = await axios.get(endpoint);
         newItems = res.data.results || [];
-        
+
         // 2. If Page 1 and movie belongs to a collection, fetch that collection!
         if (pageNum === 1 && movie?.belongs_to_collection?.id && activeTab === "all") {
-             try {
-                const collectionRes = await axios.get(`${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`);
-                if (collectionRes.data?.parts) {
-                    // Prepend collection parts to newItems so they are guaranteed to be evaluated
-                    const collectionParts = collectionRes.data.parts.filter(p => p.id !== parseInt(id));
-                    newItems = [...collectionParts, ...newItems];
-                }
-             } catch(e) {
-                console.error("Failed to fetch collection for scoring", e);
-             }
+          try {
+            const collectionRes = await axios.get(`${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`);
+            if (collectionRes.data?.parts) {
+              // Prepend collection parts to newItems so they are guaranteed to be evaluated
+              const collectionParts = collectionRes.data.parts.filter(p => p.id !== parseInt(id));
+              newItems = [...collectionParts, ...newItems];
+            }
+          } catch (e) {
+            console.error("Failed to fetch collection for scoring", e);
+          }
         }
 
         // Handle fallback trigger
@@ -280,9 +280,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       // Deduplicate results
       const uniqueResultsMap = new Map();
       safeResults.forEach(item => {
-          if (!uniqueResultsMap.has(item.id)) {
-              uniqueResultsMap.set(item.id, item);
-          }
+        if (!uniqueResultsMap.has(item.id)) {
+          uniqueResultsMap.set(item.id, item);
+        }
       });
       const uniqueSafeResults = Array.from(uniqueResultsMap.values());
 
@@ -488,74 +488,80 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[2vw] md:py-[8vw] py-[160px]">
-        <div className="flex-1">
-          <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
-            {trailer && showTrailer ? (
-              <iframe
-                className="w-full h-full"
-                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=0`}
-                title="Trailer"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <div
-                className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
-                onClick={() => setShowTrailer(true)}
-              >
-                {movie?.backdrop_path && (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
-                    srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
-                    className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
-                    alt={
-                      `Watch ${movie?.title} - ${mediaType === "tv" ? "TV Series" : "Movie"} for free online in hd ` ||
-                      "Hero Backdrop"
-                    }
-                    priority="high"
-                  />
-                )}
+      <div className="md:w-[97%] w-full mx-auto md:mt-[6vw] mt-[160px] md:mb-[2vw]  ">
 
-                <div className="relative z-10 flex flex-col items-center gap-4">
-                  <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
-                    <PlayIcon fill="white" className="text-white" size={24} />
-                  </div>
-                  {/* <p className="font-medium text-lg lg:text-xl drop-shadow-md">
+        <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
+          {trailer && showTrailer ? (
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=0`}
+              title="Trailer"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div
+              className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
+              onClick={() => setShowTrailer(true)}
+            >
+              {movie?.backdrop_path && (
+                <img
+                  src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
+                  srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
+                  className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
+                  alt={
+                    `Watch ${movie?.title} - ${mediaType === "tv" ? "TV Series" : "Movie"} for free online in hd ` ||
+                    "Hero Backdrop"
+                  }
+                  priority="high"
+                />
+              )}
+
+              <div className="relative z-10 flex flex-col items-center gap-4">
+                <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
+                  <PlayIcon fill="white" className="text-white" size={24} />
+                </div>
+                {/* <p className="font-medium text-lg lg:text-xl drop-shadow-md">
                     Click to Play Trailer
                   </p> */}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col items- px-2  gap-3 justify-between flex-wrap md:gap-0 -[2vw] ">
-            <div className="flex pb-[10px] md:pb-[1vw] items-center gap-2 justify-between  my-2 lg:my-[1vw] text-gray-300 text-sm italic bg-zinc-900/20   ">
-              {/* <div className="flex text-xs md:text-sm items-center gap-2">
-                <Eye className="size-4 text-red-500" />
-                <span>
-                  {getDynamicViewerCount()} people are exploring this{" "}
-                  {mediaType} right now
-                </span>
-              </div> */}
-              <div className="flex items-center gap-2 ">
-               
               </div>
             </div>
-            <h1 className="text-2xl lg:text-3xl w-full md:w-[90%] font-bold font-comfortaa leading-tight">
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[2vw] md:py-[1px] py-[1px]">
+        <div className="flex-1">
+
+          <div className="flex flex-col items- px-2  gap-3 justify-between flex-wrap md:gap-0 -[2vw] ">
+            {/* <div className="flex pb-[10px] md:pb-[1vw] items-center gap-2 justify-between  my-2 lg:my-[1vw] text-gray-300 text-sm italic bg-zinc-900/20   ">
+           
+              <div className="flex items-center gap-2 ">
+
+              </div>
+            </div> */}
+            <h1 className="text-2xl lg:text-3xl w-full md:w-[90%] pt-[2vh] lg:pt-0 font-bold font-comfortaa leading-tight">
               {movie?.title || movie?.name}{" "}
               <span className="text-gray-500 hidden md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
                 {mediaType === "tv" ? "~ Series Trailer" : "~ Movie Trailer"}
               </span>
             </h1>
-             {/* <button
+            {/* <button
                   title="share"
                   onClick={() => setIsShareModalOpen(true)}
                   className="b p-2 text-primary rounded-full hover:bg-zinc-700 transition"
                 >
                   <Share2 size={18} />
                 </button> */}
+
+
+            <a className="relative  w-full mt-[20px] md:mt-[2vw] " href="https://amzn.to/3NHduCE" target="_blank" rel="noopener noreferrer">
+              <img className="w-full h-full object-cover" src="https://m.media-amazon.com/images/S/stores-image-uploads-na-prod/d/AmazonStores/ATVPDKIKX0DER/d5b0dbfcfd6f7b8d9a28bd473aa1f44f.w3000.h750._CR47%2C0%2C2953%2C750_SX1500_.jpg" alt="" />
+              <button className="md:block hidden  absolute bottom-[4%]  text-lg tracking-wide font-poppins uppercase hover:shadow-primary/70 transition-all duration-300 ease-in-out cursor-pointer right-[2%] px-[2vw] py-[0.8vw] rounded-full shadow-2xl shadow-primary/30 bg-primary text-gray-100">
+                Upgrade Your Experience 
+              </button>
+            </a>
             <div className="flex flex-nowrap  items-center md:mt-[4vw] gap-3 lg:gap-[1vw]">
               <Link
                 href={`/watch/${createSlug(
@@ -621,7 +627,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
           <div className="b rounded-xl px-2  mt-10 ">
             <div className="mb-5 ">
-              <h2 className="text-xs lg:text-lg   text-black bg-primary px-3 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium lg:mb-[1vw] mb-[2vh] ">
+              <h2 className="text-xs lg:text-lg   text-white bg-primary/50 px-3 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium lg:mb-[1vw] mb-[2vh] ">
                 Storyline & Context :
               </h2>
               <motion.div
@@ -634,7 +640,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   const PREVIEW_LIMIT = 25; // Approximate words that fit in 3 lines
                   const previewText = words.slice(0, PREVIEW_LIMIT).join(" ");
                   const remainingWords = words.slice(PREVIEW_LIMIT);
-                  
+
                   return (
                     <p
                       className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] md:h-[100px]"}`}
@@ -814,7 +820,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             {/* Top Cast Section */}
             {movie?.credits?.cast?.length > 0 && (
               <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
-                <h2 className="text-lg font-poppins mb-4 text-white">
+                <h2 className="text-xl font-poppins mb-4 text-white">
                   Top Cast
                 </h2>
                 <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
@@ -921,11 +927,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-1.5 rounded-full font-poppins text-xs font- whitespace-nowrap transition-all border ${
-                    activeTab === tab.id
-                      ? "bg-white text-black border-white"
-                      : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                  }`}
+                  className={`px-4 py-1.5 rounded-full font-poppins text-xs font- whitespace-nowrap transition-all border ${activeTab === tab.id
+                    ? "bg-white text-black border-white"
+                    : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -949,9 +954,8 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   >
                     <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                       <img
-                        src={`https://image.tmdb.org/t/p/w300${
-                          rec.backdrop_path || rec.poster_path
-                        }`}
+                        src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
+                          }`}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         alt={rec.title || rec.name}
                       />
