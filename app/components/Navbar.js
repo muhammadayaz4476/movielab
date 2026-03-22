@@ -280,6 +280,15 @@ const Navbar = () => {
                       {/* <ChevronRight /> */}
                     </span>
                   </Link>
+                  <Link
+                    href="/history"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="px-4 py-2 rounded-full hover:bg-primary flex items-center justify-between group transition-all"
+                  >
+                    <span className="text-white transition-all font-medium">
+                      History
+                    </span>
+                  </Link>
                 </div>
               </div>
 
@@ -295,12 +304,12 @@ const Navbar = () => {
             </div>
 
             <div className=" md:hidden flex items-center gap-6">
-              <Link
+              {/* <Link
                 href="/watch-later"
                 className="text-sm font-medium text-white  hover:scale-110 transition-transform"
               >
                 <PlayIcon fill="white" />
-              </Link>
+              </Link> */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="bg-white/15 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
@@ -412,12 +421,12 @@ const Navbar = () => {
             </div>
 
             <div className=" hidden lg:flex items-center gap-6">
-              <Link
+              {/* <Link
                 href="/watch-later"
                 className="text-sm font-medium text-white  hover:scale-110 transition-transform"
               >
                 <PlayIcon fill="white" />
-              </Link>
+              </Link> */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="bg-white/15 backdrop-blur-xs  p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
@@ -512,6 +521,18 @@ const Navbar = () => {
                     >
                       <span className="text-gray-300 group-hover:text-white  transition-all font-medium">
                         Browse by Country
+                      </span>
+                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                        <ChevronRight />
+                      </span>
+                    </Link>
+                    <Link
+                      href="/history"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                    >
+                      <span className="text-gray-300 group-hover:text-white transition-all font-medium">
+                        Watch History
                       </span>
                       <span className="text-gray-700 group-hover:text-primary transition-colors">
                         <ChevronRight />

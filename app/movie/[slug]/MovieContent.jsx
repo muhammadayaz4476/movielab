@@ -338,6 +338,14 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       .replace(/[^\w-]+/g, "")}-${id}`;
   };
 
+  const createPersonSlug = (name, id) => {
+    if (!name || !id) return "";
+    return `${name
+      .toLowerCase()
+      .replace(/ /g, "-")
+      .replace(/[^\w-]+/g, "")}-${id}`;
+  };
+
   const formatCurrency = (amount) => {
     if (!amount || amount === 0) return "N/A";
     if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
@@ -771,7 +779,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     Director
                   </h4>
                   <Link
-                    href={`/search/${encodeURIComponent(director.name)}`}
+                    href={`/actor/${createPersonSlug(director.name, director.id)}`}
                     className="text-lg hover:text-primary transition-colors font-medium font-poppins"
                   >
                     {director.name}
@@ -787,7 +795,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                     {writers.map((w) => (
                       <Link
                         key={w.id}
-                        href={`/search/${encodeURIComponent(w.name)}`}
+                        href={`/actor/${createPersonSlug(w.name, w.id)}`}
                         className="text-lg hover:text-primary transition-colors font-medium font-poppins"
                       >
                         {w.name}
@@ -826,7 +834,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
                   {movie.credits.cast.slice(0, 8).map((actor) => (
                     <Link
-                      href={`/search/${encodeURIComponent(actor.name)}`}
+                      href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
                       key={actor.id}
                       className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
                     >
