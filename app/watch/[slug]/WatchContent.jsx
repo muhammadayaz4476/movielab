@@ -245,7 +245,7 @@ const EpisodePlaylist = ({
                         />
                       </div>
                     )}
-                    <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-bold text-white backdrop-blur-sm border border-white/5">
+                    <div className="absolute bottom-1 right-1 bg-gray-600/10 px-1.5 py-0.5 rounded text-xs font-poppins text-white backdrop-blur-sm border border-white/5">
                       EP {e.episode_number}
                     </div>
                   </div>
