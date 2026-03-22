@@ -2,7 +2,6 @@
 
 MovieLab is a modern, premium movie discovery and streaming web application built with **Next.js 15**, **Tailwind CSS**, and the **TMDB API**. It features a cinematic user experience with smooth transitions, dynamic content sliders, and full SEO optimization.
 
-## ✨ Features
 
 - **Dynamic Hero Slider**: Features trending movies with smooth cross-fade background transitions.
 - **Advanced Discovery**: Browse movies by genre, trending, top-rated, and dedicated hubs (Hollywood, Bollywood, Korean, etc.).
