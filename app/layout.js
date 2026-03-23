@@ -123,6 +123,8 @@ export default function RootLayout({ children }) {
           href="https://image.tmdb.org"
           crossOrigin="anonymous"
         />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8754313345153121"
+     crossorigin="anonymous"></script>
       </head>
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         <script

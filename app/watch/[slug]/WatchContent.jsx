@@ -8,11 +8,8 @@ import {
   MoreVertical,
   Clock,
   Calendar,
+  Star,
   Info,
-  Layers,
-  Play,
-  ChevronLeft,
-  ChevronRight,
   DownloadCloudIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +23,9 @@ import NoticeModal from "../../components/NoticeModal";
 import TrailerModal from "../../components/TrailerModal";
 import Reviews from "../../components/Reviews";
 import { motion } from "framer-motion";
+import { Play } from "lucide-react";
 import Marquee from "react-fast-marquee";
+
 
 const SidebarSkeleton = () => (
   <div className="flex gap-3 animate-pulse px-1">
@@ -116,169 +115,6 @@ const EpisodeCard = ({ episode: e, isActive, onClick }) => (
   </div>
 );
 
-const EpisodePlaylist = ({
-  episodes,
-  seasons,
-  selectedEpisode,
-  onEpisodeClick,
-  season,
-  totalSeasons,
-  handleSeasonChange,
-  onSeasonChange,
-  movieName,
-  isLoading,
-}) => {
-  const activeRef = useRef(null);
-
-  useEffect(() => {
-    if (activeRef.current) {
-      activeRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
-    }
-  }, [selectedEpisode, isLoading]);
-
-  const handlePrevSeason = () => {
-    if (season > 1) onSeasonChange(season - 1);
-  };
-
-  const handleNextSeason = () => {
-    if (season < totalSeasons) onSeasonChange(season + 1);
-  };
-
-  return (
-    <div className="flex flex-col bg-white/10 w-full backdrop-blur-xl rounded-lg  overflow-hidden h-[450px] lg:h-[550px] shadow-2xl">
-      {/* Playlist Header */}
-      <div className="p-4 bg-black/20 border-b border-white/5 backdrop-blur-md">
-        <div className="flex items-center justify-between mb-1">
-          <select
-            value={season}
-            onChange={handleSeasonChange}
-            className="bg-white/10  text-sm px-3 py-2 text-zinc-300 rounded px-2 py-1 outline-none border border-white/5 hover:border-primary/30 transition-colors"
-          >
-            {seasons.map((s) => (
-              <option
-                key={s.id}
-                value={s.season_number}
-                className="bg-gray-800 my-2 mx-3"
-              >
-                Season {s.season_number}
-              </option>
-            ))}
-          </select>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handlePrevSeason}
-              disabled={season <= 1}
-              className="p-1.5 hover:bg-white/10 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-colors text-zinc-400 hover:text-primary"
-              title="Previous Season"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={handleNextSeason}
-              disabled={season >= totalSeasons}
-              className="p-1.5 hover:bg-white/10 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-colors text-zinc-400 hover:text-primary"
-              title="Next Season"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-        <p className="text-[10px] text-zinc-500 truncate font-poppins uppercase tracking-wider">
-          {movieName} • {episodes.length} Episodes
-        </p>
-      </div>
-
-      {/* Episodes List */}
-      <div
-        className="flex-1 overflow-y-auto custom-scrollbar p-1.5 smooth-scroll space-y-1 overscroll-contain"
-        data-lenis-prevent
-      >
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex gap-3 p-2 animate-pulse">
-                <div className="w-24 aspect-video bg-white/5 rounded-lg" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3 bg-white/5 rounded w-full" />
-                  <div className="h-2 bg-white/5 rounded w-1/2" />
-                </div>
-              </div>
-            ))
-          : episodes.map((e) => {
-              const isActive = selectedEpisode === e.episode_number;
-              return (
-                <div
-                  key={e.id}
-                  ref={isActive ? activeRef : null}
-                  onClick={() => onEpisodeClick(e.episode_number)}
-                  className={`flex gap-3 p-2 rounded-xl cursor-pointer transition-all duration-300 group relative ${
-                    isActive ? "bg-primary/5 " : "hover:bg-white/5"
-                  }`}
-                >
-                  {/* Thumbnail */}
-                  <div className="relative w-40 aspect-video rounded-lg overflow-hidden shrink-0 shadow-lg">
-                    {e.still_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w300${e.still_path}`}
-                        alt={e.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <Info size={16} className="text-zinc-600" />
-                      </div>
-                    )}
-                    {isActive ? (
-                      <div className="absolute inset-0 bg-black/50  flex items-center justify-center">
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-primary ">
-                          <Play fill="currentColor" size={12} className="" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Play
-                          fill="white"
-                          size={14}
-                          className="text-white transform scale-90 group-hover:scale-100 transition-transform"
-                        />
-                      </div>
-                    )}
-                    <div className="absolute bottom-1 right-1 bg-gray-600/10 px-1.5 py-0.5 rounded text-xs font-poppins text-white backdrop-blur-sm border border-white/5">
-                      EP {e.episode_number}
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex flex-col justify-center min-w-0 pr-2">
-                    <h4
-                      className={`text-md lg:text-[0.9vw font-poppins leading-normal line-clamp-2 transition-colors ${isActive ? "text-primary" : "text-zinc-200 group-hover:text-primary"}`}
-                    >
-                      {e.name}
-                    </h4>
-                    <div className="flex items-center justify-between gap-2 mt-[0.3vw]">
-                      {e.runtime && (
-                        <p className="text-sm  text-gray-200 flex  justify-center items-center gap-[0.2vw]">
-                          {/* <Clock size={12} /> */}
-                          {e.runtime}m
-                        </p>
-                      )}
-                      {isActive && (
-                        <span className="text-xs text-red-300 font-poppins animate-pulse  uppercase">
-                          Playing
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-      </div>
-    </div>
-  );
-};
-
 const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [movie, setMovie] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
@@ -299,7 +135,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const [selectedServer, setSelectedServer] = useState(providers[0]);
   const iframeRef = useRef(null);
 
-  // Server Switcher States
+  // Server Verification State
+  const [verifying, setVerifying] = useState(true);
+  const [serverError, setServerError] = useState(false);
 
   // TV Series States
   const [seasons, setSeasons] = useState([]);
@@ -426,45 +264,29 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     if (!item || !currentMovie) return 0;
 
     // 1. Franchise / Collection Priority (Highest)
-    if (
-      currentMovie.belongs_to_collection &&
-      item.belongs_to_collection?.id === currentMovie.belongs_to_collection.id
-    ) {
+    if (currentMovie.belongs_to_collection && item.belongs_to_collection?.id === currentMovie.belongs_to_collection.id) {
       score += 100;
     }
 
     // 2. Genre Parity
-    const currentGenres = currentMovie.genres?.map((g) => g.id) || [];
-    const itemGenres = item.genre_ids || item.genres?.map((g) => g.id) || [];
-    const matchingGenres = itemGenres.filter((id) =>
-      currentGenres.includes(id),
-    );
+    const currentGenres = currentMovie.genres?.map(g => g.id) || [];
+    const itemGenres = item.genre_ids || item.genres?.map(g => g.id) || [];
+    const matchingGenres = itemGenres.filter(id => currentGenres.includes(id));
     score += matchingGenres.length * 20;
 
     // 3. Keyword / Topic Overlap
-    const currentKeywords = (
-      currentMovie.keywords?.keywords ||
-      currentMovie.keywords?.results ||
-      []
-    ).map((k) => k.id);
-    const itemKeywords = (
-      item.keywords?.keywords ||
-      item.keywords?.results ||
-      []
-    ).map((k) => k.id);
+    const currentKeywords = (currentMovie.keywords?.keywords || currentMovie.keywords?.results || []).map(k => k.id);
+    const itemKeywords = (item.keywords?.keywords || item.keywords?.results || []).map(k => k.id);
     if (currentKeywords.length > 0 && itemKeywords.length > 0) {
-      const matchingKeywords = itemKeywords.filter((id) =>
-        currentKeywords.includes(id),
-      );
-      score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
+       const matchingKeywords = itemKeywords.filter(id => currentKeywords.includes(id));
+       score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
     }
 
     // 4. Cast Overlap
-    const currentCast =
-      currentMovie.credits?.cast?.slice(0, 5).map((c) => c.id) || [];
-    const itemCast = item.credits?.cast?.slice(0, 5).map((c) => c.id) || [];
+    const currentCast = currentMovie.credits?.cast?.slice(0, 5).map(c => c.id) || [];
+    const itemCast = item.credits?.cast?.slice(0, 5).map(c => c.id) || [];
     if (currentCast.length > 0 && itemCast.length > 0) {
-      const matchingCast = itemCast.filter((id) => currentCast.includes(id));
+      const matchingCast = itemCast.filter(id => currentCast.includes(id));
       score += matchingCast.length * 10;
     }
 
@@ -506,35 +328,23 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           break;
         default: // 'all' tab
           // 1. If page 1 and we have recommendations in movie metadata, use them
-          if (
-            pageNum === 1 &&
-            movie?.id?.toString() === id.toString() &&
-            movie?.recommendations?.results?.length > 0
-          ) {
+          if (pageNum === 1 && movie?.id?.toString() === id.toString() && movie?.recommendations?.results?.length > 0) {
             newItems = movie.recommendations.results;
             break;
           }
-
+          
           if (isFallbackMode) {
             // Find movies with same genres and highest popularity
-            const genreIds =
-              movie?.genres
-                ?.slice(0, 2)
-                .map((g) => g.id)
-                .join(",") || primaryGenreId;
-            const keywords =
-              movie?.keywords?.keywords || movie?.keywords?.results || [];
-            const keywordIds = keywords
-              .slice(0, 3)
-              .map((k) => k.id)
-              .join("|");
+            const genreIds = movie?.genres?.slice(0, 2).map(g => g.id).join(',') || primaryGenreId;
+            const keywords = movie?.keywords?.keywords || movie?.keywords?.results || [];
+            const keywordIds = keywords.slice(0, 3).map(k => k.id).join('|');
 
             // Use discover with Genre + Keyword OR match
             endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&with_keywords=${keywordIds}&vote_count.gte=50&page=${pageNum}&sort_by=popularity.desc`;
-
+            
             // If still no results or first page of fallback, try broader discover
             if (!keywordIds || pageNum > 1) {
-              endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
+                endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
             }
           } else {
             // Try Recommendations first, then Similar
@@ -546,27 +356,19 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         // 1. Fetch from calculated endpoint (discover or recommendations)
         const res = await axios.get(endpoint);
         newItems = res.data.results || [];
-
+        
         // 2. If Page 1 and movie belongs to a collection, fetch that collection!
-        if (
-          pageNum === 1 &&
-          movie?.belongs_to_collection?.id &&
-          activeTab === "all"
-        ) {
-          try {
-            const collectionRes = await axios.get(
-              `${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`,
-            );
-            if (collectionRes.data?.parts) {
-              // Prepend collection parts to newItems so they are guaranteed to be evaluated
-              const collectionParts = collectionRes.data.parts.filter(
-                (p) => p.id !== parseInt(id),
-              );
-              newItems = [...collectionParts, ...newItems];
-            }
-          } catch (e) {
-            console.error("Failed to fetch collection for scoring", e);
-          }
+        if (pageNum === 1 && movie?.belongs_to_collection?.id && activeTab === "all") {
+             try {
+                const collectionRes = await axios.get(`${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`);
+                if (collectionRes.data?.parts) {
+                    // Prepend collection parts to newItems so they are guaranteed to be evaluated
+                    const collectionParts = collectionRes.data.parts.filter(p => p.id !== parseInt(id));
+                    newItems = [...collectionParts, ...newItems];
+                }
+             } catch(e) {
+                console.error("Failed to fetch collection for scoring", e);
+             }
         }
 
         // Handle fallback trigger
@@ -585,9 +387,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       }
 
       const unsafeKeywords = [];
-      const scoredResults = newItems.map((item) => ({
+      const scoredResults = newItems.map(item => ({
         ...item,
-        _similarityScore: getSimilarityScore(item, movie),
+        _similarityScore: getSimilarityScore(item, movie)
       }));
 
       const safeResults = scoredResults
@@ -602,10 +404,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
       // Deduplicate results
       const uniqueResultsMap = new Map();
-      safeResults.forEach((item) => {
-        if (!uniqueResultsMap.has(item.id)) {
-          uniqueResultsMap.set(item.id, item);
-        }
+      safeResults.forEach(item => {
+          if (!uniqueResultsMap.has(item.id)) {
+              uniqueResultsMap.set(item.id, item);
+          }
       });
       const uniqueSafeResults = Array.from(uniqueResultsMap.values());
 
@@ -640,8 +442,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setHasMoreRecs(true);
     setIsFallbackMode(false);
     // fetchSidebarData is triggered by recPage/activeTab/isFallbackMode change
-  }, [activeTab, id]);
-  // Added id to dependencies to ensure fetch on initial load after id is set
+  }, [activeTab, id]); 
+// Added id to dependencies to ensure fetch on initial load after id is set
 
   // Infinite Scroll Intersection Observer
   useEffect(() => {
@@ -686,61 +488,50 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     }
   };
 
-  // Episode Resume Logic
   useEffect(() => {
-    if (mediaType === "tv" && id) {
-      const savedResume = localStorage.getItem(`movielab_resume_${id}`);
-      if (savedResume) {
+    // Run verification only when the video ID or Episode changes
+    // Only run if we are definitely ready (have movie data)
+    if (!id || (mediaType === "tv" && !episodes.length)) return;
+
+    const findWorkingServer = async () => {
+      setVerifying(true);
+      setServerError(false);
+
+      for (const provider of providers) {
+        const testUrl = constructServerUrl(
+          provider,
+          mediaType,
+          id,
+          selectedSeason,
+          selectedEpisode,
+        );
         try {
-          const { season, episode } = JSON.parse(savedResume);
-          setSelectedSeason(season);
-          setSelectedEpisode(episode);
-          fetchEpisodes(season);
-        } catch (e) {
-          console.error("Error parsing resume state", e);
+          const res = await axios.post("/api/verify-server", { url: testUrl });
+
+          if (res.data.working) {
+            setSelectedServer(provider);
+            setVerifying(false);
+            return;
+          } else {
+            console.log(`%c ${provider.name} failed.`, "color: red");
+          }
+        } catch (error) {
+          console.error(`Error verifying ${provider.name}:`, error);
         }
       }
-    }
-  }, [id, mediaType]);
 
-  useEffect(() => {
-    if (mediaType === "tv" && id && !loading) {
-      localStorage.setItem(
-        `movielab_resume_${id}`,
-        JSON.stringify({ season: selectedSeason, episode: selectedEpisode }),
-      );
-    }
-  }, [id, mediaType, selectedSeason, selectedEpisode, loading]);
+      // If loop finishes, no server worked
+      // Fallback to Server 1 (vidsrc.to) or vidsrc.me so user can at least try
+      // Cloudflare often blocks API but allows browser, so we shouldn't block user access.
+      console.warn("All verifications failed. Falling back to Server 1.");
+      setSelectedServer(providers[0]); // Default to Server 1
+      setServerError(false); // Do not show error overlay
+      setVerifying(false);
+    };
 
-  // History Tracking Logic
-  useEffect(() => {
-    if (movie && id && !loading) {
-      const historyItem = {
-        id,
-        slug,
-        title: movie.title || movie.name,
-        poster_path: movie.poster_path,
-        media_type: mediaType,
-        season: mediaType === "tv" ? selectedSeason : null,
-        episode: mediaType === "tv" ? selectedEpisode : null,
-        watchedAt: new Date().toISOString(),
-      };
-
-      try {
-        const existingHistory = JSON.parse(
-          localStorage.getItem("movielab_history") || "[]",
-        );
-        // Remove existing entry for this movie/show to avoid duplicates and move to top
-        const filteredHistory = existingHistory.filter(
-          (item) => item.id !== id,
-        );
-        const newHistory = [historyItem, ...filteredHistory].slice(0, 50);
-        localStorage.setItem("movielab_history", JSON.stringify(newHistory));
-      } catch (e) {
-        console.error("Error updating history", e);
-      }
-    }
-  }, [id, movie, mediaType, selectedSeason, selectedEpisode, slug, loading]);
+    findWorkingServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, mediaType, selectedSeason, selectedEpisode, episodes.length]);
 
   const createSlug = (title, id, type = "movie") => {
     const prefix = type === "tv" ? "tv-" : "";
@@ -862,60 +653,60 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           />
         </div>
       )}
-      {/* <div className="w-full opacity-60   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
-        <Marquee
-          speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
-          gradient={false} // Assuming you don't need the fade gradient effect
-          loop={0} // 0 means infinite loop
-        >
-          <span className="mx-[10px] lg:mx-[3vw]    text-white/80 md:text-base text-[12px]">
-            Please Install the{" "}
-            <Link
-              href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-              target="_blank"
-              className=" text-primary underline font-semibold"
-            >
-              AdGuard browser extension
-            </Link>{" "}
-            {""}
-            or mobile app to block intrusive ads and popups
-          </span>
-          <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-            | Movies lab |
-          </span>
-          <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
-            Please Install the{" "}
-            <Link
-              href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-              target="_blank"
-              className=" text-primary underline font-semibold"
-            >
-              AdGuard browser extension
-            </Link>{" "}
-            {""}
-            or mobile app to block intrusive ads and popups
-          </span>
-          <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-            | Movies lab |
-          </span>
+       <div className="w-full opacity-60   z-[60] font-poppins   py-[0.3vw]  overflow-hidden">
+          <Marquee
+            speed={10} // Sets the speed (approx. matches the previous 40s animation duration)
+            gradient={false} // Assuming you don't need the fade gradient effect
+            loop={0} // 0 means infinite loop
+          >
+            <span className="mx-[10px] lg:mx-[3vw]    text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
 
-          <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
-            Please Install the{" "}
-            <Link
-              href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
-              target="_blank"
-              className=" text-primary underline font-semibold"
-            >
-              AdGuard browser extension
-            </Link>{" "}
-            {""}
-            or mobile app to block intrusive ads and popups
-          </span>
-          <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
-            | Movies lab |
-          </span>
-        </Marquee>
-      </div> */}
+            <span className="mx-[10px] lg:mx-[3vw]   text-white/80 md:text-base text-[12px]">
+              Please Install the{" "}
+              <Link
+                href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg?hl=en"
+                target="_blank"
+                className=" text-primary underline font-semibold"
+              >
+                AdGuard browser extension
+              </Link>{" "}
+              {""}
+              or mobile app to block intrusive ads and popups
+            </span>
+            <span className=" mx-[10px] lg:mx-[3vw]    text-secondary md:text-base text-[12px]">
+              | Movies lab |
+            </span>
+          </Marquee>
+        </div>
 
       <div className="relative z-10 ">
         <Navbar />
@@ -923,19 +714,40 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           <div className="flex-1 md:pb-0 pb-10">
             {/* Main Player */}
             <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
-              <iframe
-                ref={iframeRef}
-                src={constructServerUrl(
-                  selectedServer,
-                  mediaType,
-                  id,
-                  selectedSeason,
-                  selectedEpisode,
-                )}
-                allow="autoplay; fullscreen"
-                referrerPolicy="origin"
-                className="w-full h-full"
-              />
+              {verifying ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
+                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+                  <p className="text-zinc-400 animate-pulse font-poppins">
+                    Finding best server...
+                  </p>
+                </div>
+              ) : serverError ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-50">
+                  <p className="text-red-500 font-bold mb-2">
+                    No working servers found.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-2 py-2 bg-zinc-800 rounded hover:bg-zinc-700 transition"
+                  >
+                    Try Reloading
+                  </button>
+                </div>
+              ) : (
+                <iframe
+                  ref={iframeRef}
+                  src={constructServerUrl(
+                    selectedServer,
+                    mediaType,
+                    id,
+                    selectedSeason,
+                    selectedEpisode,
+                  )}
+                  allow="autoplay; fullscreen"
+                  referrerPolicy="origin"
+                  className="w-full h-full"
+                />
+              )}
             </div>
 
             {/* Server Switcher */}
@@ -959,7 +771,6 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
 
             {/* User Note */}
-            {/* User Note */}
             <div className="bg-white/10 backdrop-blur-sm  lg:w-fit  w-[98%]  px-2  font-poppins text-[12px] lg:text-xs  text-gray-300 py-2 px-2 rounded-lg   border border-white/5">
               {/* <span className="text-white font- mr-1">Note:</span> */}
               Try changing <span className="text-primary font-">
@@ -974,6 +785,121 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               if not playing.
             </div>
 
+            {/* TV Selectors */}
+            {mediaType === "tv" && (
+              <div className="flex flex-col  gap-6 mb-10 px-2 lg:px-0">
+                <div className="flex items-center flex-wrap justify-between w-full   gap-2  ">
+                  <label className="text-lg  font-poppins text-">
+                    Season Selection :
+                  </label>
+                  <select
+                    value={selectedSeason}
+                    onChange={handleSeasonChange}
+                    className="bg-zinc-900 border  w-full md:w-1/2   border-zinc-800 text-white text-sm rounded-md focus:ring-primary focus:border-primary block w-full p-3 outline-none cursor-pointer transition-all hover:border-zinc-700"
+                  >
+                    {seasons.map((s) => (
+                      <option key={s.id} value={s.season_number}>
+                        {s.name || `Season ${s.season_number}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg md:text-xl  font-bold font-comfortaa text-white flex items-center gap-2">
+                      <div className="w-2 h-8 bg-primary rounded-full" />
+                      Episodes List
+                      <span className="text-zinc-500 text-sm font-light ml-2">
+                        Season {selectedSeason} ({episodes.length} episodes)
+                      </span>
+                    </h2>
+                  </div>
+
+                  {loadingTV ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="aspect-video bg-zinc-900 rounded-2xl animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Mobile Slider */}
+                      <div className="sm:hidden -mx-2">
+                        <Slider {...sliderSettings}>
+                          {episodes.map((e) => (
+                            <div key={e.id} className="px-2 pb-4">
+                              <EpisodeCard
+                                episode={e}
+                                isActive={selectedEpisode === e.episode_number}
+                                onClick={() =>
+                                  setSelectedEpisode(e.episode_number)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </Slider>
+                      </div>
+
+                      {/* Desktop Grid */}
+                      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {episodes.map((e) => (
+                          <EpisodeCard
+                            key={e.id}
+                            episode={e}
+                            isActive={selectedEpisode === e.episode_number}
+                            onClick={() => setSelectedEpisode(e.episode_number)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex  flex-wrap items-center gap-4 mt-4">
+                  <button
+                    onClick={() => toggleWatchLater(movie)}
+                    className="flex items-center gap-2 text-white transition-colors text-md font-poppins bg-primary/15 px-3 py-4 rounded-lg"
+                  >
+                    {isSaved ? (
+                      <>
+                        <div className="bg-primary text-black rounded-full p-0.5">
+                          <Check size={14} strokeWidth={3} />
+                        </div>
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} />
+                        <span>Watch Later</span>
+                      </>
+                    )}
+                  </button>
+                  {trailer && (
+                    <button
+                      onClick={() => setIsTrailerModalOpen(true)}
+                      className="flex items-center gap-2 text-white hover:text-white transition-colors text-md backdrop-blur-sm font-poppins bg-white/10 px-4 cursor-pointer  py-4 rounded-lg  "
+                    >
+                      <Play size={16} fill="currentColor" />
+                      <span>Watch Trailer</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsNoticeModalOpen(true)}
+                    className="flex items-center gap-2 text-black transition-all duration-300 ease-in-out text-md font-poppins bg-primary px-4 cursor-pointer shadow-xl shadow-white/30 hover:shadow-2xl  py-3 rounded-lg border border-white/5 hover:border-primary/50"
+                  >
+                    <DownloadCloudIcon className="" size={18} />
+                    <span>
+                      Download{" "}
+                      <span className="font-bold">EP-{selectedEpisode}</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col   pt-[2vh] lg:pt-[1vw]   px-2  gap-6 relative z-10">
               <div className="flex flex-col md:flex-row md:items-end justify-between ">
                 <div className="flex items-start justify-between w-full">
@@ -984,22 +910,6 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         : movie.name +
                           ` (S${selectedSeason} E${selectedEpisode})`}
                     </h1>
-                    {mediaType === "tv" && (
-                      <div className="lg:hidden block mb-[2vh] w-full mx-auto">
-                        <EpisodePlaylist
-                          seasons={seasons}
-                          episodes={episodes}
-                          handleSeasonChange={handleSeasonChange}
-                          selectedEpisode={selectedEpisode}
-                          onEpisodeClick={setSelectedEpisode}
-                          season={selectedSeason}
-                          totalSeasons={seasons.length}
-                          onSeasonChange={setSelectedSeason}
-                          movieName={movie?.name}
-                          isLoading={loadingTV}
-                        />
-                      </div>
-                    )}
                     <div className="flex flex-nowrap  items-center md:mt-[4vw] gap-3 lg:gap-[1vw]">
                       <Link
                         href={`/movie/${createSlug(
@@ -1198,25 +1108,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
           </div>
 
-          <div className="w-full  px-2  lg:w-[30vw] flex flex-col gap-6">
-            {/* Playlist Sidebar for TV */}
-            {mediaType === "tv" && (
-              <div className="lg:block hidden mb-[1vw]">
-                <EpisodePlaylist
-                  seasons={seasons}
-                  episodes={episodes}
-                  handleSeasonChange={handleSeasonChange}
-                  selectedEpisode={selectedEpisode}
-                  onEpisodeClick={setSelectedEpisode}
-                  season={selectedSeason}
-                  totalSeasons={seasons.length}
-                  onSeasonChange={setSelectedSeason}
-                  movieName={movie?.name}
-                  isLoading={loadingTV}
-                />
-              </div>
-            )}
-
+          <div className="w-full  px-2  lg:w-[28vw] flex flex-col gap-4">
             <div className="mb-2 overflow-x-auto scrollbar-hide scroll-smooth">
               <div className="flex items-center gap-2 pb-2 scroll-smooth">
                 {[
