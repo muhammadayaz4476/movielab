@@ -118,7 +118,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-    <meta name="google-adsense-account" content="ca-pub-8754313345153121">
         <link
           rel="preconnect"
           href="https://image.tmdb.org"
