@@ -10,6 +10,7 @@
     "create-admin": "node scripts/create-admin.js"
   },
   "dependencies": {
+    "@microsoft/clarity": "^1.0.2",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "framer-motion": "^12.23.26",
