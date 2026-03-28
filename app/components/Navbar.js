@@ -421,12 +421,12 @@ const Navbar = () => {
             </div>
 
             <div className=" hidden lg:flex items-center gap-6">
-              {/* <Link
+              <Link
                 href="/watch-later"
                 className="text-sm font-medium text-white  hover:scale-110 transition-transform"
               >
                 <PlayIcon fill="white" />
-              </Link> */}
+              </Link>
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="bg-white/15 backdrop-blur-xs  p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
