@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export async function middleware(request) {
+export async function proxy(request) {
   const userAgent = request.headers.get("user-agent");
 
   const bots = [

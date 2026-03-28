@@ -40,6 +40,14 @@ async function getInitialData() {
       const trendingRes = await fetch(trendingUrl, {
         next: { revalidate: 3600 },
       });
+      if (!trendingRes.ok) {
+        if (trendingRes.status === 401) {
+          console.warn("TMDB API Key is missing or invalid. Please update NEXT_PUBLIC_TMDB_KEY in .env.local.");
+        } else {
+          console.error(`Trending fetch failed: ${trendingRes.status}`);
+        }
+        return { rows: {}, trendingKeywords: [] };
+      }
       const trendingData = await trendingRes.json();
       const topMovies = (trendingData.results || []).slice(0, 6);
 

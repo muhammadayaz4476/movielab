@@ -124,8 +124,12 @@ export default function RootLayout({ children }) {
           href="https://image.tmdb.org"
           crossOrigin="anonymous"
         />
-       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8754313345153121"
-     crossorigin="anonymous"></script>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8754313345153121"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </head>
       <body className={`${poppins.variable} ${comfortaa.variable} antialiased`}>
         <script
@@ -150,7 +154,7 @@ export default function RootLayout({ children }) {
         <Script src="https://pl28735289.effectivegatecpm.com/19/39/9b/19399ba474c25737727a403288572c40.js" /> 
         <Script src="https://pl28735344.effectivegatecpm.com/59/57/4a/59574a153ab37dd51e9c1fc6d4347223.js" /> 
         <Script src="https://pl28735344.profitablecpmratenetwork.com/59/57/4a/59574a153ab37dd51e9c1fc6d4347223.js" />
-        <Script async="async" data-cfasync="false" src="https://pl28967245.profitablecpmratenetwork.com/057ba296e4201c8828400ac32a6e5d39/invoke.js" /> 
+        <Script async data-cfasync="false" src="https://pl28967245.profitablecpmratenetwork.com/057ba296e4201c8828400ac32a6e5d39/invoke.js" /> 
         <AdminProvider>
           <AuthProvider>
             <SmoothScrollProvider>
