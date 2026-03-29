@@ -1,10 +1,16 @@
 "use client";
 export const trackEvent = (eventName, params = {}) => {
+  // Google Analytics
   if (typeof window !== "undefined" && window.gtag) {
     window.gtag("event", eventName, {
       ...params,
       transport_type: "beacon",
     });
+  }
+
+  // Microsoft Clarity Smart Events
+  if (typeof window !== "undefined" && window.clarity) {
+    window.clarity("event", eventName);
   }
 };
 
