@@ -1,10 +1,9 @@
 "use client";
-export const trackEvent = (action, category, label, value) => {
+export const trackEvent = (eventName, params = {}) => {
   if (typeof window !== "undefined" && window.gtag) {
-    window.gtag("event", action, {
-      event_category: category,
-      event_label: label,
-      value: value,
+    window.gtag("event", eventName, {
+      ...params,
+      transport_type: "beacon",
     });
   }
 };

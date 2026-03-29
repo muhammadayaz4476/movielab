@@ -420,11 +420,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
                 onClick={() => {
                   setShowTrailer(true);
-                  trackEvent(
-                    G_EVENTS.TRAILER,
-                    "engagement",
-                    movie?.title || movie?.name,
-                  );
+                  trackEvent(G_EVENTS.TRAILER, {
+                    event_category: "engagement",
+                    event_label: movie?.title || movie?.name,
+                  });
                 }}
               >
                 {movie?.backdrop_path && (
@@ -474,11 +473,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   mediaType,
                 )}`}
                 onClick={() =>
-                  trackEvent(
-                    G_EVENTS.WATCH_NOW,
-                    "conversion",
-                    movie?.title || movie?.name,
-                  )
+                  trackEvent(G_EVENTS.WATCH_NOW, {
+                    event_category: "conversion",
+                    event_label: movie?.title || movie?.name,
+                  })
                 }
                 rel="nofollow"
                 className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
@@ -488,11 +486,10 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               <button
                 onClick={() => {
                   setIsNoticeModalOpen(true);
-                  trackEvent(
-                    G_EVENTS.DOWNLOAD_NOW,
-                    "conversion",
-                    movie?.title || movie?.name,
-                  );
+                  trackEvent(G_EVENTS.DOWNLOAD_NOW, {
+                    event_category: "conversion",
+                    event_label: movie?.title || movie?.name,
+                  });
                 }}
                 className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >

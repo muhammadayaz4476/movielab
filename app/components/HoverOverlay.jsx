@@ -46,11 +46,10 @@ const HoverOverlay = ({
               movie.media_type || mediaType,
             )}`}
             onClick={() =>
-              trackEvent(
-                G_EVENTS.TRAILER,
-                "engagement",
-                movie.title || movie.name,
-              )
+              trackEvent(G_EVENTS.TRAILER, {
+                event_category: "engagement",
+                event_label: movie.title || movie.name,
+              })
             }
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"
           >
@@ -64,11 +63,10 @@ const HoverOverlay = ({
               movie.media_type || mediaType,
             )}`}
             onClick={() =>
-              trackEvent(
-                G_EVENTS.WATCH_NOW,
-                "conversion",
-                movie.title || movie.name,
-              )
+              trackEvent(G_EVENTS.WATCH_NOW, {
+                event_category: "conversion",
+                event_label: movie.title || movie.name,
+              })
             }
             rel="nofollow"
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"

@@ -1015,11 +1015,10 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       <button
                         onClick={() => {
                           setIsNoticeModalOpen(true);
-                          trackEvent(
-                            G_EVENTS.DOWNLOAD_NOW,
-                            "conversion",
-                            movie?.title || movie?.name,
-                          );
+                          trackEvent(G_EVENTS.DOWNLOAD_NOW, {
+                            event_category: "conversion",
+                            event_label: movie?.title || movie?.name,
+                          });
                         }}
                         className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
                       >
