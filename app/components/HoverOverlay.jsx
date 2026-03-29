@@ -42,7 +42,7 @@ const HoverOverlay = ({
             href={`/movie/${createSlug(
               movie.title || movie.name,
               movie.id,
-              mediaType,
+              movie.media_type || mediaType,
             )}`}
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"
           >
@@ -50,10 +50,10 @@ const HoverOverlay = ({
             Trailer
           </Link>
           <Link
-            href={`/${mediaType === "tv" ? "watch" : "watch"}/${createSlug(
+            href={`/watch/${createSlug(
               movie.title || movie.name,
               movie.id,
-              mediaType,
+              movie.media_type || mediaType,
             )}`}
             rel="nofollow"
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"

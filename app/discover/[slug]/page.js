@@ -3,113 +3,102 @@ import DiscoverContent from "./DiscoverContent";
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-async function getDiscoveryData(slug, page = 1, year = "") {
+async function getDiscoveryData(slug, page = 1, year = "", type = "all") {
   const decodedSlug = decodeURIComponent(slug);
-  const mediaType = slug === "web-series" ? "tv" : "movie";
-
-  let endpoint = "";
-  const sortBy = mediaType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
-  const commonFilters = `&include_adult=false&vote_count.gte=10`;
-  const yearParam =
-    mediaType === "tv" ? "first_air_date_year" : "primary_release_year";
-  const yearFilter = year ? `&${yearParam}=${year}` : "";
-  const baseParams = `&page=${page}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
-
-  if (
-    ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
-      decodedSlug,
-    )
-  ) {
-    const langMap = {
-      hollywood: "en",
-      bollywood: "hi",
-      korean: "ko",
-      anime: "ja",
-      japanese: "ja",
+  const isWebSeries = slug === "web-series";
+  
+  const getTVGenreId = (movieGenreId) => {
+    const mapping = {
+      28: 10759, // Action -> Action & Adventure
+      12: 10759, // Adventure -> Action & Adventure
+      878: 10765, // Sci-Fi -> Sci-Fi & Fantasy
+      14: 10765, // Fantasy -> Sci-Fi & Fantasy
+      10752: 10768, // War -> War & Politics
+      53: 9648, // Thriller -> Mystery (closest)
     };
-    if (decodedSlug === "anime") {
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=16&with_original_language=ja${baseParams}`;
+    return mapping[movieGenreId] || movieGenreId;
+  };
+
+  // Helper to fetch single type
+  const fetchSingle = async (mType, p) => {
+    const sortBy = mType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
+    const commonFilters = `&include_adult=false&vote_count.gte=10`;
+    const yearParam = mType === "tv" ? "first_air_date_year" : "primary_release_year";
+    const yearFilter = year ? `&${yearParam}=${year}` : "";
+    const baseParams = `&page=${p}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
+
+    let endpoint = "";
+    if (["hollywood", "bollywood", "korean", "anime", "japanese"].includes(decodedSlug)) {
+      const langMap = { hollywood: "en", bollywood: "hi", korean: "ko", anime: "ja", japanese: "ja" };
+      endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug] || "en"}${baseParams}`;
+      if (decodedSlug === "anime") endpoint += "&with_genres=16";
+    } else if (["trending", "top-rated", "popular", "new-releases", "hidden-gems", "feel-good", "web-series"].includes(decodedSlug)) {
+      endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}${baseParams}`;
+      if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
+      else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
+      else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
+      else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
+      else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
+      else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
+      else if (decodedSlug === "web-series" && mType === "tv") endpoint += "&with_original_language=hi";
+    } else if (decodedSlug.startsWith("actor-")) {
+      const id = decodedSlug.split("-").pop();
+      endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_cast=${id}${baseParams}`;
+    } else if (decodedSlug.startsWith("country-")) {
+      const code = decodedSlug.split("-").pop().toUpperCase();
+      endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_origin_country=${code}${baseParams}`;
     } else {
-      endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug] || "en"}${baseParams}`;
+      let gId = decodedSlug.split("-").pop();
+      if (mType === "tv") gId = getTVGenreId(gId);
+      endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_genres=${gId}${baseParams}`;
     }
-  } else if (
-    [
-      "trending",
-      "top-rated",
-      "popular",
-      "new-releases",
-      "hidden-gems",
-      "feel-good",
-      "web-series",
-    ].includes(decodedSlug)
-  ) {
-    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}${baseParams}`;
-    if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
-    else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
-    else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
-    else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
-    else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
-    else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
-    else if (decodedSlug === "web-series" && mediaType === "tv") endpoint += "&with_original_language=hi";
-  } else if (decodedSlug.startsWith("actor-")) {
-    const actorId = decodedSlug.split("-").pop();
-    if (!actorId || isNaN(actorId)) return { results: [] };
-    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}${baseParams}`;
-  } else if (decodedSlug.startsWith("country-")) {
-    const countryCode = decodedSlug.split("-").pop().toUpperCase();
-    if (!countryCode || countryCode.length < 2) return { results: [] };
-    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_origin_country=${countryCode}${baseParams}`;
-  } else {
-    const parts = decodedSlug.split("-");
-    const genreId = parts.pop();
-    if (!genreId || isNaN(genreId)) return { results: [] };
-    endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreId}${baseParams}`;
+
+    try {
+      const res = await fetch(endpoint, { next: { revalidate: 3600 } });
+      if (!res.ok) {
+        console.error(`TMDB fetch failed for ${mType}: ${res.status}`);
+        return { results: [] };
+      }
+      return await res.json();
+    } catch (err) {
+      console.error(`Fetch error for ${mType}:`, err);
+      return { results: [] };
+    }
+  };
+
+  if (isWebSeries) {
+    const data = await fetchSingle("tv", page);
+    return { ...data, lastPageFetched: page, type: "tv" };
   }
 
-  try {
-    const res = await fetch(endpoint, { next: { revalidate: 3600 } });
-    if (!res.ok) return { results: [] };
-    const data = await res.json();
+  // Determine if we should fetch both
+  const shouldFetchBoth = type === "all" && !isWebSeries;
 
-    // Simplified Buffering for actor pages (no vote count restriction)
-    if (decodedSlug.startsWith("actor-")) {
-      const actorId = decodedSlug.split("-").pop();
-      const commonFilters = `&include_adult=false&vote_count.gte=0`; // Relaxed for dedicated pages
-      const yearFilter = year
-        ? `&${mediaType === "tv" ? "first_air_date_year" : "primary_release_year"}=${year}`
-        : "";
+  if (shouldFetchBoth) {
+    const [movieData, tvData] = await Promise.all([
+      fetchSingle("movie", page),
+      fetchSingle("tv", page),
+    ]);
 
-      let allResults = [];
-      let currentPage = 1;
-      const maxPagesToBuffer = 5;
-      const targetCount = 60;
+    const results = [
+      ...(movieData.results || []).map(r => ({ ...r, media_type: "movie" })),
+      ...(tvData.results || []).map(r => ({ ...r, media_type: "tv" })),
+    ].sort((a, b) => {
+      const dateA = a.release_date || a.first_air_date || "0000-00-00";
+      const dateB = b.release_date || b.first_air_date || "0000-00-00";
+      return dateB.localeCompare(dateA);
+    });
 
-      while (
-        allResults.length < targetCount &&
-        currentPage <= maxPagesToBuffer &&
-        currentPage <= data.total_pages
-      ) {
-        const fetchUrl = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_cast=${actorId}&page=${currentPage}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
-        const currentRes = await fetch(fetchUrl, { cache: "no-store" });
-        if (!currentRes.ok) break;
-        const currentData = await currentRes.json();
-        const results = currentData.results || [];
-
-        allResults = [...allResults, ...results];
-        if (results.length === 0) break;
-        currentPage++;
-      }
-
-      return {
-        ...data,
-        results: allResults,
-        lastPageFetched: currentPage - 1,
-      };
-    }
-
-    return { ...data, lastPageFetched: page };
-  } catch (error) {
-    return { results: [] };
+    return {
+      results,
+      page,
+      total_pages: Math.max(movieData.total_pages || 0, tvData.total_pages || 0),
+      lastPageFetched: page,
+      type: "all"
+    };
+  } else {
+    const data = await fetchSingle(type, page);
+    return { ...data, lastPageFetched: page, type };
   }
 }
 
@@ -132,8 +121,10 @@ export async function generateMetadata({ params, searchParams }) {
     japanese: "Japanese",
   };
 
+  const mediaLabel = data.type === "all" ? "Movies & Series" : (data.type === "tv" ? "TV Series" : "Movies");
+
   if (capitals[decodedSlug]) {
-    title = `${capitals[decodedSlug]} Movies & Series`;
+    title = `${capitals[decodedSlug]} ${mediaLabel}`;
   } else if (
     [
       "trending",
@@ -149,28 +140,28 @@ export async function generateMetadata({ params, searchParams }) {
       trending: "Trending Now",
       "top-rated": "Top Rated",
       popular: "Popular Content",
-      "new-releases": "New Releases 2024",
+      "new-releases": "New Releases",
       "hidden-gems": "Hidden Gems",
       "feel-good": "Feel Good",
       "web-series": "Must Watch Web Series",
     };
-    title = categoryTitles[decodedSlug] || "Discover";
+    title = `${categoryTitles[decodedSlug] || "Discover"} ${mediaLabel}`;
   } else if (decodedSlug.startsWith("actor-")) {
     const nameParts = decodedSlug.split("-").slice(1, -1);
     const actorName = nameParts
       .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
       .join(" ");
-    title = `${actorName}'s Movies & Series`;
+    title = `${actorName}'s ${mediaLabel}`;
   } else if (decodedSlug.startsWith("country-")) {
     const nameParts = decodedSlug.split("-").slice(1, -1);
     const countryName = nameParts
       .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
       .join(" ");
-    title = `${countryName} Cinema`;
+    title = `${countryName} ${mediaLabel}`;
   } else {
     const parts = decodedSlug.split("-");
     parts.pop();
-    title = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+    title = `${parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ")} ${mediaLabel}`;
   }
 
   const yearSuffix = year ? ` (${year})` : "";
@@ -216,7 +207,7 @@ export default async function Page({ params, searchParams }) {
     itemListElement: initialData.results?.slice(0, 10).map((item, index) => {
       const title = item.title || item.name || "";
       const id = item.id;
-      const type = slug === "web-series" ? "tv" : "movie";
+      const type = item.media_type || (slug === "web-series" ? "tv" : "movie");
       const prefix = type === "tv" ? "tv-" : "";
       const itemSlug = `${prefix}${title
         .toLowerCase()

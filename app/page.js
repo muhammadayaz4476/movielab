@@ -33,97 +33,106 @@ async function getInitialData() {
     // Global seen IDs for server-side deduplication
     const seenIds = new Set();
 
-    // 1. Fetch Global Trending Keywords first for the footer
-    let trendingKeywords = [];
-    try {
-      const trendingUrl = urls.trendingToday;
-      const trendingRes = await fetch(trendingUrl, {
-        next: { revalidate: 3600 },
-      });
-      if (!trendingRes.ok) {
-        if (trendingRes.status === 401) {
-          console.warn("TMDB API Key is missing or invalid. Please update NEXT_PUBLIC_TMDB_KEY in .env.local.");
-        } else {
-          console.error(`Trending fetch failed: ${trendingRes.status}`);
+    const rowKeys = Object.keys(urls);
+
+    // 1. Fetch Trending Keywords and 3 pages for Popular rows (2 for others) in parallel
+    const [trendingKeywordsRes, ...allRowsRes] = await Promise.all([
+      fetch(urls.trendingToday, { next: { revalidate: 3600 } }).catch(() => null),
+      ...rowKeys.flatMap((key) => {
+        const url = urls[key];
+        const separator = url.includes("?") ? "&" : "?";
+        const pages = (key === "popularNow" || key === "trendingToday" || key === "actionMovies") ? 4 : 2;
+        const reqs = [];
+        for (let p = 1; p <= pages; p++) {
+          reqs.push(fetch(`${url}${separator}page=${p}`, { next: { revalidate: 3600 } }).catch(() => null));
         }
-        return { rows: {}, trendingKeywords: [] };
+        return reqs;
+      }),
+    ]);
+
+    // 2. Process Trending Keywords first
+    let trendingKeywords = [];
+    if (trendingKeywordsRes && trendingKeywordsRes.ok) {
+      try {
+        const trendingData = await trendingKeywordsRes.json();
+        const topMovies = (trendingData.results || []).slice(0, 6);
+        const keywordRequests = topMovies.map((movie) =>
+          fetch(`${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`, { next: { revalidate: 86400 } })
+            .then((res) => res.json())
+            .catch(() => ({ keywords: [] }))
+        );
+        const keywordsData = await Promise.all(keywordRequests);
+        const allKeywords = keywordsData.flatMap((data) => data.keywords || []);
+        const uniqueKeywordsMap = new Map();
+        allKeywords.forEach((k) => {
+          if (!uniqueKeywordsMap.has(k.id)) uniqueKeywordsMap.set(k.id, k);
+        });
+        trendingKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 50);
+      } catch (err) {
+        console.error("Failed keywords processing", err);
       }
-      const trendingData = await trendingRes.json();
-      const topMovies = (trendingData.results || []).slice(0, 6);
-
-      const keywordRequests = topMovies.map((movie) =>
-        fetch(`${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`, {
-          next: { revalidate: 86400 },
-        })
-          .then((res) => res.json())
-          .catch(() => ({ keywords: [] })),
-      );
-
-      const keywordsData = await Promise.all(keywordRequests);
-      const allKeywords = keywordsData.flatMap((data) => data.keywords || []);
-      const uniqueKeywordsMap = new Map();
-      allKeywords.forEach((k) => {
-        if (!uniqueKeywordsMap.has(k.id)) uniqueKeywordsMap.set(k.id, k);
-      });
-      trendingKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 50);
-    } catch (err) {
-      console.error("Failed to fetch trending keywords", err);
     }
 
-    // 2. Fetch all rows in parallel
-    const rowRequests = Object.entries(urls).map(async ([key, url]) => {
-      try {
-        const res = await fetch(url, { next: { revalidate: 3600 } });
-        if (!res.ok) return [key, { results: [], keywords: [] }];
-        const data = await res.json();
-        let rawResults = data.results || [];
+    // 3. Process all rows sequentially to ensure global deduplication works
+    const rawRowsData = await Promise.all(
+      allRowsRes.map(async (res) => {
+        if (!res || !res.ok) return { results: [] };
+        try { return await res.json(); } catch (e) { return { results: [] }; }
+      })
+    );
 
-        // Apply deduplication (sequential in resultsArr processing, but let's filter what we can)
-        // Note: For true global deduplication, we might need a serial approach,
-        // but for SSR we just want content to be there. We'll let Home.js handle final dedup.
-        const results = rawResults.slice(0, 20);
+    const rows = {};
+    let currentIndex = 0;
+    const priorityRows = ["trendingToday", "horrorMovies", "sciFiMovies"];
 
-        // Fetch keywords for the first 3 movies in each row (except hero)
-        let rowKeywords = [];
-        if (key !== "hero" && results.length > 0) {
-          try {
-            const topMovies = results.slice(0, 3);
-            const keywordRequests = topMovies.map((movie) =>
-              fetch(
-                `${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`,
-                { next: { revalidate: 86400 } },
-              )
-                .then((res) => res.json())
-                .catch(() => ({ keywords: [] })),
-            );
-            const keywordsData = await Promise.all(keywordRequests);
-            const allKeywords = keywordsData.flatMap(
-              (d) => d.keywords || d.results || [],
-            );
-            const uniqueKeywordsMap = new Map();
-            allKeywords.forEach((k) => {
-              if (!uniqueKeywordsMap.has(k.id)) uniqueKeywordsMap.set(k.id, k);
-            });
-            rowKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 15);
-          } catch (err) {
-            console.error(`Failed keywords for ${key}`, err);
-          }
-        }
-
-        return [key, { results, keywords: rowKeywords }];
-      } catch (err) {
-        console.error(`Failed row ${key}`, err);
-        return [key, { results: [], keywords: [] }];
+    for (const key of rowKeys) {
+      const pages = (key === "popularNow" || key === "trendingToday" || key === "actionMovies") ? 4 : 2;
+      const unfilteredResults = [];
+      for (let p = 0; p < pages; p++) {
+        const data = rawRowsData[currentIndex + p];
+        if (data && data.results) unfilteredResults.push(...data.results);
       }
-    });
+      currentIndex += pages;
 
-    const resultsArr = await Promise.all(rowRequests);
-    const rows = Object.fromEntries(resultsArr);
+      // Sort by newest to oldest
+      unfilteredResults.sort((a, b) => {
+        const dateA = a.release_date || a.first_air_date || "0000-00-00";
+        const dateB = b.release_date || b.first_air_date || "0000-00-00";
+        return dateB.localeCompare(dateA);
+      });
 
-    return {
-      rows,
-      trendingKeywords,
-    };
+      const results = [];
+      for (const movie of unfilteredResults) {
+        if (!movie.id || seenIds.has(movie.id)) continue;
+        seenIds.add(movie.id);
+        results.push(movie);
+        if (results.length >= 20) break;
+      }
+      rows[key] = { results, keywords: [] };
+    }
+
+    // 4. Fetch keywords for priority rows after they are populated
+    await Promise.all(priorityRows.map(async (key) => {
+      const row = rows[key];
+      if (row && row.results.length > 0) {
+        try {
+          const keywordRequests = row.results.slice(0, 3).map((movie) =>
+            fetch(`${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`, { next: { revalidate: 86400 } })
+              .then((res) => res.json())
+              .catch(() => ({ keywords: [] }))
+          );
+          const keywordsDataArr = await Promise.all(keywordRequests);
+          const allKeywords = keywordsDataArr.flatMap((d) => d.keywords || d.results || []);
+          const uniqueKeywordsMap = new Map();
+          allKeywords.forEach((k) => { if (!uniqueKeywordsMap.has(k.id)) uniqueKeywordsMap.set(k.id, k); });
+          row.keywords = Array.from(uniqueKeywordsMap.values()).slice(0, 10);
+        } catch (err) {
+          console.error(`Failed keywords for ${key}`, err);
+        }
+      }
+    }));
+
+    return { rows, trendingKeywords };
   } catch (error) {
     console.error("Server-side fetch error:", error);
     return {

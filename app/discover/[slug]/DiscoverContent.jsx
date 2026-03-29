@@ -35,7 +35,7 @@ const DiscoverContent = ({
 
   // Filters
   const [mediaType, setMediaType] = useState(
-    decodedSlug === "web-series" ? "tv" : "movie",
+    initialResults[0]?.media_type || (decodedSlug === "web-series" ? "tv" : "all"),
   );
   const [year, setYear] = useState(initialYear);
 
@@ -58,85 +58,88 @@ const DiscoverContent = ({
 
     setLoading(true);
     try {
-      let sortBy = currentType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
-      const commonFilters = `&include_adult=false&vote_count.gte=10`; // Relaxed for full catalog surfacing but strict enough to avoid unreleased garbage
-      const yearParam =
-        currentType === "tv" ? "first_air_date_year" : "primary_release_year";
-      const yearFilter = currentYear ? `&${yearParam}=${currentYear}` : "";
-      const baseParams = `&page=${pageNum}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
-
-      let endpoint = "";
-      if (
-        ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
-          decodedSlug,
-        )
-      ) {
-        const langMap = {
-          hollywood: "en",
-          bollywood: "hi",
-          korean: "ko",
-          anime: "ja",
-          japanese: "ja",
+      const getTVGenreId = (movieGenreId) => {
+        const mapping = {
+          28: 10759, 12: 10759, 878: 10765, 14: 10765, 10752: 10768, 53: 9648
         };
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug] || "en"}${baseParams}`;
-        if (decodedSlug === "anime") endpoint += "&with_genres=16";
-      } else if (
-        [
-          "trending",
-          "top-rated",
-          "popular",
-          "new-releases",
-          "hidden-gems",
-          "feel-good",
-          "web-series",
-        ].includes(decodedSlug)
-      ) {
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}${baseParams}`;
-        if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
-        else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
-        else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
-        else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
-        else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
-        else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
-        else if (decodedSlug === "web-series" && currentType === "tv") endpoint += "&with_original_language=hi";
-      } else if (decodedSlug.startsWith("actor-")) {
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_cast=${decodedSlug.split("-").pop()}${baseParams}`;
-      } else if (decodedSlug.startsWith("country-")) {
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_origin_country=${decodedSlug.split("-").pop().toUpperCase()}${baseParams}`;
+        return mapping[movieGenreId] || movieGenreId;
+      };
+
+      const fetchType = async (mType) => {
+        const sortBy = mType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
+        const commonFilters = `&include_adult=false&vote_count.gte=10`;
+        const yearParam = mType === "tv" ? "first_air_date_year" : "primary_release_year";
+        const yearFilter = currentYear ? `&${yearParam}=${currentYear}` : "";
+        const baseParams = `&page=${pageNum}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
+
+        let endpoint = "";
+        if (["hollywood", "bollywood", "korean", "anime", "japanese"].includes(decodedSlug)) {
+          const langMap = { hollywood: "en", bollywood: "hi", korean: "ko", anime: "ja", japanese: "ja" };
+          endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_original_language=${langMap[decodedSlug] || "en"}${baseParams}`;
+          if (decodedSlug === "anime") endpoint += "&with_genres=16";
+        } else if (["trending", "top-rated", "popular", "new-releases", "hidden-gems", "feel-good", "web-series"].includes(decodedSlug)) {
+          endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}${baseParams}`;
+          if (decodedSlug === "trending") endpoint += "&vote_count.gte=100";
+          else if (decodedSlug === "top-rated") endpoint += "&vote_average.gte=7.5&vote_count.gte=300";
+          else if (decodedSlug === "popular") endpoint += "&vote_count.gte=500";
+          else if (decodedSlug === "new-releases") endpoint += "&with_release_type=2|3";
+          else if (decodedSlug === "hidden-gems") endpoint += "&vote_average.gte=7&vote_count.lte=300";
+          else if (decodedSlug === "feel-good") endpoint += "&with_genres=35,10749";
+          else if (decodedSlug === "web-series" && mType === "tv") endpoint += "&with_original_language=hi";
+        } else if (decodedSlug.startsWith("actor-")) {
+          endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_cast=${decodedSlug.split("-").pop()}${baseParams}`;
+        } else if (decodedSlug.startsWith("country-")) {
+          endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_origin_country=${decodedSlug.split("-").pop().toUpperCase()}${baseParams}`;
+        } else {
+          let gId = decodedSlug.split("-").pop();
+          if (mType === "tv") gId = getTVGenreId(gId);
+          endpoint = `${BASE_URL}/discover/${mType}?api_key=${API_KEY}&with_genres=${gId}${baseParams}`;
+        }
+
+        try {
+          const res = await axios.get(endpoint);
+          return { 
+            results: (res.data.results || []).map(r => ({ ...r, media_type: mType })),
+            total_pages: res.data.total_pages 
+          };
+        } catch (err) {
+          console.error(`Client fetch error for ${mType}:`, err);
+          return { results: [], total_pages: 0 };
+        }
+      };
+
+      let combinedResults = [];
+      let totalPages = 0;
+
+      if (currentType === "all") {
+        const [movieData, tvData] = await Promise.all([
+          fetchType("movie"),
+          fetchType("tv")
+        ]);
+        combinedResults = [...movieData.results, ...tvData.results].sort((a, b) => {
+          const dateA = a.release_date || a.first_air_date || "0000-00-00";
+          const dateB = b.release_date || b.first_air_date || "0000-00-00";
+          return dateB.localeCompare(dateA);
+        });
+        totalPages = Math.max(movieData.total_pages, tvData.total_pages);
       } else {
-        endpoint = `${BASE_URL}/discover/${currentType}?api_key=${API_KEY}&with_genres=${decodedSlug.split("-").pop()}${baseParams}`;
+        const data = await fetchType(currentType);
+        combinedResults = data.results;
+        totalPages = data.total_pages;
       }
 
-      const req = await axios.get(endpoint);
-      const newResults = req.data.results || [];
-
-      const unsafeKeywords = [
-        "sexy",
-        "erotic",
-        "porn",
-        "xxx",
-        "nude",
-        "adult",
-        "busty",
-        "breast",
-        "sex",
-        "18+",
-      ];
-      const safeBatch = newResults.filter((item) => {
+      const unsafeKeywords = ["sexy", "erotic", "porn", "xxx", "nude", "adult", "busty", "breast", "sex", "18+"];
+      const safeBatch = combinedResults.filter((item) => {
         const titleText = (item.title || item.name || "").toLowerCase();
         const overviewText = (item.overview || "").toLowerCase();
         return (
           !item.adult &&
-          !unsafeKeywords.some(
-            (k) => titleText.includes(k) || overviewText.includes(k),
-          )
+          !unsafeKeywords.some((k) => titleText.includes(k) || overviewText.includes(k))
         );
       });
 
-      setResults((prev) =>
-        pageNum === 1 ? safeBatch : [...prev, ...safeBatch],
-      );
-      setHasMore(pageNum < req.data.total_pages && newResults.length > 0);
+      setResults((prev) => (pageNum === 1 ? safeBatch : [...prev, ...safeBatch]));
+      setHasMore(pageNum < totalPages && combinedResults.length > 0);
       setLoading(false);
     } catch (error) {
       console.error("Error discovering:", error);
@@ -156,7 +159,7 @@ const DiscoverContent = ({
 
   // Initialization
   useEffect(() => {
-    const initialType = decodedSlug === "web-series" ? "tv" : mediaType;
+    const initialType = decodedSlug === "web-series" ? "tv" : (initialResults[0]?.media_type || "all");
     setMediaType(initialType);
     setYear(initialYear);
 
@@ -192,7 +195,7 @@ const DiscoverContent = ({
 
   // Title Effect
   useEffect(() => {
-    const mediaLabel = mediaType === "movie" ? "Movies" : "TV Shows";
+    const mediaLabel = mediaType === "all" ? "Movies & TV" : (mediaType === "movie" ? "Movies" : "TV Shows");
     let finalTitle = "";
     if (
       ["hollywood", "bollywood", "korean", "anime", "japanese"].includes(
@@ -271,6 +274,12 @@ const DiscoverContent = ({
           <div className="flex flex-wrap items-center gap-3">
             <div className="bg-container p-1 rounded-lg flex">
               <button
+                onClick={() => handleFilterChange("all", year)}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mediaType === "all" ? "bg-primary text-white" : "text-gray-400 hover:text-white"}`}
+              >
+                All
+              </button>
+              <button
                 onClick={() => handleFilterChange("movie", year)}
                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mediaType === "movie" ? "bg-primary text-white" : "text-gray-400 hover:text-white"}`}
               >
@@ -306,10 +315,10 @@ const DiscoverContent = ({
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-[1.5vw]">
           {results.map((item, index) => (
             <Link
-              href={`/${mediaType === "tv" ? "movie" : "movie"}/${createSlug(
+              href={`/movie/${createSlug(
                 item.title || item.name,
                 item.id,
-                mediaType,
+                item.media_type || (mediaType === "all" ? "movie" : mediaType),
               )}`}
               key={`${item.id}-${index}`}
               className="group cursor-pointer"

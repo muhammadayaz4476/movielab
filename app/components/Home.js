@@ -51,7 +51,7 @@ const Home = ({ initialData = {} }) => {
       try {
         const allUniqueMovies = [];
         let page = 1;
-        const MAX_PAGES = 8; // Scan more pages to find unique content
+        const MAX_PAGES = 3; // Reduced from 8 to speed up loading
 
         while (allUniqueMovies.length < 15 && page <= MAX_PAGES) {
           const separator = url.includes("?") ? "&" : "?";
@@ -87,33 +87,16 @@ const Home = ({ initialData = {} }) => {
           if (url.includes("page=") || allUniqueMovies.length >= 20) break;
         }
 
-        // Fetch keywords for the first few movies in the row
-        let rowKeywords = [];
-        try {
-          const topMovies = allUniqueMovies.slice(0, 3);
-          const keywordRequests = topMovies.map((movie) =>
-            axios.get(
-              `${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`,
-            ),
-          );
-          const keywordsRes = await Promise.all(keywordRequests);
-          const allKeywords = keywordsRes.flatMap(
-            (r) => r.data.keywords || r.data.results || [],
-          );
-          const uniqueKeywordsMap = new Map();
-          allKeywords.forEach((k) => {
-            if (!uniqueKeywordsMap.has(k.id)) {
-              uniqueKeywordsMap.set(k.id, k);
-            }
-          });
-          rowKeywords = Array.from(uniqueKeywordsMap.values()).slice(0, 15);
-        } catch (err) {
-          console.error(`Failed to fetch keywords for ${key}`, err);
-        }
+        // Sort results by newest to oldest
+        allUniqueMovies.sort((a, b) => {
+          const dateA = a.release_date || a.first_air_date || "0000-00-00";
+          const dateB = b.release_date || b.first_air_date || "0000-00-00";
+          return dateB.localeCompare(dateA);
+        });
 
         setRowData((prev) => ({
           ...prev,
-          [key]: { results: allUniqueMovies, keywords: rowKeywords },
+          [key]: { results: allUniqueMovies, keywords: [] },
         }));
       } catch (err) {
         console.error(`Failed fetching ${key}`, err);
