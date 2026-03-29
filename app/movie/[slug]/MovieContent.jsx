@@ -82,6 +82,13 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   const isSaved = watchLater.some((item) => item.id === id);
 
+  const createPersonSlug = (name, id) => {
+    if (!name || !id) return "";
+    return `${name
+      .toLowerCase()
+      .replace(/ /g, "-")
+      .replace(/[^\w-]+/g, "")}-${id}`;
+  };
   // 1. Trailer Logic
   useEffect(() => {
     if (movie?.videos?.results) {
@@ -99,14 +106,16 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       // If the ID and mediaType match initialData, we don't need to refetch immediately
       if (initialData && initialData.id.toString() === id.toString()) {
         setMovie(initialData);
+        console.log(initialData);
         setLoading(false);
       } else {
         try {
           setLoading(true);
           const res = await axios.get(
-            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,recommendations,similar`,
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
           );
           setMovie(res.data);
+          console.log(res.data);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching content details:", error);
@@ -122,52 +131,12 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setIsFallbackMode(false);
   }, [id, initialData, mediaType]);
 
-  // 2. Similarity Scoring Function
-  const getSimilarityScore = (item, currentMovie) => {
-    let score = 0;
-    if (!item || !currentMovie) return 0;
-
-    // 1. Franchise / Collection Priority (Highest)
-    if (currentMovie.belongs_to_collection && item.belongs_to_collection?.id === currentMovie.belongs_to_collection.id) {
-      score += 100;
-    }
-
-    // 2. Genre Parity
-    const currentGenres = currentMovie.genres?.map(g => g.id) || [];
-    const itemGenres = item.genre_ids || item.genres?.map(g => g.id) || [];
-    const matchingGenres = itemGenres.filter(id => currentGenres.includes(id));
-    score += matchingGenres.length * 20;
-
-    // 3. Keyword / Topic Overlap
-    const currentKeywords = (currentMovie.keywords?.keywords || currentMovie.keywords?.results || []).map(k => k.id);
-    const itemKeywords = (item.keywords?.keywords || item.keywords?.results || []).map(k => k.id);
-    if (currentKeywords.length > 0 && itemKeywords.length > 0) {
-      const matchingKeywords = itemKeywords.filter(id => currentKeywords.includes(id));
-      score += Math.min(matchingKeywords.length * 10, 50); // Cap at 5 points
-    }
-
-    // 4. Cast Overlap
-    const currentCast = currentMovie.credits?.cast?.slice(0, 5).map(c => c.id) || [];
-    const itemCast = item.credits?.cast?.slice(0, 5).map(c => c.id) || [];
-    if (currentCast.length > 0 && itemCast.length > 0) {
-      const matchingCast = itemCast.filter(id => currentCast.includes(id));
-      score += matchingCast.length * 10;
-    }
-
-    // 5. Popularity/Vote Weight
-    score += (item.vote_average || 0) * 2;
-    score += Math.min((item.popularity || 0) / 100, 10);
-
-    return score;
-  };
-
-  // 3. Fetch Sidebar Content (Infinite Scroll)
+  // 2. Fetch Sidebar Content (Infinite Scroll)
   const fetchSidebarData = async (pageNum) => {
     if (!id) return;
     try {
       setLoadingMoreRecs(true);
       let endpoint = "";
-      let newItems;
 
       const primaryGenreId = movie?.genres?.[0]?.id;
       const primaryStudioId = movie?.production_companies?.[0]?.id;
@@ -191,60 +160,21 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_keywords=${firstKeywordId}&page=${pageNum}&sort_by=popularity.desc`;
           break;
         default:
-          // 1. If page 1 and we have recommendations in movie metadata, use them
-          if (pageNum === 1 && movie?.id?.toString() === id.toString() && movie?.recommendations?.results?.length > 0) {
-            newItems = movie.recommendations.results;
-            break;
-          }
-
-          if (isFallbackMode) {
-            // Find movies with same genres and highest popularity
-            const genreIds = movie?.genres?.slice(0, 2).map(g => g.id).join(',') || primaryGenreId;
-            const keywords = movie?.keywords?.keywords || movie?.keywords?.results || [];
-            const keywordIds = keywords.slice(0, 3).map(k => k.id).join('|');
-
-            // Use discover with Genre + Keyword OR match
-            endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&with_keywords=${keywordIds}&vote_count.gte=50&page=${pageNum}&sort_by=popularity.desc`;
-
-            // If still no results or first page of fallback, try broader discover
-            if (!keywordIds || pageNum > 1) {
-              endpoint = `${BASE_URL}/discover/${mediaType}?api_key=${API_KEY}&with_genres=${genreIds}&vote_count.gte=100&page=${pageNum}&sort_by=popularity.desc`;
-            }
-          } else {
-            endpoint = `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
-          }
+          endpoint = isFallbackMode
+            ? `${BASE_URL}/${mediaType}/popular?api_key=${API_KEY}&page=${pageNum}`
+            : `${BASE_URL}/${mediaType}/${id}/recommendations?api_key=${API_KEY}&page=${pageNum}`;
       }
 
-      if (!newItems && endpoint) {
-        // 1. Fetch from calculated endpoint (discover or recommendations)
-        const res = await axios.get(endpoint);
-        newItems = res.data.results || [];
+      const res = await axios.get(endpoint);
+      const newItems = res.data.results;
 
-        // 2. If Page 1 and movie belongs to a collection, fetch that collection!
-        if (pageNum === 1 && movie?.belongs_to_collection?.id && activeTab === "all") {
-          try {
-            const collectionRes = await axios.get(`${BASE_URL}/collection/${movie.belongs_to_collection.id}?api_key=${API_KEY}`);
-            if (collectionRes.data?.parts) {
-              // Prepend collection parts to newItems so they are guaranteed to be evaluated
-              const collectionParts = collectionRes.data.parts.filter(p => p.id !== parseInt(id));
-              newItems = [...collectionParts, ...newItems];
-            }
-          } catch (e) {
-            console.error("Failed to fetch collection for scoring", e);
-          }
-        }
-
-        // Handle fallback trigger
-        if (newItems.length === 0 && activeTab === "all" && !isFallbackMode) {
+      if (newItems.length === 0) {
+        if (activeTab === "all" && !isFallbackMode) {
           setIsFallbackMode(true);
           setRecPage(1);
-          setLoadingMoreRecs(false);
-          return;
+        } else {
+          setHasMoreRecs(false);
         }
-      }
-
-      if (!newItems || newItems.length === 0) {
-        setHasMoreRecs(false);
         setLoadingMoreRecs(false);
         return;
       }
@@ -259,37 +189,21 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         "sex",
         "18+",
       ];
-      const scoredResults = newItems.map(item => ({
-        ...item,
-        _similarityScore: getSimilarityScore(item, movie)
-      }));
-
-      const safeResults = scoredResults
-        .filter((item) => {
-          const title = (item.title || "").toLowerCase();
-          const overview = (item.overview || "").toLowerCase(); // Keep overview check for safety
-          const hasUnsafe = unsafeKeywords.some(
-            (k) => title.includes(k) || overview.includes(k)
-          );
-          return (
-            !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
-          );
-        })
-        .sort((a, b) => b._similarityScore - a._similarityScore);
-
-      // Deduplicate results
-      const uniqueResultsMap = new Map();
-      safeResults.forEach(item => {
-        if (!uniqueResultsMap.has(item.id)) {
-          uniqueResultsMap.set(item.id, item);
-        }
+      const safeResults = newItems.filter((item) => {
+        const title = (item.title || "").toLowerCase();
+        const overview = (item.overview || "").toLowerCase();
+        const hasUnsafe = unsafeKeywords.some(
+          (k) => title.includes(k) || overview.includes(k),
+        );
+        return (
+          !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
+        );
       });
-      const uniqueSafeResults = Array.from(uniqueResultsMap.values());
 
       setRecommendations((prev) =>
         pageNum === 1 && !isFallbackMode
-          ? uniqueSafeResults
-          : [...prev, ...uniqueSafeResults],
+          ? safeResults
+          : [...prev, ...safeResults],
       );
 
       if (res.data.page >= res.data.total_pages) {
@@ -306,7 +220,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
   useEffect(() => {
     fetchSidebarData(recPage);
-  }, [recPage, isFallbackMode, id, mediaType, activeTab, movie?.id]);
+  }, [recPage, isFallbackMode, id, mediaType, activeTab]);
 
   // Handle Tab Change
   useEffect(() => {
@@ -314,7 +228,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     setRecPage(1);
     setHasMoreRecs(true);
     setIsFallbackMode(false);
-    // fetchSidebarData is handled by the higher-level recPage effect
+    fetchSidebarData(1);
   }, [activeTab]);
 
   // Infinite Scroll Intersection Observer
@@ -333,14 +247,6 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   const createSlug = (title, id, type = "movie") => {
     const prefix = type === "tv" ? "tv-" : "";
     return `${prefix}${(title || "")
-      .toLowerCase()
-      .replace(/ /g, "-")
-      .replace(/[^\w-]+/g, "")}-${id}`;
-  };
-
-  const createPersonSlug = (name, id) => {
-    if (!name || !id) return "";
-    return `${name
       .toLowerCase()
       .replace(/ /g, "-")
       .replace(/[^\w-]+/g, "")}-${id}`;
@@ -496,63 +402,53 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="md:w-[97%] w-full mx-auto md:mt-[6vw] mt-[160px] md:mb-[2vw]  ">
+      <div className="flex flex-col lg:flex-row gap-[3vw] px-0 lg:px-[2vw] md:py-[8vw] py-[160px]">
+        <div className="flex-1">
+          <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
+            {trailer && showTrailer ? (
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=0`}
+                title="Trailer"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div
+                className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
+                onClick={() => setShowTrailer(true)}
+              >
+                {movie?.backdrop_path && (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
+                    srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
+                    className="absolute inset-0 w-full h-full object-cover opacity-70 transition-opacity group-hover:opacity-100"
+                    alt={
+                      `Watch ${movie?.title} - ${mediaType === "tv" ? "TV Series" : "Movie"} for free online in hd ` ||
+                      "Hero Backdrop"
+                    }
+                    priority="high"
+                  />
+                )}
 
-        <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
-          {trailer && showTrailer ? (
-            <iframe
-              className="w-full h-full"
-              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=0`}
-              title="Trailer"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div
-              className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
-              onClick={() => setShowTrailer(true)}
-            >
-              {movie?.backdrop_path && (
-                <img
-                  src={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
-                  srcSet={`https://image.tmdb.org/t/p/w780${movie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${movie.backdrop_path} 1280w`}
-                  className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity group-hover:opacity-70"
-                  alt={
-                    `Watch ${movie?.title} - ${mediaType === "tv" ? "TV Series" : "Movie"} for free online in hd ` ||
-                    "Hero Backdrop"
-                  }
-                  priority="high"
-                />
-              )}
-
-              <div className="relative z-10 flex flex-col items-center gap-4">
-                <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
-                  <PlayIcon fill="white" className="text-white" size={24} />
-                </div>
-                {/* <p className="font-medium text-lg lg:text-xl drop-shadow-md">
+                <div className="relative z-10 flex flex-col items-center gap-4">
+                  <div className="bg-primary/80 p-4 rounded-full text-black shadow-2xl scale-100 ease-in-out duration-300 hover:scale-125 transition-transform">
+                    <PlayIcon fill="white" className="text-white" size={24} />
+                  </div>
+                  {/* <p className="font-medium text-lg lg:text-xl drop-shadow-md">
                     Click to Play Trailer
                   </p> */}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
 
-      <div className="flex flex-col lg:flex-row gap-10 px-0 lg:px-[2vw] md:py-[1px] py-[1px]">
-        <div className="flex-1">
-
-          <div className="flex flex-col items- px-2  gap-3 justify-between flex-wrap md:gap-0 -[2vw] ">
-            {/* <div className="flex pb-[10px] md:pb-[1vw] items-center gap-2 justify-between  my-2 lg:my-[1vw] text-gray-300 text-sm italic bg-zinc-900/20   ">
-           
-              <div className="flex items-center gap-2 ">
-
-              </div>
-            </div> */}
-            <h1 className="text-2xl lg:text-3xl w-full md:w-[90%] pt-[2vh] lg:pt-0 font-bold font-comfortaa leading-tight">
+          <div className="flex items-start px-2  gap-3 justify-between flex-wrap md:gap-0 py-[2vw] ">
+            <h1 className="w-full text-2xl lg:text-3xl  md:w-[55%] font-bold font-comfortaa leading-normal">
               {movie?.title || movie?.name}{" "}
-              <span className="text-gray-500 hidden md:inline text-lg lg:text-2xl mt-1 md:mt-0 font-light">
-                {mediaType === "tv" ? "~ Series Trailer" : "~ Movie Trailer"}
+              <span className="text-gray-500 hidden md:inline text-lg lg:text-2xl   font-light">
+                {"~ Trailer"}
               </span>
             </h1>
             {/* <button
@@ -562,15 +458,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 >
                   <Share2 size={18} />
                 </button> */}
-
-
-            <a className="relative  w-full mt-[20px] md:mt-[2vw] " href="https://amzn.to/3NHduCE" target="_blank" rel="noopener noreferrer">
-              <img className="w-full h-full object-cover" src="https://m.media-amazon.com/images/S/stores-image-uploads-na-prod/d/AmazonStores/ATVPDKIKX0DER/d5b0dbfcfd6f7b8d9a28bd473aa1f44f.w3000.h750._CR47%2C0%2C2953%2C750_SX1500_.jpg" alt="" />
-              <button className="md:block hidden  absolute bottom-[4%]  text-lg tracking-wide font-poppins uppercase hover:shadow-primary/70 transition-all duration-300 ease-in-out cursor-pointer right-[2%] px-[2vw] py-[0.8vw] rounded-full shadow-2xl shadow-primary/30 bg-primary text-gray-100">
-                Upgrade Your Experience 
-              </button>
-            </a>
-            <div className="flex flex-nowrap  items-center md:mt-[4vw] gap-3 lg:gap-[1vw]">
+            <div className="flex flex-nowrap  items-center  gap-3 lg:gap-[1vw]">
               <Link
                 href={`/watch/${createSlug(
                   movie?.title || movie?.name,
@@ -598,50 +486,63 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               >
                 {isSaved ? (
                   <div className="flex items-center gap-2">
-                    <div className="bg-primary text-black rounded-full p-0.5">
+                    <div className="bg-primary text-black rounded-full p-[1vw] ">
                       <Check size={20} strokeWidth={3} />
                     </div>
                     <span className="sr-only">Saved</span>
                   </div>
                 ) : (
                   <Plus
-                    size={24}
-                    className="text-zinc-400 group-hover:text-white transition-colors"
+                    // size={24}
+                    className="size-[1.2vw] text-zinc-400 group-hover:text-white transition-colors"
                   />
                 )}
               </button>
             </div>
           </div>
-
-          <div className="flex font-poppins px-2 flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
-            <div className="flex  items-center gap-3">
+          <div className="flex flex-wrap gap-[2vw] mb-[4vw]   ">
+            {director && (
               <div>
-                <h3 className="md:font-medium text-lg font-poppins md:text-xl">
-                  {movie?.vote_count?.toLocaleString()} votes ~{" "}
-                  <a
-                    href="https://www.imdb.com/title/tt0111161/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    IMDB
-                  </a>
-                </h3>
-                <h4 className="text-xs text-gray-400 ">
-                  {movie?.production_companies?.[0]?.name || "Official Studio"}
+                <h4 className="text-sm uppercase font-bold text-gray-500 mb-2">
+                  Director
                 </h4>
+                <Link
+                  href={`/actor/${createPersonSlug(director.name, director.id)}`}
+                  className="text-lg hover:text-primary transition-colors font-medium font-poppins"
+                >
+                  {director.name}
+                </Link>
               </div>
-            </div>
+            )}
+            {writers?.length > 0 && (
+              <div>
+                <h4 className="text-sm uppercase font-bold text-gray-500 mb-2">
+                  Writers
+                </h4>
+                <div className="flex flex-wrap gap-x-4 ">
+                  {writers.map((w) => (
+                    <Link
+                      key={w.id}
+                      href={`/actor/${createPersonSlug(w.name, w.id)}`}
+                      className="text-lg hover:text-primary transition-colors font-medium font-poppins"
+                    >
+                      {w.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="b rounded-xl px-2  mt-10 ">
             <div className="mb-5 ">
-              <h2 className="text-xs lg:text-lg   text-white bg-primary/50 px-3 py-2  md:py-3 md:px-6 whit  w-fit font-poppins font-medium lg:mb-[1vw] mb-[2vh] ">
+              <h2 className="text-xs lg:text-lg   text-white bg-violet-600/40 px-3 py-2  md:py-[0.8vw] md:px-[1vw] whit  w-fit font-poppins font-medium lg:mb-[1vw] mb-[2vh] ">
                 Storyline & Context :
               </h2>
               <motion.div
                 layout
                 transition={{ duration: 0.6, ease: "easeInOut" }}
-                className=" relative w-full md:w-[95%] bg-white/15  rounded-xl  lg:p-[1vw] p-[1vh] "
+                className=" relative w-full md:w-[95%]   rounded-xl  lg:py-[1vw] py-[1vh] "
               >
                 {(() => {
                   const words = getExpandedStoryline().split(" ");
@@ -651,7 +552,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
                   return (
                     <p
-                      className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] md:h-[100px]"}`}
+                      className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] md:h-[5.4vw]"}`}
                     >
                       <span>{previewText} </span>
                       <motion.span
@@ -693,19 +594,38 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
                 {/* gradient fade shown only when collapsed */}
                 {!storyExpanded && (
-                  <div className="absolute bottom-0 left-0  w-full h-3/4 md:h-1/2 pointer-events-none bg-gradient-to-b from-transparent to-black" />
+                  <div className="absolute bottom-0 left-0  w-full h-3/4 md:h-full pointer-events-none bg-gradient-to-b from-transparent to-black" />
                 )}
                 {getExpandedStoryline().length > 200 && (
                   <button
                     onClick={() => setStoryExpanded((prev) => !prev)}
-                    className="text-primary   absolute bottom-0 right-1/2 translate-x-1/4 text-xs md:text-sm mt-1 font-poppins"
+                    className="text-violet-600   absolute bottom-0 right-1/2 translate-x-1/4 text-xs md:text-sm mt-1 font-poppins"
                   >
                     {storyExpanded ? "" : "Read more"}
                   </button>
                 )}
               </motion.div>
             </div>
-
+            <div className="flex font-poppins px-2 flex-wrap items-center justify-between gap-4 mb-6 pt-10 md:py-[2vw]">
+              <div className="flex  items-center gap-3">
+                <div>
+                  <h3 className="md:font-medium text-lg font-poppins md:text-xl">
+                    {movie?.vote_count?.toLocaleString()} votes ~{" "}
+                    <a
+                      href="https://www.imdb.com/title/tt0111161/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      IMDB
+                    </a>
+                  </h3>
+                  <h4 className="text-xs text-gray-400 ">
+                    {movie?.production_companies?.[0]?.name ||
+                      "Official Studio"}
+                  </h4>
+                </div>
+              </div>
+            </div>
             {/* Where to Watch Section */}
             {/* {watchProviders &&
               (watchProviders.streaming.length > 0 ||
@@ -772,51 +692,18 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               )} */}
 
             {/* Production & Crew Section */}
-            <div className="flex flex-wrap gap-[2vw] mt-[6vh]  md:mt-[2.7vw]  mb-10">
-              {director && (
-                <div>
-                  <h4 className="text-sm uppercase font-bold text-zinc-500 mb-2">
-                    Director
-                  </h4>
-                  <Link
-                    href={`/actor/${createPersonSlug(director.name, director.id)}`}
-                    className="text-lg hover:text-primary transition-colors font-medium font-poppins"
-                  >
-                    {director.name}
-                  </Link>
-                </div>
-              )}
-              {writers?.length > 0 && (
-                <div>
-                  <h4 className="text-sm uppercase font-bold text-zinc-500 mb-2">
-                    Writers
-                  </h4>
-                  <div className="flex flex-wrap gap-x-4 ">
-                    {writers.map((w) => (
-                      <Link
-                        key={w.id}
-                        href={`/actor/${createPersonSlug(w.name, w.id)}`}
-                        className="text-lg hover:text-primary transition-colors font-medium font-poppins"
-                      >
-                        {w.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
 
             {movie?.keywords?.keywords?.length > 0 && (
               <div className="mb-8">
-                <h4 className="text-sm uppercase font-bold text-zinc-500 mb-3">
+                <h4 className="text-sm uppercase font-semibold text-gray-500 mb-[1vw]">
                   Relevant Tags
                 </h4>
-                <div className="flex flex-wrap  gap-2 w-full md:w-[70%]">
+                <div className="flex flex-wrap  gap-[0.7vw] w-full md:w-[70%]">
                   {movie.keywords.keywords.slice(0, 10).map((kw) => (
                     <Link
                       key={kw.id}
                       href={`/search/kw-${kw.id}-${encodeURIComponent(kw.name.replace(/ /g, "-"))}`}
-                      className="px-3 py-1  hover:bg-primary bg-white/16 hover:text-black rounded-full text-md transition-all border border-white/5"
+                      className="px-[1vw] py-[0.5vw]  hover:bg-primary bg-white/15 hover:text-black rounded-full text-sm transition-all border border-white/5"
                     >
                       #{kw.name}
                     </Link>
@@ -827,14 +714,14 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
             {/* Top Cast Section */}
             {movie?.credits?.cast?.length > 0 && (
-              <div className="pt-6 lg:pt-[3vw] w-full md:w-[90%]">
-                <h2 className="text-xl font-poppins mb-4 text-white">
+              <div className="pt-6 lg:pt-[3vw] w-full md:w-[95%]">
+                <h2 className="text-lg font-poppins mb-[2vw] text-white">
                   Top Cast
                 </h2>
-                <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
-                  {movie.credits.cast.slice(0, 8).map((actor) => (
+                <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-y-[2vw] gap-[1.4vw] pb-4 lg:pb-0 scrollbar-hide snap-x">
+                  {movie.credits.cast.slice(0, 12).map((actor) => (
                     <Link
-                      href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
+                     href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
                       key={actor.id}
                       className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
                     >
@@ -876,7 +763,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <TrendingUp size={20} />
                 Explore Related Collections
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[2vw]">
                 {[
                   {
                     name: `Top 10 ${movie?.genres?.[0]?.name || "Featured"} Movies`,
@@ -906,9 +793,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
         </div>
 
-        <div className="w-full px-2 lg:w-[25vw] flex flex-col gap-4">
-          <div className="mb-2 overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-2 pb-2">
+        <div className="w-full lg:w-[30vw] flex flex-col ">
+          <div className=" overflow-x-auto transition-all duration-300 ease-in-out scrollbar-hide">
+            <div className="flex items-center gap-[0.7vw] pb-[1.3vw] ">
               {[
                 { id: "all", label: "All" },
                 { id: "related", label: "Related" },
@@ -935,17 +822,18 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-1.5 rounded-full font-poppins text-xs font- whitespace-nowrap transition-all border ${activeTab === tab.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
-                    }`}
+                  className={`px-[1vw] py-[0.3vw] cursor-pointer rounded-full font-poppins text-sm font- whitespace-nowrap transition-all duration-300    ease-in-out border ${
+                    activeTab === tab.id
+                      ? "bg-white text-black border-white"
+                      : "bg-white/15 text-gray-400 border-white/5 hover:border-white/20 hover:text-white"
+                  }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {recommendations.map((rec, index) => {
               const isRecSaved = watchLater.some(
                 (item) => item.id === rec.id.toString(),
@@ -958,31 +846,32 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       rec.id,
                       mediaType,
                     )}`}
-                    className="flex gap-3 group"
+                    className="flex gap-[1vw] group"
                   >
-                    <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
+                    <div className="relative w-40 lg:w-[12vw] aspect-video rounded-[0.5vw] overflow-hidden shrink-0 bg-zinc-900">
                       <img
-                        src={`https://image.tmdb.org/t/p/w300${rec.backdrop_path || rec.poster_path
-                          }`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        src={`https://image.tmdb.org/t/p/w300${
+                          rec.backdrop_path || rec.poster_path
+                        }`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-all ease-in-out duration-300"
                         alt={rec.title || rec.name}
                       />
                     </div>
-                    <div className="flex flex-col min-w-0 justify-center">
-                      <h3 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                    <div className="flex flex-col pr-[1vw] justify-center">
+                      <h3 className="text-md lg:text-lg leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                         {rec.title || rec.name}
                       </h3>
-                      {/* <span className="font-comfortaa capitalize font-bold text-lg md:text-xl lg:text-2xl mt-10 md:mt-20">
-                        More Like This
-                      </span> */}
-                      <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
+                      <p className="text-xs md:text-sm text-gray-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(
                             "-",
                           )[0]
                         }{" "}
-                        • {mediaType === "tv" ? "Series" : "Movie"}
+                        - {mediaType === "tv" ? "Series" : "Movie"}
                       </p>
+                      {/* <span className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
+                        {rec.genre_ids }
+                      </span> */}
                     </div>
                   </Link>
 
@@ -993,7 +882,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       e.stopPropagation();
                       setActiveMenuId(activeMenuId === rec.id ? null : rec.id);
                     }}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white/50 group-hover:text-primary transition-all duration-300 ease-in-out cursor-pointer hover:bg-black/80 z-20"
                   >
                     <MoreVertical size={16} />
                   </button>

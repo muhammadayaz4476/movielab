@@ -674,13 +674,12 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
       }
     }
     if (type === "tv") {
-      if (server.id === "vidsrc_me")
-        return `${server.value}/tv?tmdb=${mId}&sea=${sea}&epi=${epi}`;
+      // if (server.id === "vidsrc_me")  return `${server.value}/tv/${mId}/${sea}/${epi}`;
       if (server.id === "2embed")
         return `${server.value}/embedtv/${mId}&s=${sea}&e=${epi}`;
       return `${server.value}/tv/${mId}/${sea}/${epi}`;
     } else {
-      if (server.id === "vidsrc_me") return `${server.value}/movie?tmdb=${mId}`;
+      // if (server.id === "vidsrc_me") return `${server.value}/movie/${mId}`;
       if (server.id === "2embed") return `${server.value}/embed/${mId}`;
       return `${server.value}/movie/${mId}`;
     }
