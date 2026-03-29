@@ -60,7 +60,8 @@ const DiscoverContent = ({
     try {
       const getTVGenreId = (movieGenreId) => {
         const mapping = {
-          28: 10759, 12: 10759, 878: 10765, 14: 10765, 10752: 10768, 53: 9648
+          27: 10765, // Horror -> Sci-Fi & Fantasy
+          28: 10759, 12: 10759, 878: 10765, 14: 10765, 10752: 10768, 53: 9648, 36: 10768
         };
         return mapping[movieGenreId] || movieGenreId;
       };

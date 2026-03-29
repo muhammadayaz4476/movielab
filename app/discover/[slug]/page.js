@@ -9,12 +9,14 @@ async function getDiscoveryData(slug, page = 1, year = "", type = "all") {
   
   const getTVGenreId = (movieGenreId) => {
     const mapping = {
+      27: 10765, // Horror -> Sci-Fi & Fantasy (Most horror series are here)
       28: 10759, // Action -> Action & Adventure
       12: 10759, // Adventure -> Action & Adventure
       878: 10765, // Sci-Fi -> Sci-Fi & Fantasy
       14: 10765, // Fantasy -> Sci-Fi & Fantasy
       10752: 10768, // War -> War & Politics
-      53: 9648, // Thriller -> Mystery (closest)
+      53: 9648, // Thriller -> Mystery
+      36: 10768, // History -> War & Politics
     };
     return mapping[movieGenreId] || movieGenreId;
   };
