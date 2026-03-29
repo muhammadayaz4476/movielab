@@ -26,6 +26,7 @@ import {
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "@/context/AuthContext";
+import { trackEvent, G_EVENTS } from "../../utils/analytics";
 
 // Dynamic Imports for Modals
 const ShareModal = dynamic(() => import("../../components/ShareModal"), {
@@ -417,7 +418,14 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             ) : (
               <div
                 className="w-full h-full flex flex-col items-center justify-center bg-gray-800 cursor-pointer relative"
-                onClick={() => setShowTrailer(true)}
+                onClick={() => {
+                  setShowTrailer(true);
+                  trackEvent(
+                    G_EVENTS.TRAILER,
+                    "engagement",
+                    movie?.title || movie?.name,
+                  );
+                }}
               >
                 {movie?.backdrop_path && (
                   <img
@@ -465,13 +473,27 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   movie?.id,
                   mediaType,
                 )}`}
+                onClick={() =>
+                  trackEvent(
+                    G_EVENTS.WATCH_NOW,
+                    "conversion",
+                    movie?.title || movie?.name,
+                  )
+                }
                 rel="nofollow"
                 className="bg-primary   text-black font-extrabold lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg  rounded-md lg:rounded-[0.51vw]  font-comfortaa transition"
               >
                 Watch Now
               </Link>
               <button
-                onClick={() => setIsNoticeModalOpen(true)}
+                onClick={() => {
+                  setIsNoticeModalOpen(true);
+                  trackEvent(
+                    G_EVENTS.DOWNLOAD_NOW,
+                    "conversion",
+                    movie?.title || movie?.name,
+                  );
+                }}
                 className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
               >
                 Download Now

@@ -20,6 +20,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useAuth } from "@/context/AuthContext";
+import { trackEvent, G_EVENTS } from "../../utils/analytics";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
 import NoticeModal from "../../components/NoticeModal";
@@ -1012,7 +1013,14 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         Watch Trailer
                       </Link>
                       <button
-                        onClick={() => setIsNoticeModalOpen(true)}
+                        onClick={() => {
+                          setIsNoticeModalOpen(true);
+                          trackEvent(
+                            G_EVENTS.DOWNLOAD_NOW,
+                            "conversion",
+                            movie?.title || movie?.name,
+                          );
+                        }}
                         className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
                       >
                         Download Now

@@ -3,6 +3,7 @@ import React from "react";
 import { Plus, Check, Play } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { trackEvent, G_EVENTS } from "../utils/analytics";
 
 const HoverOverlay = ({
   movie,
@@ -44,6 +45,13 @@ const HoverOverlay = ({
               movie.id,
               movie.media_type || mediaType,
             )}`}
+            onClick={() =>
+              trackEvent(
+                G_EVENTS.TRAILER,
+                "engagement",
+                movie.title || movie.name,
+              )
+            }
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"
           >
             {/* <Play size={14} fill="black" /> */}
@@ -55,6 +63,13 @@ const HoverOverlay = ({
               movie.id,
               movie.media_type || mediaType,
             )}`}
+            onClick={() =>
+              trackEvent(
+                G_EVENTS.WATCH_NOW,
+                "conversion",
+                movie.title || movie.name,
+              )
+            }
             rel="nofollow"
             className="bg-white/90 cursor-pointer text-black text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-white transition-colors"
           >
