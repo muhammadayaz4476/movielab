@@ -2,7 +2,8 @@
 
 import { trackEvent } from "./analytics";
 
-const SMARTLINK_URL = "https://doubtfulimpatient.com/mr2ybtg778?key=9226cef44dcb9cc9cb86abcf1b81715f";
+const SMARTLINK_URL =
+  "https://doubtfulimpatient.com/mr2ybtg778?key=9226cef44dcb9cc9cb86abcf1b81715f";
 const REDIRECT_LIMIT = 3; // Maximum redirects per hour
 const ONE_HOUR = 3600000; // 1 hour in milliseconds
 
@@ -14,7 +15,9 @@ const shouldRedirect = () => {
   if (typeof window === "undefined") return false;
 
   const now = Date.now();
-  const lastTime = parseInt(localStorage.getItem("monetization_last_time") || "0");
+  const lastTime = parseInt(
+    localStorage.getItem("monetization_last_time") || "0",
+  );
   let count = parseInt(localStorage.getItem("monetization_count") || "0");
 
   // Reset count if an hour has passed
@@ -34,7 +37,7 @@ const markRedirect = () => {
 
   const now = Date.now();
   let count = parseInt(localStorage.getItem("monetization_count") || "0");
-  
+
   localStorage.setItem("monetization_last_time", now.toString());
   localStorage.setItem("monetization_count", (count + 1).toString());
 };

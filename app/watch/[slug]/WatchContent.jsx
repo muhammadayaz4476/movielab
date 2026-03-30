@@ -921,7 +921,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
       <div className="relative z-10 ">
         <Navbar />
-        <div className="flex flex-col lg:flex-row gap-10 justify-center lg:px-[2vw] md:py-[8vw] py-[160px]">
+        <div className="flex flex-col lg:flex-row gap-10 justify-center lg:px-[2vw] lg:py-[8vw] py-[160px]">
           <div className="flex-1 md:pb-0 pb-10">
             {/* Main Player */}
             <div className="w-full aspect-video bg-black lg:rounded-xl overflow-hidden mb-4 border border-zinc-800 relative group">
@@ -1174,7 +1174,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       Top Cast
                     </h2>
                     <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
-                      {movie.credits.cast.slice(0, 8).map((actor) => (
+                      {movie.credits.cast.slice(0, 12).map((actor) => (
                         <Link
                           href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
                           key={actor.id}
@@ -1273,7 +1273,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 ))}
               </div>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-6 lg:gap-[1vw]">
               {recommendations.map((rec, index) => {
                 const isRecSaved = watchLater.some(
                   (item) => item.id === rec.id.toString(),
@@ -1286,9 +1286,9 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         rec.id,
                         mediaType,
                       )}`}
-                      className="flex gap-3 group"
+                      className="flex lg:gap-[1vw] gap-4  group"
                     >
-                      <div className="relative w-40 lg:w-[10vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
+                      <div className="relative w-40 md:w-[40%] lg:w-[12vw] aspect-video rounded-lg overflow-hidden shrink-0 bg-zinc-900">
                         <img
                           src={`https://image.tmdb.org/t/p/w300${
                             rec.backdrop_path || rec.poster_path
@@ -1298,10 +1298,13 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         />
                       </div>
                       <div className="flex flex-col min-w-0 justify-center">
-                        <h3 className="text-md lg:text-[0.9vw] leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                        <h3 className="text-md md:text-xl lg:text-lg leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                           {rec.title || rec.name}
                         </h3>
-                        <p className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
+                          <p className="text-xs  md:text-sm text-gray-300 mb-2 lg:mb-[0.5vw] font-poppins tracking-wide mt-1 line-clamp-2">
+                        {rec.overview}
+                      </p>
+                        <p className="text-xs md:text-sm text-gray-400 mt-1">
                           {
                             (rec.release_date || rec.first_air_date)?.split(
                               "-",
@@ -1321,7 +1324,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                           activeMenuId === rec.id ? null : rec.id,
                         );
                       }}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white lg:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
+                      className="absolute top-1 right-1  text-white lg:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-20"
                     >
                       <MoreVertical size={16} />
                     </button>

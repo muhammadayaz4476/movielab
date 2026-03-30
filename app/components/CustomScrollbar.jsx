@@ -140,7 +140,7 @@ const CustomScrollbar = () => {
   return (
     <div
       ref={containerRef}
-      className="hidden md:block fixed top-[8vh] md:top-[5vh] right-0 md:right-[0.4vw] w-[0.4vw] h-[90vh] bg-white/25 rounded-md z-[1000] overflow-hidden"
+      className="hidden lg:block fixed top-[8vh] md:top-[5vh] right-0 md:right-[0.4vw] w-[0.4vw] h-[90vh] bg-white/25 rounded-md z-[1000] overflow-hidden"
     >
       <div
         ref={thumbRef}

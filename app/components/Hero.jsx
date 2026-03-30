@@ -137,7 +137,7 @@ const Hero = ({ initialMovies = [] }) => {
                 className="bg-[#1c77b0]  text-white/89 px-4 py-3 lg:px-6 lg:py-4 rounded-full font-poppins transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-between gap-[0.3vw]"
               >
                 
-                Watch Now
+                Watch Now {":)"}
               </Link>
               <button
                 onClick={() => setIsNoticeModalOpen(true)}

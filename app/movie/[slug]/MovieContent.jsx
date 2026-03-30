@@ -404,7 +404,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white">
       <Navbar />
-      <div className="flex flex-col lg:flex-row gap-[3vw] px-0 lg:px-[2vw] md:py-[8vw] py-[160px]">
+      <div className="flex flex-col lg:flex-row gap-[3vw] px-0 lg:px-[2vw] lg:py-[8vw] py-[160px]">
         <div className="flex-1">
           <div className="w-full aspect-video bg-gray-900 lg:rounded-xl overflow-hidden relative group">
             {trailer && showTrailer ? (
@@ -510,7 +510,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               >
                 {isSaved ? (
                   <div className="flex items-center gap-2">
-                    <div className="bg-primary text-black rounded-full p-[1vw] ">
+                    <div className="bg-primary text-black rounded-full p-2 lg:p-[1vw] ">
                       <Check size={20} strokeWidth={3} />
                     </div>
                     <span className="sr-only">Saved</span>
@@ -518,13 +518,13 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 ) : (
                   <Plus
                     // size={24}
-                    className="size-[1.2vw] text-zinc-400 group-hover:text-white transition-colors"
+                    className="size-5 lg:size-[1.2vw] text-zinc-400 group-hover:text-white transition-colors"
                   />
                 )}
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-[2vw] mb-[4vw]   ">
+          <div className="flex flex-wrap lg:gap-[2vw] gap-4 lg:mb-[4vw] my-6 lg:px-0 px-2   ">
             {director && (
               <div>
                 <h4 className="text-sm uppercase font-bold text-gray-500 mb-2">
@@ -576,7 +576,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
                   return (
                     <p
-                      className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] md:h-[5.4vw]"}`}
+                      className={`text-sm md:text-xl font-light font-poppins w-full overflow-hidden text-gray-300 wrap-break-words max-w-prose leading-relaxed transition-all ${storyExpanded ? "" : " h-[70px] lg:h-[5.4vw]"}`}
                     >
                       <span>{previewText} </span>
                       <motion.span
@@ -722,12 +722,12 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <h4 className="text-sm uppercase font-semibold text-gray-500 mb-[1vw]">
                   Relevant Tags
                 </h4>
-                <div className="flex flex-wrap  gap-[0.7vw] w-full md:w-[70%]">
+                <div className="flex flex-wrap  lg:gap-[0.7vw] gap-2 w-full md:w-[70%]">
                   {movie.keywords.keywords.slice(0, 10).map((kw) => (
                     <Link
                       key={kw.id}
                       href={`/search/kw-${kw.id}-${encodeURIComponent(kw.name.replace(/ /g, "-"))}`}
-                      className="px-[1vw] py-[0.5vw]  hover:bg-primary bg-white/15 hover:text-black rounded-full text-sm transition-all border border-white/5"
+                      className="lg:px-[1vw] px-3 lg:py-[0.5vw] py-2  hover:bg-primary bg-white/15 hover:text-black rounded-full text-sm transition-all border border-white/5"
                     >
                       #{kw.name}
                     </Link>
@@ -738,14 +738,14 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
             {/* Top Cast Section */}
             {movie?.credits?.cast?.length > 0 && (
-              <div className="pt-6 lg:pt-[3vw] w-full md:w-[95%]">
+              <div className="pt-6 lg:pt-[3vw] w-full lg:w-[95%]">
                 <h2 className="text-lg font-poppins mb-[2vw] text-white">
                   Top Cast
                 </h2>
-                <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-y-[2vw] gap-[1.4vw] pb-4 lg:pb-0 scrollbar-hide snap-x">
+                <div className="flex overflow-x-auto lg:grid lg:grid-cols-6 lg:gap-y-[2vw] gap-y-4 lg:gap-[1.4vw] gap-x-4 pb-4 lg:pb-0 scrollbar-hide snap-x">
                   {movie.credits.cast.slice(0, 12).map((actor) => (
                     <Link
-                     href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
+                      href={`/actor/${createPersonSlug(actor.name, actor.id)}`}
                       key={actor.id}
                       className="min-w-[100px] lg:min-w-0 snap-start flex flex-col gap-2 cursor-pointer group"
                     >
@@ -782,7 +782,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
             </div>
 
             {/* Internal Linking Clusters (SEO) */}
-            <div className="mt-12 pt-8 border-t hidden md:block border-white/5">
+            <div className="mt-12 pt-8 border-t hidden lg:block border-white/5">
               <h2 className="text-xl font-poppins font-medium mb-6 text-primary flex items-center gap-2">
                 <TrendingUp size={20} />
                 Explore Related Collections
@@ -817,9 +817,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
         </div>
 
-        <div className="w-full lg:w-[30vw] flex flex-col ">
+        <div className="w-full lg:w-[30vw] md:px-4 lg:px-0 px-2 flex flex-col ">
           <div className=" overflow-x-auto transition-all duration-300 ease-in-out scrollbar-hide">
-            <div className="flex items-center gap-[0.7vw] pb-[1.3vw] ">
+            <div className="flex items-center  lg:gap-[0.7vw] gap-2 lg:pb-[1.3vw] pb-6 ">
               {[
                 { id: "all", label: "All" },
                 { id: "related", label: "Related" },
@@ -846,7 +846,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-[1vw] py-[0.3vw] cursor-pointer rounded-full font-poppins text-sm font- whitespace-nowrap transition-all duration-300    ease-in-out border ${
+                  className={`lg:px-[1vw] px-4 lg:py-[0.3vw] py-2 cursor-pointer rounded-full font-poppins text-sm font- whitespace-nowrap transition-all duration-300    ease-in-out border ${
                     activeTab === tab.id
                       ? "bg-white text-black border-white"
                       : "bg-white/15 text-gray-400 border-white/5 hover:border-white/20 hover:text-white"
@@ -859,6 +859,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
           </div>
           <div className="flex flex-col gap-6">
             {recommendations.map((rec, index) => {
+              // console.log(rec);
               const isRecSaved = watchLater.some(
                 (item) => item.id === rec.id.toString(),
               );
@@ -870,9 +871,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       rec.id,
                       mediaType,
                     )}`}
-                    className="flex gap-[1vw] group"
+                    className="flex lg:gap-[1vw] gap-4 group"
                   >
-                    <div className="relative w-40 lg:w-[12vw] aspect-video rounded-[0.5vw] overflow-hidden shrink-0 bg-zinc-900">
+                    <div className="relative w-40 md:w-[40%] lg:w-[12vw] aspect-video rounded-[0.5vw] overflow-hidden shrink-0 bg-zinc-900">
                       <img
                         src={`https://image.tmdb.org/t/p/w300${
                           rec.backdrop_path || rec.poster_path
@@ -881,10 +882,13 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         alt={rec.title || rec.name}
                       />
                     </div>
-                    <div className="flex flex-col pr-[1vw] justify-center">
-                      <h3 className="text-md lg:text-lg leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
+                    <div className="flex flex-col lg:pr-[1vw] pr-4 justify-center">
+                      <h3 className="text-sm md:text-xl  lg:text-lg leading-normal font-poppins line-clamp-2 group-hover:text-primary transition">
                         {rec.title || rec.name}
                       </h3>
+                      <p className="text-xs  md:text-sm text-gray-300 mb-2 lg:mb-[0.5vw] font-poppins tracking-wide mt-1 line-clamp-2">
+                        {rec.overview}
+                      </p>
                       <p className="text-xs md:text-sm text-gray-400 mt-1">
                         {
                           (rec.release_date || rec.first_air_date)?.split(
@@ -893,6 +897,7 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                         }{" "}
                         - {mediaType === "tv" ? "Series" : "Movie"}
                       </p>
+
                       {/* <span className="text-xs md:text-[0.7vw] text-zinc-400 mt-1">
                         {rec.genre_ids }
                       </span> */}

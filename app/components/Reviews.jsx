@@ -130,7 +130,7 @@ const Reviews = ({ movieId, type = "movie" }) => {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-white mb-4">User Reviews</h3>
+        <h3 className="text-xl font-semibold text-white mb-4">Reviews</h3>
         {[1, 2, 3].map((i) => (
           <div key={i} className="bg-zinc-900 rounded-lg p-4 animate-pulse">
             <div className="flex items-start gap-3 mb-3">
@@ -274,11 +274,11 @@ const Reviews = ({ movieId, type = "movie" }) => {
   return (
     <div className="space-y-6 pt-[3vw] font-poppins">
       <h3 className="text-2xl font-semibold text-white mb-4">
-        User Reviews ({reviews.length})
+         Reviews ({reviews.length})
       </h3>
 
       {/* Mobile Slider View */}
-      <div className="block md:hidden">
+      <div className="block lg:hidden">
         <Slider {...sliderSettings}>
           {reviews.map((review) => (
             <div key={review.id} className="px-2">
@@ -289,7 +289,7 @@ const Reviews = ({ movieId, type = "movie" }) => {
       </div>
 
       {/* Desktop Grid View */}
-      <div className="hidden md:block space-y-[3vw]">
+      <div className="hidden lg:block space-y-[3vw]">
         {reviews.map((review) => renderReviewCard(review))}
       </div>
 

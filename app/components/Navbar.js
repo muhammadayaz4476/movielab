@@ -214,7 +214,7 @@ const Navbar = () => {
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className={`fixed top-0 left-0 w-full z-100 ${isVisible ? "" : "opacity-60"}`}
       >
-        <nav className="px-4    w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
+        <nav className="px-4 py-3   w-full flex lg:flex-row flex-col lg:px-[2vw] lg:py-[0.3vw]  lg:items-center justify-between z-[60]">
           <div className="flex items-center justify-between w-full lg:w-full">
             <div className=" flex lg:flex-row-reverse lg:justify-start justify-between w-full items-center gap-6">
               <div className=" w-full hidden lg:flex items-center justify-center">
@@ -292,13 +292,13 @@ const Navbar = () => {
               </Link>
             </div>
 
-            <div className=" md:hidden flex items-center gap-6">
-              {/* <Link
+            <div className=" lg:hidden flex items-center gap-6">
+              <Link
                 href="/watch-later"
                 className="text-sm font-medium text-white  hover:scale-110 transition-transform"
               >
                 <PlayIcon fill="white" />
-              </Link> */}
+              </Link>
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="bg-white/15 backdrop-blur-xs border border-white/5 p-3 lg:p-[0.7vw] rounded-full flex items-center justify-center text-white hover:bg-primary transition-all group"
@@ -308,12 +308,12 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center w-full lg:w-fit gap-2 pt-2 md:pt-0 lg:gap-[1vw]">
+          <div className="flex items-center w-full lg:w-fit gap-2 pt-2 lg:pt-0 lg:gap-[1vw]">
             <div className="relative w-full lg:w-[20vw]" ref={searchRef}>
               <div className="bg-white/15 backdrop-blur-xl border border-white/5 w-full lg:px-[1.2vw] lg:py-[0.6vw] px-4 py-3 rounded-full flex flex-nowrap items-center gap-[0.6vw] text-white focus-within:border-primary/30 transition-all relative overflow-hidden">
-                <SearchIcon className="text-primary/50 shrink-0 size-[1.3vw]" />
+                <SearchIcon className="text-primary/50 shrink-0 lg:size-[1.3vw]" />
 
-                <div className="relative flex-1 h-[1.6vw]">
+                <div className="relative flex-1 h-6 lg:h-[1.6vw]">
                   <input
                     type="search"
                     className="bg-transparent border-none font-poppins outline-none text-white text-sm lg:text-base w-full h-full absolute top-0 left-0 z-10"
@@ -449,7 +449,7 @@ const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "circOut" }}
-              className="fixed top-0 right-0 bottom-0 w-full lg:w-[20vw] bg-white/20 backdrop-blur-xl border-l border-white/10 p-[1.5vw] z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
+              className="fixed top-0 right-0 bottom-0 w-full md:w-[55%] lg:w-[20vw] bg-white/20 backdrop-blur-xl border-l border-white/10 p-4 lg:p-[1.5vw] z-[110] lg:shadow-2xl flex flex-col overflow-hidden custom-scrollbar"
             >
               <div className="flex items-center justify-between mb-[1vw]">
                 <h3 className="text-2xl font-bold font-comfortaa text-white">
@@ -459,7 +459,7 @@ const Navbar = () => {
                   onClick={() => setIsSidebarOpen(false)}
                   className="p-2 hover:bg-primary/20 hover:text-primary text-gray-100 rounded-full transition-colors"
                 >
-                  <X className="size-[1.3vw]" />
+                  <X className=" size-6 lg:size-[1.3vw]" />
                 </button>
               </div>
 
@@ -467,20 +467,20 @@ const Navbar = () => {
                 onWheel={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchMove={(e) => e.stopPropagation()}
-                className="overflow-y-auto flex-1 pr-[0.1vw] custom-scrollbar smooth-native-scroll"
+                className="overflow-y-auto flex-1 pr-0 lg:pr-[0.1vw] custom-scrollbar smooth-native-scroll"
               >
                 {/* Hubs Section */}
                 <div className="mb-8">
-                  <h4 className="text-primary text-sm font-medium mb-[1vw] uppercase font-poppins">
+                  <h4 className="text-primary text-sm font-medium mb-4 lg:mb-[1vw] uppercase font-poppins">
                     Cinema Hubs
                   </h4>
-                  <div className="grid grid-cols-2 gap-[0.7vw]">
+                  <div className="grid grid-cols-2 gap-2 lg:gap-[0.7vw]">
                     {hubs.map((hub) => (
                       <Link
                         key={hub.slug}
                         href={`/discover/${hub.slug}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="bg-blue-400/40 font-poppins  p-[1vw] rounded text-center hover:bg-primary hover:border-primary transition-all text-sm"
+                        className="bg-blue-400/40 font-poppins  p-4 lg:p-[1vw] rounded text-center hover:bg-primary hover:border-primary transition-all text-sm"
                       >
                         {hub.name}
                       </Link>
@@ -489,8 +489,8 @@ const Navbar = () => {
                 </div>
 
                 {/* Explore More - New Section */}
-                <div className="mb-8 lg:hidden">
-                  <h4 className="text-gray-500 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">
+                <div className="mb-5 lg:hidden">
+                  <h4 className="text-primary text-sm font-medium mb-4 uppercase ">
                     Explore More
                   </h4>
                   <div className="flex flex-col gap-1">
@@ -499,10 +499,10 @@ const Navbar = () => {
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >
-                      <span className="text-gray-300 group-hover:text-white  transition-all font-medium">
-                        Popular Actors
+                      <span className="text-white group-hover:text-primary  transition-all font-medium">
+                        Browse By Actors
                       </span>
-                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      <span className="text-white group-hover:text-primary transition-colors">
                         <ChevronRight />
                       </span>
                     </Link>
@@ -511,10 +511,10 @@ const Navbar = () => {
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >
-                      <span className="text-gray-300 group-hover:text-white  transition-all font-medium">
-                        Browse by Country
+                      <span className="text-white group-hover:text-primary  transition-all font-medium">
+                        Browse By Country
                       </span>
-                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      <span className="text-white group-hover:text-primary transition-colors">
                         <ChevronRight />
                       </span>
                     </Link>
@@ -523,10 +523,10 @@ const Navbar = () => {
                       onClick={() => setIsSidebarOpen(false)}
                       className="px-4 py-3 rounded-xl hover:bg-white/5 flex items-center justify-between group transition-all"
                     >
-                      <span className="text-gray-300 group-hover:text-white transition-all font-medium">
+                      <span className="text-white group-hover:text-primary transition-all font-medium">
                         Watch History
                       </span>
-                      <span className="text-gray-700 group-hover:text-primary transition-colors">
+                      <span className="text-white group-hover:text-primary transition-colors">
                         <ChevronRight />
                       </span>
                     </Link>
@@ -546,7 +546,7 @@ const Navbar = () => {
                           .toLowerCase()
                           .replace(/ /g, "-")}-${genre.id}`}
                         onClick={() => setIsSidebarOpen(false)}
-                        className="px-[1vw] py-[0.7vw] rounded-md hover:bg-white/5 flex items-center justify-between group transition-all"
+                        className="px-4 lg:px-[1vw] py-4 lg:py-[0.7vw] rounded-md hover:bg-white/5 flex items-center justify-between group transition-all"
                       >
                         <span className="text-white text-lg font-poppins group-hover:text-primary transition-all ">
                           {genre.name}

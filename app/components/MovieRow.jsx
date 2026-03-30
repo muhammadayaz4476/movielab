@@ -131,7 +131,7 @@ const MovieRow = ({
                 <div
                   onClick={() => router.push(`/movie/${movieSlug}`)}
                   key={movie.id}
-                  className="w-[45vw] lg:w-[16vw] group cursor-pointer shrink-0 relative transition-transform duration-300 z-0 hover:z-50 hover:scale-110"
+                  className="w-[45vw] md:w-[30vw] lg:w-[16vw] group cursor-pointer shrink-0 relative transition-transform duration-300 z-0 hover:z-50 hover:scale-110"
                 >
                   {/* Image Container */}
                   <div className="relative w-full aspect-3/4 rounded-lg overflow-hidden shadow-lg">

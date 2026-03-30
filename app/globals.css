@@ -17,7 +17,7 @@
   --text-9xl-fluid: 128px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   :root {
     /* Desktop/Large - using VW for fluid scaling */
     --text-xs-fluid: 0.65vw;
