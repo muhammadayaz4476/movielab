@@ -27,6 +27,7 @@ import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { trackEvent, G_EVENTS } from "../../utils/analytics";
+import { handleMonetizedAction } from "../../utils/monetization";
 
 // Dynamic Imports for Modals
 const ShareModal = dynamic(() => import("../../components/ShareModal"), {
@@ -473,9 +474,11 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                   mediaType,
                 )}`}
                 onClick={() =>
-                  trackEvent(G_EVENTS.WATCH_NOW, {
-                    event_category: "conversion",
-                    event_label: movie?.title || movie?.name,
+                  handleMonetizedAction("watch", () => {
+                    trackEvent(G_EVENTS.WATCH_NOW, {
+                      event_category: "conversion",
+                      event_label: movie?.title || movie?.name,
+                    });
                   })
                 }
                 rel="nofollow"
@@ -485,10 +488,12 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               </Link>
               <button
                 onClick={() => {
-                  setIsNoticeModalOpen(true);
-                  trackEvent(G_EVENTS.DOWNLOAD_NOW, {
-                    event_category: "conversion",
-                    event_label: movie?.title || movie?.name,
+                  handleMonetizedAction("download", () => {
+                    setIsNoticeModalOpen(true);
+                    trackEvent(G_EVENTS.DOWNLOAD_NOW, {
+                      event_category: "conversion",
+                      event_label: movie?.title || movie?.name,
+                    });
                   });
                 }}
                 className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"

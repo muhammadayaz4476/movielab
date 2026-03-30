@@ -21,6 +21,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useAuth } from "@/context/AuthContext";
 import { trackEvent, G_EVENTS } from "../../utils/analytics";
+import { handleMonetizedAction } from "../../utils/monetization";
 import Navbar from "../../components/Navbar";
 import ShareModal from "../../components/ShareModal";
 import NoticeModal from "../../components/NoticeModal";
@@ -296,6 +297,7 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
     { name: "Server 2", value: "https://multiembed.mov/", id: "multiembed" },
     { name: "Server 3", value: "https://vidsrc.me/embed", id: "vidsrc_me" },
     { name: "Server 4", value: "https://vidsrc.cc/v2/embed", id: "vidsrc_cc" },
+    { name: "Server 5", value: "https://www.vidking.net", id: "server5" },
   ];
   const [selectedServer, setSelectedServer] = useState(providers[0]);
   const iframeRef = useRef(null);
@@ -946,7 +948,14 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
               {providers.map((provider) => (
                 <button
                   key={provider.name}
-                  onClick={() => setSelectedServer(provider)}
+                  onClick={() => {
+                    if (provider.name === "Server 5") {
+                      // Server 5 has no limits and does not change the active server
+                      handleMonetizedAction("server5", null, true);
+                    } else {
+                      setSelectedServer(provider);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-full text-xs font-medium transition ${
                     selectedServer.name === provider.name
                       ? "bg-primary text-black"
@@ -1014,10 +1023,12 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
                       </Link>
                       <button
                         onClick={() => {
-                          setIsNoticeModalOpen(true);
-                          trackEvent(G_EVENTS.DOWNLOAD_NOW, {
-                            event_category: "conversion",
-                            event_label: movie?.title || movie?.name,
+                          handleMonetizedAction("download", () => {
+                            setIsNoticeModalOpen(true);
+                            trackEvent(G_EVENTS.DOWNLOAD_NOW, {
+                              event_category: "conversion",
+                              event_label: movie?.title || movie?.name,
+                            });
                           });
                         }}
                         className="bg-white/10 backdrop-blur-md text-lg text-white lg:px-[1vw] px-2 py-2 lg:py-[0.9vw]   text-sm lg:text-lg rounded-md lg:rounded-[0.51vw] font-bold font-comfortaa flex items-center gap-3 hover:bg-white/20 transition-all group border border-white/10"
