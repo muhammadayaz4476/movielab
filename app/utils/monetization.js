@@ -4,7 +4,7 @@ import { trackEvent } from "./analytics";
 
 const SMARTLINK_URL =
   "https://doubtfulimpatient.com/mr2ybtg778?key=9226cef44dcb9cc9cb86abcf1b81715f";
-const REDIRECT_LIMIT = 3; // Maximum redirects per hour
+const REDIRECT_LIMIT =3; // Maximum redirects per hour
 const ONE_HOUR = 3600000; // 1 hour in milliseconds
 
 /**
