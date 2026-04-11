@@ -4,7 +4,6 @@ import { Plus, Check, Play } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { trackEvent, G_EVENTS } from "../utils/analytics";
-import { handleMonetizedAction } from "../utils/monetization";
 
 const HoverOverlay = ({
   movie,
@@ -64,11 +63,9 @@ const HoverOverlay = ({
               movie.media_type || mediaType,
             )}`}
             onClick={() =>
-              handleMonetizedAction("watch", () => {
-                trackEvent(G_EVENTS.WATCH_NOW, {
-                  event_category: "conversion",
-                  event_label: movie.title || movie.name,
-                });
+              trackEvent(G_EVENTS.WATCH_NOW, {
+                event_category: "conversion",
+                event_label: movie.title || movie.name,
               })
             }
             rel="nofollow"

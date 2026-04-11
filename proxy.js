@@ -1,20 +1,8 @@
 import { NextResponse } from "next/server";
 
 export async function proxy(request) {
-  // Temporary Redirect for maintenance
-  const smartlink = 'https://doubtfulimpatient.com/mr2ybtg778?key=9226cef44dcb9cc9cb86abcf1b81715f';
-  const { pathname: urlPath } = new URL(request.url);
-
-  // Redirect all traffic except for _next and favicon.ico to handle "all routes"
-  if (
-    !urlPath.startsWith("/_next") &&
-    !urlPath.startsWith("/api") &&
-    urlPath !== "/favicon.ico"
-  ) {
-    return NextResponse.redirect(smartlink);
-  }
-
   const userAgent = request.headers.get("user-agent");
+
 
   const bots = [
     "googlebot",
