@@ -129,7 +129,6 @@ export async function POST(request) {
     const collected = [];
     let page = 1;
     let totalPages = 1;
-    const unsafeKeywords = ["sexy", "erotic", "porn", "xxx", "nude", "breast", "sex", "18+"];
 
     while (collected.length < offset + quantity && page <= totalPages) {
       let searchUrl;
@@ -139,10 +138,10 @@ export async function POST(request) {
         let discoverPath = "multi";
         if (requestedType === "movie") discoverPath = "movie";
         else if (requestedType === "tv") discoverPath = "tv";
-        searchUrl = `${BASE_URL}/discover/${discoverPath}?api_key=${API_KEY}&with_genres=${encodeURIComponent(query)}&include_adult=false&sort_by=popularity.desc&page=${page}`;
+        searchUrl = `${BASE_URL}/discover/${discoverPath}?api_key=${API_KEY}&with_genres=${encodeURIComponent(query)}&include_adult=true&sort_by=popularity.desc&page=${page}`;
       } else {
         // Search mode: search by query text
-        searchUrl = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false&page=${page}`;
+        searchUrl = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=true&page=${page}`;
       }
       
       const searchRes = await fetchJson(searchUrl);
@@ -182,11 +181,6 @@ export async function POST(request) {
           }
         }
 
-        // basic unsafe filter
-        const titleLower = ((r.title || r.name) || "").toLowerCase();
-        const overviewLower = (r.overview || "").toLowerCase();
-        const hasUnsafe = unsafeKeywords.some(k => titleLower.includes(k) || overviewLower.includes(k));
-        if (hasUnsafe) continue;
 
         collected.push(r);
       }

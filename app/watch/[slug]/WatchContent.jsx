@@ -586,7 +586,6 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         return;
       }
 
-      const unsafeKeywords = [];
       const scoredResults = newItems.map((item) => ({
         ...item,
         _similarityScore: getSimilarityScore(item, movie),
@@ -594,10 +593,8 @@ const WatchContent = ({ initialData, slug, id, mediaType = "movie" }) => {
 
       const safeResults = scoredResults
         .filter((item) => {
-          const title = (item.title || "").toLowerCase();
-          const hasUnsafe = unsafeKeywords.some((k) => title.includes(k));
           return (
-            !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
+            item.id.toString() !== id.toString()
           );
         })
         .sort((a, b) => b._similarityScore - a._similarityScore);

@@ -25,6 +25,8 @@ const Home = ({ initialData = {} }) => {
     return {};
   });
 
+  const [trendingKeywords, setTrendingKeywords] = useState(initialData.trendingKeywords || []);
+
   // Mark server-fetched keys as "already fetching/fetched" and sync deduplication
   useEffect(() => {
     if (initialData.rows) {
@@ -39,9 +41,48 @@ const Home = ({ initialData = {} }) => {
       });
       setRowData(initialData.rows);
     }
-  }, [initialData.rows]);
+    if (initialData.trendingKeywords) {
+      setTrendingKeywords(initialData.trendingKeywords);
+    }
+  }, [initialData]);
 
-  const unsafeKeywords = ["porn", "xxx", "erotic", "nude", "18+", "nsfw"];
+  // Fetch trending keywords for footer if not provided
+  useEffect(() => {
+    if (trendingKeywords.length === 0) {
+      const fetchKeywords = async () => {
+        try {
+          // Fetch trending movies first
+          const trendingRes = await axios.get(
+            `${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=true`,
+          );
+          const topMovies = (trendingRes.data.results || []).slice(0, 6);
+
+          // Fetch keywords for those movies
+          const keywordRequests = topMovies.map((movie) =>
+            axios
+              .get(`${BASE_URL}/movie/${movie.id}/keywords?api_key=${API_KEY}`)
+              .then((res) => res.data.keywords || [])
+              .catch(() => []),
+          );
+
+          const keywordsData = await Promise.all(keywordRequests);
+          const allKeywords = keywordsData.flat();
+
+          // Deduplicate
+          const uniqueKeywordsMap = new Map();
+          allKeywords.forEach((k) => {
+            if (!uniqueKeywordsMap.has(k.id)) uniqueKeywordsMap.set(k.id, k);
+          });
+
+          setTrendingKeywords(Array.from(uniqueKeywordsMap.values()).slice(0, 50));
+        } catch (err) {
+          console.error("Failed to fetch trending keywords on client", err);
+        }
+      };
+      fetchKeywords();
+    }
+  }, [API_KEY, BASE_URL, trendingKeywords.length]);
+
 
   const fetchRowData = React.useCallback(
     async (key, url) => {
@@ -61,16 +102,8 @@ const Home = ({ initialData = {} }) => {
           if (results.length === 0) break;
 
           for (const item of results) {
-            if (!item.id || item.adult) continue;
+            if (!item.id) continue;
 
-            const title = (item.title || item.name || "").toLowerCase();
-            const overview = (item.overview || "").toLowerCase();
-            const hasUnsafeKeyword = unsafeKeywords.some(
-              (keyword) =>
-                title.includes(keyword) || overview.includes(keyword),
-            );
-
-            if (hasUnsafeKeyword) continue;
 
             // Sync deduplication check using Ref
             if (seenIdsRef.current.has(item.id)) continue;
@@ -164,7 +197,7 @@ const Home = ({ initialData = {} }) => {
   return (
     <main className="w-full min-h-screen bg-black text-white pb-20">
       <Navbar />
-      <Hero initialMovies={initialData.rows?.hero?.results || []} />
+      <Hero initialMovies={rowData.hero?.results || []} />
       <div className="flex lg:hidden overflow-x-auto gap-3 px-4 pb-2 scrollbar-hide py-3">
         {[
           { name: "New", slug: "/discover/new-releases" },
@@ -194,7 +227,7 @@ const Home = ({ initialData = {} }) => {
           isPriority={true}
           rowKey="trendingToday"
           title="Streamers of the day"
-          url={`${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=false`}
+          url={`${BASE_URL}/trending/movie/day?api_key=${API_KEY}&include_adult=true`}
           viewAllLink="/discover/trending"
         />
         <LazyMovieRow
@@ -202,7 +235,7 @@ const Home = ({ initialData = {} }) => {
           isPriority={true}
           rowKey="horrorMovies"
           title="Horror Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=27&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/horror-27"
         />
         <LazyMovieRow
@@ -210,81 +243,81 @@ const Home = ({ initialData = {} }) => {
           isPriority={true}
           rowKey="sciFiMovies"
           title="Sci-Fi Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=878&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/sci-fi-878"
         />
 
         <LazyMovieRow
           rowKey="movies2024"
           title="Best of 2024"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2024&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2024&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/new-releases"
         />
         <LazyMovieRow
           rowKey="movies2025"
           title="Top of 2025"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2025&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2025&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/new-releases"
         />
         {/* <LazyMovieRow
           rowKey="movies2026"
           title="Upcoming 2026"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2026&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&primary_release_year=2026&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/new-releases"
         /> */}
 
         <LazyMovieRow
           rowKey="actionMovies"
           title="Action Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/action-28"
         />
         <LazyMovieRow
           rowKey="topRated"
           title="Top Rated Movies"
-          url={`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=false`}
+          url={`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&include_adult=true`}
           viewAllLink="/discover/top-rated"
         />
         <LazyMovieRow
           rowKey="comedyMovies"
           title="Comedy Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/comedy-35"
         />
         <LazyMovieRow
           rowKey="popularNow"
           title="Popular Now"
-          url={`${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=false`}
+          url={`${BASE_URL}/movie/popular?api_key=${API_KEY}&include_adult=true`}
           viewAllLink="/discover/popular"
         />
         <LazyMovieRow
           rowKey="romanceMovies"
           title="Romance Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=10749&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/romance-10749"
         />
         <LazyMovieRow
           rowKey="koreanMovies"
           title="Korean Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=ko&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/korean"
         />
         <LazyMovieRow
           rowKey="indianMovies"
           title="Indian Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_original_language=hi&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/bollywood"
         />
         <LazyMovieRow
           rowKey="hiddenGems"
           title="Hidden Gems"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&vote_average.gte=7&vote_count.lte=300&sort_by=vote_average.desc&include_adult=true`}
           viewAllLink="/discover/hidden-gems"
         />
         <LazyMovieRow
           rowKey="feelGoodMovies"
           title="Feel Good Movies"
-          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=false`}
+          url={`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=35,10749&sort_by=popularity.desc&include_adult=true`}
           viewAllLink="/discover/feel-good"
         />
 
@@ -489,14 +522,14 @@ const Home = ({ initialData = {} }) => {
 
             <div className="space-y-8">
               {/* Dynamic Trending Keywords */}
-              {initialData.trendingKeywords &&
-                initialData.trendingKeywords.length > 0 && (
+              {trendingKeywords &&
+                trendingKeywords.length > 0 && (
                   <div>
                     <h4 className="md:text-xl md:pt-[3vw] font-semibold text-primary/90 font-comfortaa   mb-4 ">
                       Trending Now
                     </h4>
                     <div className="flex flex-wrap gap-2 md:gap-[1vw]   w-full md:w-[90%]">
-                      {initialData.trendingKeywords.map((keyword) => (
+                      {trendingKeywords.map((keyword) => (
                         <Link
                           key={keyword.id}
                           href={`/search/kw-${keyword.id}-${encodeURIComponent(keyword.name.replace(/\s+/g, "-").toLowerCase())}`}

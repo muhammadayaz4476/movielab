@@ -38,69 +38,10 @@ export async function generateMetadata({ params }) {
 
 export default async function Page({ params }) {
   const { slug } = await params;
-  const id = slug?.split("-").pop();
-
-  let data = null;
-  try {
-    data = await getActorData(id);
-  } catch (error) {
-    console.error("Error fetching actor data:", error);
-  }
-
-  if (!data)
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white italic">
-        Actor not found
-      </div>
-    );
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://movies.umairlab.com",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Actors",
-        item: "https://movies.umairlab.com/actors",
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: data.name,
-        item: `https://movies.umairlab.com/actor/${slug}`,
-      },
-    ],
-  };
-
-  const personSchema = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: data.name,
-    description: data.biography,
-    image: `https://image.tmdb.org/t/p/w500${data.profile_path}`,
-    birthDate: data.birthday,
-    deathDate: data.deathday,
-    birthPlace: data.place_of_birth,
-  };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-      />
-      <ActorContent data={data} slug={slug} />
+      <ActorContent data={null} slug={slug} />
     </>
   );
 }

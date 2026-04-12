@@ -21,6 +21,8 @@ import HoverOverlay from "@/app/components/HoverOverlay";
 import { useAuth } from "@/context/AuthContext";
 
 const ActorContent = ({ data, slug }) => {
+  const [actor, setActor] = useState(data);
+  const [loading, setLoading] = useState(!data);
   const [showFullBio, setShowFullBio] = useState(false);
   const [relatedActors, setRelatedActors] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -32,8 +34,33 @@ const ActorContent = ({ data, slug }) => {
   const API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
-  // Deduplication: Only one entry per unique ID
-  const rawCast = data.combined_credits?.cast || [];
+  // Fetch Actor Details on Mount if Not Provided
+  useEffect(() => {
+    const fetchActorData = async () => {
+      if (data) {
+        setActor(data);
+        setLoading(false);
+      } else {
+        const id = slug?.split("-").pop();
+        if (!id) return;
+        try {
+          setLoading(true);
+          const res = await axios.get(
+            `${BASE_URL}/person/${id}?api_key=${API_KEY}&append_to_response=combined_credits,images,external_ids`,
+          );
+          setActor(res.data);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching actor details:", error);
+          setLoading(false);
+        }
+      }
+    };
+    fetchActorData();
+  }, [id, data, slug, API_KEY, BASE_URL]);
+
+  // Derived Values from Actor State
+  const rawCast = actor?.combined_credits?.cast || [];
   const uniqueCastMap = new Map();
   rawCast.forEach((item) => {
     if (!uniqueCastMap.has(item.id)) {
@@ -101,8 +128,8 @@ const ActorContent = ({ data, slug }) => {
 
   useEffect(() => {
     const fetchRelated = async () => {
+      if (!actor?.id) return;
       // Improved logic: Find a project that is likely NOT a talk show or reality TV
-      // We look for projects where character is NOT "Self" or "Guest" or "Host"
       const bestProject =
         sortedCast.find((item) => {
           const role = (item.character || "").toLowerCase();
@@ -125,7 +152,7 @@ const ActorContent = ({ data, slug }) => {
         const related =
           creditData.cast
             ?.filter((c) => {
-              const isSelf = c.id === data.id;
+              const isSelf = c.id === actor.id;
               const isActor = c.known_for_department === "Acting";
               const role = (c.character || "").toLowerCase();
               const isNotHost =
@@ -142,7 +169,7 @@ const ActorContent = ({ data, slug }) => {
       }
     };
     fetchRelated();
-  }, [data.id]);
+  }, [actor?.id, API_KEY, BASE_URL, sortedCast.length]);
 
   // Infinite Scroll Hook
   useEffect(() => {
@@ -174,6 +201,22 @@ const ActorContent = ({ data, slug }) => {
     };
   }, [showFullBio]);
 
+  if (loading || !actor) {
+    return (
+      <main className="w-full min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="px-4 lg:px-[3vw] py-[40vw] lg:py-[10vw] flex flex-col lg:flex-row gap-10 animate-pulse">
+          <div className="w-52 lg:w-72 aspect-[3/4] bg-zinc-900 rounded-xl shrink-0" />
+          <div className="flex-1 space-y-6">
+            <div className="h-4 bg-zinc-900 rounded w-1/4" />
+            <div className="h-16 bg-zinc-900 rounded w-3/4" />
+            <div className="h-24 bg-zinc-900 rounded w-full" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="w-full min-h-screen bg-black text-white selection:bg-primary/30 pb-20">
       <Navbar />
@@ -182,7 +225,7 @@ const ActorContent = ({ data, slug }) => {
       <div className="relative w-full h-[110vh] lg:h-[100vh] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={`https://image.tmdb.org/t/p/original${data.images?.profiles?.[0]?.file_path || data.profile_path}`}
+            src={`https://image.tmdb.org/t/p/original${actor.images?.profiles?.[0]?.file_path || actor.profile_path}`}
             alt=""
             className="w-full h-full object-cover  blur-sm "
           />
@@ -197,8 +240,8 @@ const ActorContent = ({ data, slug }) => {
               className="w-52 lg:w-72 aspect-[3/4] rounded-xl overflow-hidden "
             >
               <img
-                src={`https://image.tmdb.org/t/p/original${data.images?.profiles?.[1]?.file_path || data.profile_path}`}
-                alt={data.name}
+                src={`https://image.tmdb.org/t/p/original${actor.images?.profiles?.[1]?.file_path || actor.profile_path}`}
+                alt={actor.name}
                 className="w-full h-full object-cover object-top"
               />
             </motion.div>
@@ -211,34 +254,34 @@ const ActorContent = ({ data, slug }) => {
               >
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-3">
                   <span className="px-4 py-1.5 bg-primary text-black text-[11px] font-black uppercase rounded-lg shadow-lg shadow-primary/20">
-                    {data.known_for_department}
+                    {actor.known_for_department}
                   </span>
-                  {data.birthday && (
+                  {actor.birthday && (
                     <span className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 backdrop-blur-md px-3 py-1 rounded-full border border-white/5">
                       <Cake size={16} className="text-primary" />
-                      {new Date(data.birthday).toLocaleDateString("en-US", {
+                      {new Date(actor.birthday).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })}
                     </span>
                   )}
-                  {data.place_of_birth && (
+                  {actor.place_of_birth && (
                     <span className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 backdrop-blur-md px-3 py-1 rounded-full border border-white/5">
                       <MapPin size={16} className="text-primary" />
-                      {data.place_of_birth.split(",").slice(-1)}
+                      {actor.place_of_birth.split(",").slice(-1)}
                     </span>
                   )}
                 </div>
                 <h1 className="text-5xl lg:text-8xl font-comfortaa font-bold mb-8 tracking-tighter">
-                  {data.name}
+                  {actor.name}
                 </h1>
 
                 <div className="max-w-3xl">
                   <p className="text-gray-300 font-poppins leading-relaxed text-lg line-clamp-3">
-                    {data.biography || "No biography available for this actor."}
+                    {actor.biography || "No biography available for this actor."}
                   </p>
-                  {data.biography?.length > 200 && (
+                  {actor.biography?.length > 200 && (
                     <button
                       onClick={() => setShowFullBio(true)}
                       className="text-primary  font-bold mt-4 flex items-center gap-1 group/btn"
@@ -505,7 +548,7 @@ const ActorContent = ({ data, slug }) => {
                     Biography
                   </h2>
                   <p className="text-primary font-poppins   text-lg">
-                    {data.name}
+                    {actor.name}
                   </p>
                 </div>
                 <button
@@ -526,22 +569,22 @@ const ActorContent = ({ data, slug }) => {
                     <div>
                       <h3 className="text-xl  text-white mb-4 flex items-center gap-2">
                         <div className="w-1.5 h-6 bg-primary rounded-full" />
-                        About {data.name.split(" ")[0]}
+                        About {actor.name.split(" ")[0]}
                       </h3>
                       <p className="text-gray-300 font-poppins text-lg leading-relaxed whitespace-pre-wrap">
-                        {data.biography ||
-                          `No detailed biography available for ${data.name}.`}
+                        {actor.biography ||
+                          `No detailed biography available for ${actor.name}.`}
                       </p>
                     </div>
 
-                    {data.images?.profiles?.length > 0 && (
+                    {actor.images?.profiles?.length > 0 && (
                       <div>
                         <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                           <div className="w-1.5 h-6 bg-primary rounded-full" />
                           Photo Gallery
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {data.images.profiles.map((img, idx) => (
+                          {actor.images.profiles.map((img, idx) => (
                             <motion.div
                               key={idx}
                               whileHover={{ scale: 1.05 }}
@@ -549,7 +592,7 @@ const ActorContent = ({ data, slug }) => {
                             >
                               <img
                                 src={`https://image.tmdb.org/t/p/w500${img.file_path}`}
-                                alt={`${data.name} profile ${idx + 1}`}
+                                alt={`${actor.name} profile ${idx + 1}`}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
                               />
@@ -568,14 +611,14 @@ const ActorContent = ({ data, slug }) => {
                       </h3>
 
                       <div className="space-y-4">
-                        {data.birthday && (
+                        {actor.birthday && (
                           <div className="space-y-1">
                             <p className="text-xs font-black text-gray-500 uppercase tracking-wide">
                               Date of Birth
                             </p>
                             <p className="text-white font-medium flex items-center gap-2">
                               <Cake size={14} className="text-primary" />
-                              {new Date(data.birthday).toLocaleDateString(
+                              {new Date(actor.birthday).toLocaleDateString(
                                 "en-US",
                                 {
                                   year: "numeric",
@@ -587,13 +630,13 @@ const ActorContent = ({ data, slug }) => {
                           </div>
                         )}
 
-                        {data.deathday && (
+                        {actor.deathday && (
                           <div className="space-y-1">
                             <p className="text-xs font-black text-gray-500 uppercase tracking-wide">
                               Date of Death
                             </p>
                             <p className="text-white font-medium">
-                              {new Date(data.deathday).toLocaleDateString(
+                              {new Date(actor.deathday).toLocaleDateString(
                                 "en-US",
                                 {
                                   year: "numeric",
@@ -605,14 +648,14 @@ const ActorContent = ({ data, slug }) => {
                           </div>
                         )}
 
-                        {data.place_of_birth && (
+                        {actor.place_of_birth && (
                           <div className="space-y-1">
                             <p className="text-xs font-black text-gray-500 uppercase tracking-wide">
                               Place of Birth
                             </p>
                             <p className="text-white font-medium flex items-center gap-2">
                               <MapPin size={14} className="text-primary" />
-                              {data.place_of_birth}
+                              {actor.place_of_birth}
                             </p>
                           </div>
                         )}
@@ -622,9 +665,9 @@ const ActorContent = ({ data, slug }) => {
                             Gender
                           </p>
                           <p className="text-white font-medium">
-                            {data.gender === 1
+                            {actor.gender === 1
                               ? "Female"
-                              : data.gender === 2
+                              : actor.gender === 2
                                 ? "Male"
                                 : "Not specified"}
                           </p>
@@ -635,7 +678,7 @@ const ActorContent = ({ data, slug }) => {
                             Known For
                           </p>
                           <p className="text-white font-medium">
-                            {data.known_for_department}
+                            {actor.known_for_department}
                           </p>
                         </div>
 
@@ -648,13 +691,13 @@ const ActorContent = ({ data, slug }) => {
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{
-                                  width: `${Math.min(data.popularity, 100)}%`,
+                                  width: `${Math.min(actor.popularity, 100)}%`,
                                 }}
                                 className="h-full bg-primary"
                               />
                             </div>
                             <span className="text-white font-bold text-xs">
-                              {data.popularity?.toFixed(0)}
+                              {actor.popularity?.toFixed(0)}
                             </span>
                           </div>
                         </div>

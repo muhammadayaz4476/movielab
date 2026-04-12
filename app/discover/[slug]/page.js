@@ -24,7 +24,7 @@ async function getDiscoveryData(slug, page = 1, year = "", type = "all") {
   // Helper to fetch single type
   const fetchSingle = async (mType, p) => {
     const sortBy = mType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
-    const commonFilters = `&include_adult=false&vote_count.gte=10`;
+    const commonFilters = `&include_adult=true&vote_count.gte=10`;
     const yearParam = mType === "tv" ? "first_air_date_year" : "primary_release_year";
     const yearFilter = year ? `&${yearParam}=${year}` : "";
     const baseParams = `&page=${p}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
@@ -180,96 +180,15 @@ export async function generateMetadata({ params, searchParams }) {
 export default async function Page({ params, searchParams }) {
   const { slug } = await params;
   const { year } = (await searchParams) || {};
-  const initialData = await getDiscoveryData(slug, 1, year);
   const decodedSlug = decodeURIComponent(slug);
-
-  // Schema Markup
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://movies.umairlab.com",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Discover",
-        item: `https://movies.umairlab.com/discover/${slug}`,
-      },
-    ],
-  };
-
-  const itemListSchema = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    itemListElement: initialData.results?.slice(0, 10).map((item, index) => {
-      const title = item.title || item.name || "";
-      const id = item.id;
-      const type = item.media_type || (slug === "web-series" ? "tv" : "movie");
-      const prefix = type === "tv" ? "tv-" : "";
-      const itemSlug = `${prefix}${title
-        .toLowerCase()
-        .replace(/ /g, "-")
-        .replace(/[^\w-]+/g, "")}-${id}`;
-
-      return {
-        "@type": "ListItem",
-        position: index + 1,
-        url: `https://movies.umairlab.com/movie/${itemSlug}`,
-        name: title,
-      };
-    }),
-  };
-
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `Where can I watch ${decodedSlug.replace(/-/g, " ")} for free?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `You can watch high-quality content in the ${decodedSlug.replace(/-/g, " ")} category on MovieLab for free with no registration and zero ads.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: `What are the best movies in this category?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Our top picks currently include ${initialData.results
-            ?.slice(0, 3)
-            .map((m) => m.title || m.name)
-            .join(", ")}.`,
-        },
-      },
-    ],
-  };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
       <DiscoverContent
         slug={slug}
-        initialResults={initialData.results || []}
+        initialResults={[]}
         initialYear={year}
-        initialLastPage={initialData.lastPageFetched || 1}
+        initialLastPage={0}
       />
     </>
   );

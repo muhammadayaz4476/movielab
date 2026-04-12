@@ -104,19 +104,17 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
   // Handle movie change if user navigates via sidebar
   useEffect(() => {
     const fetchMovieData = async () => {
-      // If the ID and mediaType match initialData, we don't need to refetch immediately
-      if (initialData && initialData.id.toString() === id.toString()) {
+      // If IDs match, use initialData, but if it's null we MUST fetch
+      if (initialData && initialData.id?.toString() === id.toString()) {
         setMovie(initialData);
-        console.log(initialData);
         setLoading(false);
       } else {
         try {
           setLoading(true);
           const res = await axios.get(
-            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`,
+            `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits,keywords,release_dates,external_ids`,
           );
           setMovie(res.data);
-          console.log(res.data);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching content details:", error);
@@ -180,24 +178,9 @@ const MovieContent = ({ initialData, slug, id, mediaType = "movie" }) => {
         return;
       }
 
-      const unsafeKeywords = [
-        "sexy",
-        "erotic",
-        "porn",
-        "xxx",
-        "nude",
-        "adult",
-        "sex",
-        "18+",
-      ];
       const safeResults = newItems.filter((item) => {
-        const title = (item.title || "").toLowerCase();
-        const overview = (item.overview || "").toLowerCase();
-        const hasUnsafe = unsafeKeywords.some(
-          (k) => title.includes(k) || overview.includes(k),
-        );
         return (
-          !item.adult && !hasUnsafe && item.id.toString() !== id.toString()
+          item.id.toString() !== id.toString()
         );
       });
 

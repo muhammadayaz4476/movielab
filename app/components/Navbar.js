@@ -88,7 +88,7 @@ const Navbar = () => {
           const response = await axios.get(
             `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(
               searchQuery,
-            )}&include_adult=false`,
+            )}&include_adult=true`,
           );
 
           let results = response.data.results

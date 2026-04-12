@@ -68,7 +68,7 @@ const DiscoverContent = ({
 
       const fetchType = async (mType) => {
         const sortBy = mType === "tv" ? "first_air_date.desc" : "primary_release_date.desc";
-        const commonFilters = `&include_adult=false&vote_count.gte=10`;
+        const commonFilters = `&include_adult=true&vote_count.gte=10`;
         const yearParam = mType === "tv" ? "first_air_date_year" : "primary_release_year";
         const yearFilter = currentYear ? `&${yearParam}=${currentYear}` : "";
         const baseParams = `&page=${pageNum}&sort_by=${sortBy}${commonFilters}${yearFilter}`;
@@ -129,15 +129,7 @@ const DiscoverContent = ({
         totalPages = data.total_pages;
       }
 
-      const unsafeKeywords = ["sexy", "erotic", "porn", "xxx", "nude", "adult", "busty", "breast", "sex", "18+"];
-      const safeBatch = combinedResults.filter((item) => {
-        const titleText = (item.title || item.name || "").toLowerCase();
-        const overviewText = (item.overview || "").toLowerCase();
-        return (
-          !item.adult &&
-          !unsafeKeywords.some((k) => titleText.includes(k) || overviewText.includes(k))
-        );
-      });
+      const safeBatch = combinedResults;
 
       setResults((prev) => (pageNum === 1 ? safeBatch : [...prev, ...safeBatch]));
       setHasMore(pageNum < totalPages && combinedResults.length > 0);
@@ -160,11 +152,11 @@ const DiscoverContent = ({
 
   // Initialization
   useEffect(() => {
-    const initialType = decodedSlug === "web-series" ? "tv" : (initialResults[0]?.media_type || "all");
+    const initialType = decodedSlug === "web-series" ? "tv" : "all";
     setMediaType(initialType);
     setYear(initialYear);
 
-    if (initialResults.length > 0) {
+    if (initialResults && initialResults.length > 0) {
       setResults(initialResults);
       setPage(initialLastPage);
       setLoading(false);
@@ -173,6 +165,7 @@ const DiscoverContent = ({
       setResults([]);
       setPage(1);
       setHasMore(true);
+      setLoading(true);
       fetchDiscovery(1, initialType, initialYear);
     }
     // console.log(initialResults);
